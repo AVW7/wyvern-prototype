@@ -1,0 +1,89 @@
+/* Management-sim UI overlay. Sits above the Phaser canvas. Style the base and
+   roster screens here with normal CSS instead of drawing them on canvas. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #0e0a14;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: #ece7f2;
+}
+
+/* Center the game + overlay stack. */
+#game, #ui-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 960px;
+  height: 540px;
+}
+
+#ui-overlay {
+  pointer-events: none; /* let canvas receive input except on real controls */
+}
+#ui-overlay > * { pointer-events: auto; }
+
+.panel {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  width: 300px;
+  padding: 20px;
+  background: rgba(20, 14, 30, 0.92);
+  border: 1px solid #3a2d52;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.panel h1 { margin: 0; font-size: 22px; letter-spacing: 1px; }
+.panel .subtitle { margin: 2px 0 16px; color: #9b8bbd; font-size: 12px; }
+.panel h2 { margin: 12px 0 8px; font-size: 13px; text-transform: uppercase; color: #b9a8dc; }
+
+.roster { list-style: none; margin: 0 0 16px; padding: 0; }
+.roster li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+.roster .lvl { color: #8a5cf6; font-weight: 600; }
+
+.base-actions { display: flex; flex-direction: column; gap: 8px; }
+
+button {
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #fff;
+  background: #7c3aed;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+button:hover { background: #8b4bff; }
+button.ghost { background: rgba(255, 255, 255, 0.06); color: #9b8bbd; cursor: not-allowed; }
+
+/* In-mission HUD */
+.hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+.controls-hint {
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #9b8bbd;
+}

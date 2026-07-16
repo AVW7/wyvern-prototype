@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wyvern Prototype</title>
+  <link rel="stylesheet" href="src/ui/ui.css" />
+</head>
+<body>
+  <!-- Phaser mounts its canvas into #game. The HTML/CSS management-sim UI
+       overlay (rosters, base screens) lives in #ui-overlay on top of it. -->
+  <div id="game"></div>
+  <div id="ui-overlay"></div>
+
+  <!-- Phaser 3 from CDN. Pin the version so the prototype is reproducible. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
+
+  <!-- Game code loaded as an ES module (needs a local server, see README). -->
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
