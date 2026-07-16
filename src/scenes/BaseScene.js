@@ -1,11 +1,16 @@
-// BaseScene: the between-missions management sim (roster, base-building).
-// UI-heavy screens like this are easiest as an HTML/CSS overlay on top of the
-// canvas rather than hand-drawn Phaser objects. This scene shows/hides that
-// overlay and hands off to a mission when the player launches one.
+// BaseScene: the sanctuary grounds — the hand-authored Mossy Monolith island
+// (data/sanctuary.js) with the roster living on it as residents, plus the
+// HTML Roost panel overlay. The vault interior is its own scene (VaultScene),
+// entered through the barred gate at the massif's base; missions are a third,
+// fully separate layer. This scene shares no scene code with either.
+import { SANCTUARY } from '../config.js';
+import { sortByDepth } from '../systems/iso.js';
 import {
-  getRoster, gainXp, raiseBond, recruitAnimal,
-} from '../systems/roster.js';
-import { SPECIES } from '../data/species.js';
+  buildSanctuaryView, spawnSanctuaryResidents, animateSanctuaryProps,
+} from '../systems/sanctuaryRender.js';
+import { buildSanctuaryExterior } from '../data/sanctuary.js';
+import { buildRoostOverlay } from '../ui/roostPanel.js';
+import { gainXp, raiseBond, recruitAnimal } from '../systems/roster.js';
 
 export default class BaseScene extends Phaser.Scene {
   constructor() {
@@ -13,87 +18,75 @@ export default class BaseScene extends Phaser.Scene {
   }
 
   create() {
+    // Fresh refs each visit — the scene restarts when a mission or the vault
+    // returns here, and the old display objects were destroyed with it.
+    this.world = null;
+    this.panelCollapsed = false;
+
+    this.buildWorld();
     this.buildOverlay();
+  }
+
+  // (Re)builds the island: backdrop, tiles, props, residents, entrance.
+  // Called on scene start and on recruit (so the newcomer appears). Baked
+  // textures are cached across rebuilds, so this is cheap.
+  buildWorld() {
+    this.tweens.killAll();
+    if (this.world) {
+      this.world.layer.removeAll(true);
+      this.world.layer.destroy();
+      this.world.backdrop.destroy();
+    }
+
+    const { tiles } = buildSanctuaryExterior();
+    this.world = buildSanctuaryView(this, SANCTUARY.VIEWS.OUTSIDE, tiles);
+    spawnSanctuaryResidents(this, this.world.layer, SANCTUARY.VIEWS.OUTSIDE, this.world.zoom);
+    sortByDepth(this.world.layer);
+    animateSanctuaryProps(this, this.world.placed);
+    this.wireEntrance();
+  }
+
+  // The barred gate at the massif's base is the way into the vault. A soft
+  // breathing pulse marks it as interactive.
+  wireEntrance() {
+    const entrance = this.world.placed.decor.find((d) => d.type === 'barredDoor');
+    if (!entrance) return;
+    entrance.sprite.setInteractive({ useHandCursor: true });
+    entrance.sprite.on('pointerdown', () => this.enterVault());
+    this.tweens.add({
+      targets: entrance.sprite,
+      alpha: 0.8,
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
   }
 
   buildOverlay() {
-    const overlay = document.getElementById('ui-overlay');
-    const roster = getRoster();
-    const rows = roster.map((a) => this.renderCard(a)).join('');
-    const recruitButtons = Object.values(SPECIES)
-      .map((s) => `<button class="recruit-btn" data-species="${s.id}"><span class="btn-icon">${s.emoji}</span>${s.name}</button>`)
-      .join('');
-
-    overlay.innerHTML = `
-      <div class="panel base-panel">
-        <div class="panel-header">
-          <h1>Roost</h1>
-          <p class="subtitle">Sanctuary &amp; roster management</p>
-        </div>
-        <h2>Companions <span class="roster-count">${roster.length}</span></h2>
-        <ul class="roster">${rows}</ul>
-        <div class="base-actions">
-          <button id="btn-launch" class="btn-primary"><span class="btn-icon">⚔️</span>Launch Mission</button>
-          <h2 class="recruit-label">Recruit</h2>
-          <div class="recruit-row">${recruitButtons}</div>
-        </div>
-      </div>`;
-
-    document.getElementById('btn-launch').onclick = () => this.launchMission();
-    roster.forEach((a) => {
-      document.getElementById(`train-${a.id}`).onclick = () => this.train(a.id);
-      document.getElementById(`feed-${a.id}`).onclick = () => this.feed(a.id);
-    });
-    document.querySelectorAll('.recruit-btn').forEach((btn) => {
-      btn.onclick = () => this.build(btn.dataset.species);
+    buildRoostOverlay({
+      subtitle: 'Sanctuary grounds &middot; roster management',
+      travelLabel: '🏰 Enter the Vault',
+      collapsed: this.panelCollapsed,
+      onTravel: () => this.enterVault(),
+      onLaunch: () => this.launchMission(),
+      onTrain: (id) => { gainXp(id, 25); this.buildOverlay(); },
+      onFeed: (id) => { raiseBond(id, 15); this.buildOverlay(); },
+      // A recruit walks into the sanctuary immediately, so rebuild the world
+      // as well as the panel.
+      onRecruit: (speciesId) => {
+        recruitAnimal(speciesId);
+        this.buildWorld();
+        this.buildOverlay();
+      },
+      onCollapse: () => { this.panelCollapsed = true; this.buildOverlay(); },
+      onExpand: () => { this.panelCollapsed = false; this.buildOverlay(); },
     });
   }
 
-  // Renders one roster entry as a self-contained card: avatar, xp/bond bars,
-  // and its own Train/Feed actions (scoped to this animal's id).
-  renderCard(a) {
-    const species = SPECIES[a.species];
-    const xpPct = Math.min(100, Math.round((a.xp / 100) * 100));
-    const bondPct = Math.min(100, a.bond);
-    return `
-      <li class="roster-card">
-        <div class="avatar">${species.emoji}</div>
-        <div class="info">
-          <div class="top-row">
-            <span class="name">${a.name}</span>
-            <span class="lvl">Lv ${a.level}</span>
-          </div>
-          <div class="xp-bar"><div class="xp-fill" style="width:${xpPct}%"></div></div>
-          <div class="stats-row">
-            <span class="species-tag">${species.name}</span>
-            <span>${a.xp}/100 xp</span>
-            <span>${a.hp} hp</span>
-          </div>
-          <div class="bond-bar"><div class="bond-fill" style="width:${bondPct}%"></div></div>
-          <div class="card-actions">
-            <button id="train-${a.id}" class="icon-btn" title="Train">💪</button>
-            <button id="feed-${a.id}" class="icon-btn" title="Feed">🍖</button>
-          </div>
-        </div>
-      </li>`;
-  }
-
-  // Grants the given animal xp, leveling it up at the usual threshold.
-  train(id) {
-    gainXp(id, 25);
-    this.buildOverlay();
-  }
-
-  // Raises the given animal's bond stat.
-  feed(id) {
-    raiseBond(id, 15);
-    this.buildOverlay();
-  }
-
-  // Recruits a fresh animal of the given species into the roost.
-  build(speciesId) {
-    recruitAnimal(speciesId);
-    this.buildOverlay();
+  enterVault() {
+    document.getElementById('ui-overlay').innerHTML = '';
+    this.scene.start('Vault');
   }
 
   launchMission() {

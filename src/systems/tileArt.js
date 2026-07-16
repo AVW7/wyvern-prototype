@@ -36,7 +36,7 @@ export function tileTextureSize({
 // its center at (width/2, tileHeight*scale/2), so callers can place the sprite
 // with origin (0.5, 0) at the grid point regardless of height.
 export function drawIsoTile(ctx, {
-  biome, variant = 0, height = 0, tileWidth, tileHeight, elevation, scale = 1, rand,
+  biome, variant = 0, height = 0, tileWidth, tileHeight, elevation, scale = 1, rand, overlay = null,
 }) {
   const colors = BIOMES[biome];
   if (!colors) throw new Error(`drawIsoTile: unknown biome "${biome}"`);
@@ -60,7 +60,39 @@ export function drawIsoTile(ctx, {
 
   drawTopTexture(ctx, { biome, d, colors, tw, th, scale, rand });
   drawTopRim(ctx, { biome, d, colors, scale, rand });
+
+  if (overlay) {
+    const drawOverlay = TILE_OVERLAYS[overlay];
+    if (!drawOverlay) throw new Error(`drawIsoTile: unknown overlay "${overlay}"`);
+    drawOverlay(ctx, { d, depth, s: scale });
+  }
 }
+
+// Position-specific one-off details baked onto a single tile. Shared tile
+// textures can't hold these (one texture serves every tile of that biome +
+// variant), so a cell that names an overlay gets its own unique baked key —
+// see ensureTileTexture in textureBake.js.
+export const TILE_OVERLAYS = {
+  // The monolith's signature shadowed niche: a dark recess on the front-right
+  // face with a moss-green lintel and a blue rune block. Ported from the
+  // Mossy Monolith design's drawSideStrata special case at cell (6,4).
+  monolithNiche(ctx, { d, s }) {
+    const a = { x: lerp(d.b.x, d.r.x, 0.18), y: lerp(d.b.y, d.r.y, 0.18) + 16 * s };
+    const b = { x: lerp(d.b.x, d.r.x, 0.78), y: lerp(d.b.y, d.r.y, 0.78) + 16 * s };
+    polygon(ctx, [
+      a, b,
+      { x: b.x, y: b.y + 17 * s },
+      { x: a.x, y: a.y + 17 * s },
+    ], '#050518', '#191a58', Math.max(1, s));
+    ctx.strokeStyle = '#49b528';
+    ctx.lineWidth = Math.max(1, s);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y - 2 * s);
+    ctx.lineTo(b.x, b.y - 2 * s);
+    ctx.stroke();
+    rect(ctx, a.x + 3 * s, a.y + 2 * s, 3 * s, 3 * s, '#2a17bd');
+  },
+};
 
 // The two visible faces. Left catches the light; right falls off to near-black.
 function drawSidewalls(ctx, d, depth, colors, stroke) {
@@ -334,7 +366,62 @@ const TOP_TEXTURES = {
     ctx.stroke();
     scatter(ctx, [colors.accent, '#5d4b83', '#0c0c13'], 18, 5840, 1.5, 0.5, { d, tw, th, s, rand });
   },
+
+  // Sanctuary exterior: golden/dark grass blades over the Krog moss palette,
+  // plus the design's signature gold-and-mint confetti flecks.
+  moss(ctx, { d, colors, s, rand, point, tw, th }) {
+    ctx.lineWidth = Math.max(1, s);
+    for (let i = 0; i < 9; i++) {
+      const p = point(5120 + i * 4, 0.40);
+      ctx.strokeStyle = i % 3 === 0 ? colors.accent : colors.dark;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y + 2 * s);
+      ctx.lineTo(p.x + (i % 2 ? 2 : -2) * s, p.y - (3 + i % 3) * s);
+      ctx.stroke();
+    }
+    scatter(ctx, [colors.accent, '#64f0a1', colors.mid], 10, 5160, 1.3, 0.5, { d, tw, th, s, rand });
+  },
+
+  // Sanctuary spring: layered pixel wave bands + bright ripple scatter.
+  springwater(ctx, { d, colors, s, rand, point, tw, th }) {
+    const wave = (salt, width, color) => {
+      const p = point(salt, 0.28);
+      rect(ctx, p.x - width * s, p.y, width * 2 * s, Math.max(1, s), color);
+      rect(ctx, p.x - (width - 2) * s, p.y - 2 * s, (width - 2) * 2 * s, Math.max(1, s), color);
+    };
+    wave(5260, 8, colors.dark);
+    wave(5270, 6, colors.light);
+    wave(5280, 4, colors.accent);
+    scatter(ctx, [colors.light, colors.mid, '#25a6d8'], 14, 5290, 1.5, 0.72, { d, tw, th, s, rand });
+  },
+
+  // Interior floors share one treatment: a faint mortar seam just inside the
+  // tile edge plus a chip crack, which gives the vault its laid-slab read
+  // (the design got the same effect from its editor grid overlay).
+  flagstone: groutTexture,
+  masonry: groutTexture,
+  warmstone: groutTexture,
 };
+
+// Shared slab/grout detail for the vault's stone materials. Not in the
+// TOP_TEXTURES literal because three keys reference the same drawer.
+function groutTexture(ctx, { d, colors, s, rand, point }) {
+  const inset = (v) => ({ x: lerp(v.x, d.c.x, 0.10), y: lerp(v.y, d.c.y, 0.10) });
+  polygon(ctx, [inset(d.t), inset(d.r), inset(d.b), inset(d.l)], null,
+    alphaColor(colors.dark, 0.5), Math.max(1, s));
+
+  ctx.strokeStyle = alphaColor(colors.dark, 0.55);
+  ctx.lineWidth = Math.max(1, s);
+  const crackCount = 1 + Math.floor(rand(5950) * 2);
+  for (let i = 0; i < crackCount; i++) {
+    const p = point(5960 + i * 6, 0.30);
+    ctx.beginPath();
+    ctx.moveTo(p.x - 4 * s, p.y - 1 * s);
+    ctx.lineTo(p.x, p.y + 1 * s);
+    ctx.lineTo(p.x + 5 * s, p.y - 2 * s);
+    ctx.stroke();
+  }
+}
 
 // Edge lighting: the two far edges catch light, the two near edges sit in
 // shadow. Living biomes also grow a fringe of blades over the front lip, which

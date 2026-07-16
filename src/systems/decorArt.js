@@ -9,10 +9,12 @@
 // in a biome's `decor` array in data/biomes.js. Preload bakes it automatically.
 import { rect, polygon, mixColor, alphaColor, drawObjectShadow } from './draw.js';
 
-// Bounding box every prop is baked into, in unscaled px. The drawers reach up
-// to ~35px above the base and ~13px to either side; this leaves margin for
-// glow bloom. Bumping a drawer taller than this means bumping these too.
-export const DECOR_BOX = { width: 44, height: 46, baseX: 22, baseY: 41 };
+// Bounding box every prop is baked into, in unscaled px. Sized for the widest
+// drawer (the sleeping dragon spans ~x-32..x+32) and the deepest one (the
+// chest reaches 7px below its base); glow bloom gets margin too. Sprite
+// origins derive from baseX/width ratios, so resizing this stays safe.
+// Bumping a drawer bigger than this means bumping these too.
+export const DECOR_BOX = { width: 72, height: 56, baseX: 36, baseY: 47 };
 
 // Texture key for a baked prop. Baked per biome as well as per type, because
 // `rock` picks up the local stone color from the palette.
@@ -315,6 +317,185 @@ function drawBasaltSpires(ctx, x, y, s) {
   });
 }
 
+// ---- Interior props (Emberkeep Dragonvault) ------------------------------
+// Ported from the dragonvault design's drawInteriorProp(). These are placed
+// by hand in data/sanctuary.js rather than rolled from a biome decor list.
+
+function drawBarredDoor(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 11, 0.2);
+  rect(ctx, x - 11 * s, y - 30 * s, 22 * s, 31 * s, '#291e1b');
+  rect(ctx, x - 9 * s, y - 28 * s, 18 * s, 27 * s, '#17191c');
+  rect(ctx, x - 11 * s, y - 31 * s, 22 * s, 4 * s, '#8d563b');
+  rect(ctx, x - 12 * s, y - 29 * s, 4 * s, 31 * s, '#6e422f');
+  rect(ctx, x + 8 * s, y - 29 * s, 4 * s, 31 * s, '#3d2b25');
+  for (let i = -6; i <= 6; i += 4) rect(ctx, x + i * s, y - 27 * s, 2 * s, 26 * s, '#647078');
+  rect(ctx, x - 8 * s, y - 16 * s, 17 * s, 2 * s, '#424c53');
+  rect(ctx, x + 5 * s, y - 14 * s, 3 * s, 3 * s, '#d59d58');
+}
+
+function drawChest(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 13, 0.25);
+  polygon(ctx, [
+    { x: x - 13 * s, y: y - 11 * s }, { x, y: y - 18 * s },
+    { x: x + 13 * s, y: y - 11 * s }, { x, y: y - 4 * s },
+  ], '#a45f39', '#3b251e', Math.max(1, s));
+  polygon(ctx, [
+    { x: x - 13 * s, y: y - 11 * s }, { x, y: y - 4 * s },
+    { x, y: y + 7 * s }, { x: x - 13 * s, y },
+  ], '#70412e', '#33221e', Math.max(1, s));
+  polygon(ctx, [
+    { x, y: y - 4 * s }, { x: x + 13 * s, y: y - 11 * s },
+    { x: x + 13 * s, y }, { x, y: y + 7 * s },
+  ], '#4e3028', '#2a1d1a', Math.max(1, s));
+  rect(ctx, x - 13 * s, y - 4 * s, 26 * s, 3 * s, '#3b2924');
+  rect(ctx, x - 2 * s, y - 5 * s, 4 * s, 6 * s, '#d2a05e');
+}
+
+function drawTorch(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 5, 0.16);
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = '#ffb452';
+  ctx.beginPath();
+  ctx.arc(x, y - 10 * s, 16 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  rect(ctx, x - 2 * s, y - 7 * s, 4 * s, 8 * s, '#8c765c');
+  polygon(ctx, [
+    { x, y: y - 20 * s }, { x: x + 5 * s, y: y - 12 * s },
+    { x, y: y - 7 * s }, { x: x - 5 * s, y: y - 12 * s },
+  ], '#f08a38', '#6b3422', Math.max(1, s));
+  rect(ctx, x - 1 * s, y - 16 * s, 3 * s, 6 * s, '#ffe08a');
+}
+
+function drawRailing(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 12, 0.12);
+  rect(ctx, x - 13 * s, y - 18 * s, 3 * s, 20 * s, '#5b382c');
+  rect(ctx, x + 10 * s, y - 18 * s, 3 * s, 20 * s, '#342824');
+  ctx.strokeStyle = '#8f573b';
+  ctx.lineWidth = Math.max(2, 3 * s);
+  ctx.beginPath();
+  ctx.moveTo(x - 12 * s, y - 16 * s);
+  ctx.lineTo(x + 12 * s, y - 16 * s);
+  ctx.moveTo(x - 12 * s, y - 5 * s);
+  ctx.lineTo(x + 12 * s, y - 5 * s);
+  ctx.stroke();
+  ctx.strokeStyle = '#302420';
+  ctx.lineWidth = Math.max(1, s);
+  ctx.beginPath();
+  ctx.moveTo(x - 7 * s, y - 15 * s);
+  ctx.lineTo(x - 7 * s, y - 3 * s);
+  ctx.moveTo(x, y - 15 * s);
+  ctx.lineTo(x, y - 3 * s);
+  ctx.moveTo(x + 7 * s, y - 15 * s);
+  ctx.lineTo(x + 7 * s, y - 3 * s);
+  ctx.stroke();
+}
+
+function drawPillar(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 12, 0.24);
+  rect(ctx, x - 8 * s, y - 35 * s, 16 * s, 35 * s, '#53616b');
+  rect(ctx, x - 8 * s, y - 35 * s, 5 * s, 35 * s, '#78838a');
+  rect(ctx, x + 4 * s, y - 35 * s, 4 * s, 35 * s, '#2d3a44');
+  rect(ctx, x - 11 * s, y - 39 * s, 22 * s, 6 * s, '#8b918e');
+  rect(ctx, x - 11 * s, y - 3 * s, 22 * s, 5 * s, '#34424c');
+  for (let yy = -28; yy < -5; yy += 8) rect(ctx, x - 8 * s, y + yy * s, 16 * s, 1 * s, '#26333c');
+}
+
+function drawTable(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 14, 0.22);
+  polygon(ctx, [
+    { x: x - 15 * s, y: y - 10 * s }, { x, y: y - 18 * s },
+    { x: x + 15 * s, y: y - 10 * s }, { x, y: y - 2 * s },
+  ], '#8f5537', '#3b2923', Math.max(1, s));
+  rect(ctx, x - 12 * s, y - 4 * s, 4 * s, 11 * s, '#4d3229');
+  rect(ctx, x + 8 * s, y - 4 * s, 4 * s, 11 * s, '#352925');
+  rect(ctx, x - 5 * s, y - 13 * s, 10 * s, 2 * s, '#c77b4c');
+}
+
+function drawHoard(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 16, 0.25);
+  const coins = [
+    [-13, -2], [-9, -7], [-4, -3], [1, -8], [6, -4],
+    [11, -1], [-1, 0], [8, -10], [-7, -11], [3, -14],
+  ];
+  coins.forEach((coin, i) => {
+    let tone = '#b96e28';
+    if (i % 3 === 0) tone = '#ffe07a';
+    else if (i % 3 === 1) tone = '#d99b32';
+    rect(ctx, x + coin[0] * s, y + coin[1] * s, (5 + i % 3) * s, 3 * s, tone);
+    rect(ctx, x + (coin[0] + 1) * s, y + (coin[1] - 1) * s, 2 * s, 1 * s, '#fff2a3');
+  });
+  // A single ruby crowning the pile.
+  polygon(ctx, [
+    { x: x - 5 * s, y: y - 12 * s }, { x, y: y - 22 * s },
+    { x: x + 6 * s, y: y - 12 * s }, { x, y: y - 7 * s },
+  ], '#b83d32', '#4e2524', Math.max(1, s));
+}
+
+function drawDragonEggs(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 13, 0.2);
+  [[-8, 1], [2, 0.9], [10, 0.7]].forEach(([ox, k], i) => {
+    ctx.fillStyle = i === 1 ? '#6d8179' : '#88917b';
+    ctx.beginPath();
+    ctx.ellipse(x + ox * s, y - (11 * k) * s, 6 * k * s, 11 * k * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#293943';
+    ctx.stroke();
+    rect(ctx, x + (ox - 1) * s, y - (15 * k) * s, 2 * s, 2 * s, '#b7c49a');
+  });
+}
+
+function drawNest(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 16, 0.2);
+  ctx.strokeStyle = '#644431';
+  ctx.lineWidth = Math.max(2, 3 * s);
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    ctx.ellipse(x, y - 3 * s, (15 - i) * s, (7 - i * 0.5) * s, -0.08, Math.PI * 0.1, Math.PI * 1.8);
+    ctx.stroke();
+  }
+  rect(ctx, x - 7 * s, y - 7 * s, 4 * s, 2 * s, '#c28c50');
+  rect(ctx, x + 4 * s, y - 5 * s, 6 * s, 2 * s, '#9e6b3d');
+}
+
+function drawSleepingDragon(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 25, 0.32);
+  ctx.save();
+  // Tail curling out to the right.
+  ctx.strokeStyle = '#502b31';
+  ctx.lineWidth = Math.max(3, 5 * s);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x + 12 * s, y - 4 * s);
+  ctx.quadraticCurveTo(x + 30 * s, y + 2 * s, x + 25 * s, y - 13 * s);
+  ctx.quadraticCurveTo(x + 22 * s, y - 21 * s, x + 32 * s, y - 19 * s);
+  ctx.stroke();
+  ctx.restore();
+  // Body, folded wing, head with horns and a half-open golden eye.
+  polygon(ctx, [
+    { x: x - 19 * s, y: y - 8 * s }, { x: x - 10 * s, y: y - 20 * s }, { x: x + 8 * s, y: y - 21 * s },
+    { x: x + 20 * s, y: y - 10 * s }, { x: x + 13 * s, y: y + 2 * s }, { x: x - 8 * s, y: y + 4 * s },
+  ], '#733c43', '#2a2026', Math.max(1, s));
+  polygon(ctx, [
+    { x: x - 3 * s, y: y - 18 * s }, { x: x + 5 * s, y: y - 34 * s }, { x: x + 11 * s, y: y - 17 * s },
+    { x: x + 21 * s, y: y - 30 * s }, { x: x + 17 * s, y: y - 8 * s },
+  ], '#4a3039', '#251d24', Math.max(1, s));
+  polygon(ctx, [
+    { x: x - 25 * s, y: y - 11 * s }, { x: x - 17 * s, y: y - 20 * s }, { x: x - 8 * s, y: y - 15 * s },
+    { x: x - 11 * s, y: y - 5 * s }, { x: x - 22 * s, y: y - 3 * s },
+  ], '#86464a', '#2a2026', Math.max(1, s));
+  polygon(ctx, [
+    { x: x - 19 * s, y: y - 19 * s }, { x: x - 16 * s, y: y - 27 * s }, { x: x - 12 * s, y: y - 18 * s },
+  ], '#d1b082', '#45352e');
+  polygon(ctx, [
+    { x: x - 25 * s, y: y - 13 * s }, { x: x - 31 * s, y: y - 10 * s }, { x: x - 24 * s, y: y - 7 * s },
+  ], '#b98663', '#45352e');
+  rect(ctx, x - 21 * s, y - 14 * s, 2 * s, 2 * s, '#ffd263');
+  rect(ctx, x - 10 * s, y - 2 * s, 9 * s, 3 * s, '#3d2930');
+  rect(ctx, x + 6 * s, y - 3 * s, 8 * s, 3 * s, '#3d2930');
+}
+
 // The prop registry. Keys here are what biomes list in their `decor` array.
 // `colors` is the owning biome's palette, so rocks pick up local stone tone.
 export const DECOR_DRAWERS = {
@@ -338,6 +519,18 @@ export const DECOR_DRAWERS = {
   obelisk: (ctx, x, y, s, v) => drawObelisk(ctx, x, y, s, v),
   ruin: (ctx, x, y, s, v) => drawRuin(ctx, x, y, s, v),
   spires: (ctx, x, y, s) => drawBasaltSpires(ctx, x, y, s),
+  // Interior props (hand-placed by data/sanctuary.js, not rolled from biomes).
+  barredDoor: (ctx, x, y, s) => drawBarredDoor(ctx, x, y, s),
+  chest: (ctx, x, y, s) => drawChest(ctx, x, y, s),
+  torch: (ctx, x, y, s) => drawTorch(ctx, x, y, s),
+  railing: (ctx, x, y, s) => drawRailing(ctx, x, y, s),
+  pillar: (ctx, x, y, s) => drawPillar(ctx, x, y, s),
+  table: (ctx, x, y, s) => drawTable(ctx, x, y, s),
+  hoard: (ctx, x, y, s) => drawHoard(ctx, x, y, s),
+  dragonEgg: (ctx, x, y, s) => drawDragonEggs(ctx, x, y, s),
+  crystalProp: (ctx, x, y, s, v) => drawCrystalCluster(ctx, x, y, s * 0.85, v, '#72f0e8', '#2c7180'),
+  nest: (ctx, x, y, s) => drawNest(ctx, x, y, s),
+  sleepingDragon: (ctx, x, y, s) => drawSleepingDragon(ctx, x, y, s),
 };
 
 // Draws a prop with its base at (x, y). Unknown types are a programming error

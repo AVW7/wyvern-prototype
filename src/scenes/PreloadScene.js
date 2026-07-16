@@ -2,6 +2,7 @@
 // prototype runs with ZERO art files. Replace the generated textures with real
 // loads (this.load.atlas / this.load.spritesheet / this.load.image) as art lands.
 import { WYVERN_STATES, ENEMY_STATES, EMOJI } from '../config.js';
+import { SPECIES } from '../data/species.js';
 
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -26,6 +27,7 @@ export default class PreloadScene extends Phaser.Scene {
   create() {
     this.createPlaceholderWyvern();
     this.createPlaceholderEnemy();
+    this.createSpeciesTextures();
     this.createWyvernAnimations();
     this.createEnemyAnimations();
 
@@ -57,6 +59,15 @@ export default class PreloadScene extends Phaser.Scene {
   // Placeholder enemy: same emoji-texture approach as the wyvern.
   createPlaceholderEnemy() {
     this.createEmojiTexture('enemy-placeholder', EMOJI.enemy, 48, 44, 40);
+  }
+
+  // One texture per sanctuary species (`species-<id>`), so any recruited
+  // animal can appear as a resident in the BaseScene sanctuary views. Same
+  // emoji placeholders as above — swap for real art per species later.
+  createSpeciesTextures() {
+    Object.values(SPECIES).forEach((species) => {
+      this.createEmojiTexture(`species-${species.id}`, species.emoji, 48, 44, 40);
+    });
   }
 
   // Registers animations by state name. When you load a real atlas, replace the

@@ -45,6 +45,22 @@ export const TERRAIN = {
 // buildTerrain() read heights/biomes from the loaded map instead of noise;
 // everything downstream only sees the per-cell descriptions it returns.
 
+// The base/sanctuary rendered by BaseScene: two hand-authored views (see
+// data/sanctuary.js) with the roster wandering them as residents. Kept fully
+// separate from the mission layer — tuning here never touches missions.
+export const SANCTUARY = {
+  VIEWS: { OUTSIDE: 'outside', INSIDE: 'inside' },
+  // Screen px kept clear around the map when fitting the camera zoom.
+  cameraMargin: 30,
+  // Screen px the camera shifts the map right so it clears the roster panel.
+  panelBias: 120,
+  // Residents' idle bob: pixels of travel and base duration (staggered per
+  // resident so the roost doesn't bounce in lockstep).
+  residentBob: { amplitude: 3, durationMs: 1150 },
+  // Brazier flicker: how dim the flame dips and how fast it breathes.
+  torchFlicker: { alphaTo: 0.72, durationMs: 780 },
+};
+
 // Wyvern animation state names. Keep these as the single source of truth so
 // the entity, the preloader, and any AI all reference the same strings.
 export const WYVERN_STATES = {

@@ -31,11 +31,45 @@ html, body {
   left: 24px;
   width: 320px;
   padding: 22px;
-  background: rgba(20, 14, 30, 0.92);
+  background: rgba(20, 14, 30, 0.86);
   border: 1px solid #3a2d52;
   border-radius: 14px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(6px);
+}
+
+/* Small ✕ in the panel header that collapses the roster panel so the
+   sanctuary view behind it is unobstructed. */
+.panel-header { position: relative; }
+.panel-hide {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #9b8bbd;
+}
+
+/* Collapsed-panel pill: click to bring the roster panel back. */
+.panel-pill {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  padding: 9px 16px;
+  font-size: 13px;
+}
+
+/* Sanctuary view toggle — swaps between the grounds and the vault. */
+.btn-view {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  padding: 11px 18px;
+  font-size: 14px;
+  background: linear-gradient(135deg, rgba(38, 28, 58, 0.92), rgba(24, 18, 40, 0.92));
+  border-color: #5a4680;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
 }
 
 .panel-header {
