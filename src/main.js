@@ -13,6 +13,10 @@ const config = {
   backgroundColor: GAME.backgroundColor,
   pixelArt: true,     // crisp pixels, no smoothing — matches sprite art
   roundPixels: true,  // avoid sub-pixel jitter when sprites move
+  scale: {
+    mode: Phaser.Scale.FIT,          // letterbox into whatever window we get
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
   physics: {
     default: 'arcade',
     arcade: { debug: false },

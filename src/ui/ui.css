@@ -11,14 +11,13 @@ html, body {
   color: #ece7f2;
 }
 
-/* Center the game + overlay stack. */
+/* Game + overlay fill the window; Phaser's Scale.FIT letterboxes the canvas
+   inside #game, and the overlay floats above the whole stage. */
 #game, #ui-overlay {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 960px;
-  height: 540px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 #ui-overlay {
@@ -30,42 +29,149 @@ html, body {
   position: absolute;
   top: 24px;
   left: 24px;
-  width: 300px;
-  padding: 20px;
+  width: 320px;
+  padding: 22px;
   background: rgba(20, 14, 30, 0.92);
   border: 1px solid #3a2d52;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
 }
 
-.panel h1 { margin: 0; font-size: 22px; letter-spacing: 1px; }
-.panel .subtitle { margin: 2px 0 16px; color: #9b8bbd; font-size: 12px; }
-.panel h2 { margin: 12px 0 8px; font-size: 13px; text-transform: uppercase; color: #b9a8dc; }
+.panel-header {
+  margin: -22px -22px 16px;
+  padding: 18px 22px 14px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.35), rgba(124, 58, 237, 0));
+  border-bottom: 1px solid #3a2d52;
+  border-radius: 14px 14px 0 0;
+}
 
-.roster { list-style: none; margin: 0 0 16px; padding: 0; }
+.panel h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+.panel .subtitle { margin: 4px 0 0; color: #9b8bbd; font-size: 12px; }
+.panel h2 {
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #b9a8dc;
+}
+.roster-count {
+  padding: 1px 7px;
+  font-size: 11px;
+  background: rgba(138, 92, 246, 0.25);
+  color: #cabdf0;
+  border-radius: 999px;
+}
+
+.roster { list-style: none; margin: 0 0 20px; padding: 0; max-height: 300px; overflow-y: auto; }
 .roster li {
   display: flex;
-  justify-content: space-between;
-  padding: 8px 10px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
   margin-bottom: 6px;
+  transition: background 0.15s, border-color 0.15s;
 }
-.roster .lvl { color: #8a5cf6; font-weight: 600; }
+.roster li:hover { background: rgba(255, 255, 255, 0.07); border-color: #3a2d52; }
+
+.avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: radial-gradient(circle at 30% 30%, #4c2f8a, #241638);
+  border-radius: 50%;
+  border: 1px solid #4a3a6b;
+}
+
+.info { flex: 1; min-width: 0; }
+.top-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.name { font-size: 13px; font-weight: 600; }
+.lvl { color: #a78bfa; font-weight: 700; font-size: 11px; }
+
+.xp-bar, .bond-bar {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.bond-bar { margin-top: 5px; }
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.bond-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #db2777, #f472b6);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #8a7aa8;
+}
+.species-tag {
+  padding: 0 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  color: #b9a8dc;
+}
+
+.card-actions { display: flex; gap: 6px; margin-top: 8px; }
+.icon-btn {
+  padding: 4px 8px;
+  font-size: 13px;
+  line-height: 1;
+}
+.icon-btn .btn-icon { font-size: 13px; }
 
 .base-actions { display: flex; flex-direction: column; gap: 8px; }
+.recruit-label { margin: 6px 0 4px; }
+.recruit-row { display: flex; gap: 8px; }
+.recruit-btn { flex: 1; padding: 8px 10px; font-size: 12px; }
 
 button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 10px 14px;
   font-size: 14px;
-  color: #fff;
-  background: #7c3aed;
-  border: none;
-  border-radius: 8px;
+  font-weight: 600;
+  color: #ece7f2;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #3a2d52;
+  border-radius: 9px;
   cursor: pointer;
+  transition: background 0.15s, transform 0.1s, border-color 0.15s;
 }
-button:hover { background: #8b4bff; }
-button.ghost { background: rgba(255, 255, 255, 0.06); color: #9b8bbd; cursor: not-allowed; }
+button:hover { background: rgba(255, 255, 255, 0.12); border-color: #5a4680; }
+button:active { transform: scale(0.97); }
+
+.btn-icon { font-size: 14px; }
+
+.btn-primary {
+  background: linear-gradient(135deg, #7c3aed, #6025c9);
+  border-color: #8b5cf6;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+}
+.btn-primary:hover { background: linear-gradient(135deg, #8b4bff, #7c3aed); }
 
 /* In-mission HUD */
 .hud {
@@ -87,3 +193,20 @@ button.ghost { background: rgba(255, 255, 255, 0.06); color: #9b8bbd; cursor: no
   font-size: 12px;
   color: #9b8bbd;
 }
+
+/* Order bar: click a command to change the wyvern's standing behavior. */
+.order-bar {
+  position: absolute;
+  top: 48px;
+  left: 16px;
+  display: flex;
+  gap: 6px;
+}
+.order-bar button {
+  padding: 6px 10px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #c9bfe0;
+}
+.order-bar button:hover { background: rgba(255, 255, 255, 0.16); }
+.order-bar button.active { background: #8a5cf6; color: #fff; }

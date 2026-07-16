@@ -1,7 +1,7 @@
 // PreloadScene: loads all assets, then generates placeholder textures so the
 // prototype runs with ZERO art files. Replace the generated textures with real
 // loads (this.load.atlas / this.load.spritesheet / this.load.image) as art lands.
-import { ISO, WYVERN_STATES } from '../config.js';
+import { WYVERN_STATES, ENEMY_STATES, EMOJI } from '../config.js';
 
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -15,70 +15,48 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.on('progress', (p) => { bar.width = 240 * p; });
 
     // ---- REAL ASSET LOADS GO HERE (examples, commented until art exists) ----
-    // this.load.image('iso-ground', 'assets/tilemaps/ground.png');
-    // this.load.image('iso-block',  'assets/tilemaps/block.png');
+    // Terrain tiles are procedural (see systems/textureBake.js, baked lazily by
+    // MissionScene) and need no files. To move to hand-authored tile art, load
+    // images here under the same keys tileTextureKey() produces.
     // this.load.atlas('wyvern', 'assets/sprites/wyverns/wyvern.png',
     //                           'assets/sprites/wyverns/wyvern.json');
     // this.load.tilemapTiledJSON('mission01', 'assets/tilemaps/mission01.json');
   }
 
   create() {
-    this.createPlaceholderTiles();
     this.createPlaceholderWyvern();
+    this.createPlaceholderEnemy();
     this.createWyvernAnimations();
+    this.createEnemyAnimations();
 
     // Boot into the base/management sim first, mirroring the game loop:
     // manage roster -> launch mission -> return to base.
     this.scene.start('Base');
   }
 
-  // A diamond-shaped ground tile and a taller "blocked" tile, drawn with
-  // Graphics and baked to textures. Lets the iso grid render before real art.
-  createPlaceholderTiles() {
-    const w = ISO.tileWidth;
-    const h = ISO.tileHeight;
-
-    const ground = this.add.graphics();
-    ground.fillStyle(0x2f6f4f, 1);
-    ground.lineStyle(1, 0x1d4a34, 1);
-    ground.beginPath();
-    ground.moveTo(w / 2, 0);
-    ground.lineTo(w, h / 2);
-    ground.lineTo(w / 2, h);
-    ground.lineTo(0, h / 2);
-    ground.closePath();
-    ground.fillPath();
-    ground.strokePath();
-    ground.generateTexture('iso-ground', w, h);
-    ground.destroy();
-
-    // Blocked tile: same diamond top with a raised block body.
-    const bh = h + 24;
-    const block = this.add.graphics();
-    block.fillStyle(0x5a4636, 1); // side
-    block.fillRect(0, h / 2, w, 24);
-    block.fillStyle(0x7a6048, 1); // top diamond
-    block.beginPath();
-    block.moveTo(w / 2, 0);
-    block.lineTo(w, h / 2);
-    block.lineTo(w / 2, h);
-    block.lineTo(0, h / 2);
-    block.closePath();
-    block.fillPath();
-    block.generateTexture('iso-block', w, bh);
-    block.destroy();
+  // Bakes an emoji glyph onto a canvas texture. Placeholder for real sprite
+  // art — swap the call sites for this.load.atlas/this.load.image once art
+  // atlases exist, no other code needs to change.
+  createEmojiTexture(key, emoji, width, height, fontSize) {
+    const tex = this.textures.createCanvas(key, width, height);
+    const ctx = tex.getContext();
+    ctx.clearRect(0, 0, width, height);
+    ctx.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, width / 2, height / 2);
+    tex.refresh();
   }
 
-  // Placeholder wyvern: a colored body so the sprite + state machine work
+  // Placeholder wyvern: an emoji glyph so the sprite + state machine work
   // before real frames exist. Swap for a loaded atlas later.
   createPlaceholderWyvern() {
-    const g = this.add.graphics();
-    g.fillStyle(0xc0392b, 1);
-    g.fillTriangle(24, 4, 44, 40, 4, 40); // body
-    g.fillStyle(0xe74c3c, 1);
-    g.fillTriangle(24, 14, 34, 30, 14, 30); // belly highlight
-    g.generateTexture('wyvern-placeholder', 48, 44);
-    g.destroy();
+    this.createEmojiTexture('wyvern-placeholder', EMOJI.wyvern, 48, 44, 40);
+  }
+
+  // Placeholder enemy: same emoji-texture approach as the wyvern.
+  createPlaceholderEnemy() {
+    this.createEmojiTexture('enemy-placeholder', EMOJI.enemy, 48, 44, 40);
   }
 
   // Registers animations by state name. When you load a real atlas, replace the
@@ -92,6 +70,20 @@ export default class PreloadScene extends Phaser.Scene {
         frames: [{ key }], // TODO: replace with real frame ranges per state
         frameRate: 8,
         repeat: state === WYVERN_STATES.DEATH ? 0 : -1,
+      });
+    });
+  }
+
+  // Same pattern as createWyvernAnimations, for the enemy state set.
+  createEnemyAnimations() {
+    const key = 'enemy-placeholder';
+    Object.values(ENEMY_STATES).forEach((state) => {
+      if (this.anims.exists(`enemy-${state}`)) return;
+      this.anims.create({
+        key: `enemy-${state}`,
+        frames: [{ key }],
+        frameRate: 8,
+        repeat: state === ENEMY_STATES.DEATH ? 0 : -1,
       });
     });
   }
