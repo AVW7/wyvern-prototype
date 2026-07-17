@@ -108,9 +108,9 @@ export default class MissionScene extends Phaser.Scene {
     // Drop the wyvern on a walkable start cell, carrying its roster hp over.
     const start = gridToScreen(WYVERN_START.col, WYVERN_START.row);
     const rosterWyvern = getAnimal('wyv-01');
-    this.wyvern = new Wyvern(this, start.x, start.y, rosterWyvern?.hp ?? 100);
+    this.wyvern = new Wyvern(this, start.x, start.y, rosterWyvern);
     this.wyvern.on('attack', () => this.handlePlayerAttack());
-    this.isoLayer.add(this.wyvern);
+    this.isoLayer.add([this.wyvern.shadow, this.wyvern]);
   }
 
   spawnEnemies() {
@@ -170,9 +170,10 @@ export default class MissionScene extends Phaser.Scene {
 
   // Resolves the wyvern's attack against the nearest enemy in range.
   handlePlayerAttack() {
+    const wyvernGroundY = this.wyvern.groundY ?? this.wyvern.y;
     const target = this.enemies
       .filter((e) => e.hp > 0)
-      .find((e) => Phaser.Math.Distance.Between(this.wyvern.x, this.wyvern.y, e.x, e.y)
+      .find((e) => Phaser.Math.Distance.Between(this.wyvern.x, wyvernGroundY, e.x, e.y)
         <= COMBAT.wyvernAttackRange);
     if (!target) return;
     const dead = target.takeHit(COMBAT.wyvernAttackDamage);
@@ -184,9 +185,10 @@ export default class MissionScene extends Phaser.Scene {
   handleContactDamage(time) {
     if (!this.wyvern || this.wyvern.hp <= 0) return;
     const { damageTakenMultiplier } = ORDER_EFFECTS[this.wyvern.order];
+    const wyvernGroundY = this.wyvern.groundY ?? this.wyvern.y;
     this.enemies.forEach((enemy) => {
       if (enemy.hp <= 0) return;
-      const dist = Phaser.Math.Distance.Between(this.wyvern.x, this.wyvern.y, enemy.x, enemy.y);
+      const dist = Phaser.Math.Distance.Between(this.wyvern.x, wyvernGroundY, enemy.x, enemy.y);
       const offCooldown = time - enemy.lastContactAt >= COMBAT.enemyContactCooldownMs;
       if (dist <= COMBAT.enemyContactRange && offCooldown) {
         enemy.lastContactAt = time;
@@ -202,9 +204,10 @@ export default class MissionScene extends Phaser.Scene {
   handleAutoAttack(time) {
     if (!ORDER_EFFECTS[this.wyvern.order].autoAttack) return;
     if (time - this.lastAutoAttackAt < COMBAT.autoAttackCooldownMs) return;
+    const wyvernGroundY = this.wyvern.groundY ?? this.wyvern.y;
     const target = this.enemies
       .filter((e) => e.hp > 0)
-      .find((e) => Phaser.Math.Distance.Between(this.wyvern.x, this.wyvern.y, e.x, e.y)
+      .find((e) => Phaser.Math.Distance.Between(this.wyvern.x, wyvernGroundY, e.x, e.y)
         <= COMBAT.wyvernAttackRange);
     if (!target) return;
     this.lastAutoAttackAt = time;

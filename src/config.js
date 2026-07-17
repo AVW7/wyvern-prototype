@@ -112,9 +112,32 @@ export const ATLAS = {
 export const WYVERN_STATES = {
   IDLE: 'idle',
   FLY: 'fly',
+  GUARD: 'guard',
   ATTACK: 'attack',
   HURT: 'hurt',
   DEATH: 'death',
+};
+
+// Real atlas frames are authored at high resolution, while generated emoji
+// placeholders are already close to their on-screen size. Scenes normalize
+// them independently so swapping art does not change gameplay proportions.
+export const WYVERN_ART = {
+  vaultPreviewHeight: 150,
+  missionHeight: 72,
+  placeholderPreviewScale: 1.9,
+  placeholderMissionScale: 1,
+  vaultFlightLift: 38,
+  missionFlightLift: 18,
+  flightBobAmplitude: 2.5,
+  flightLiftResponseMs: 140,
+  frameRates: {
+    idle: 7,
+    fly: 11,
+    guard: 8,
+    attack: 12,
+    hurt: 12,
+    death: 8,
+  },
 };
 
 // Enemy animation state names (mirrors WYVERN_STATES, minus movement).

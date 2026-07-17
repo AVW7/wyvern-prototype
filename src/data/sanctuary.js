@@ -210,3 +210,8 @@ export const RESIDENT_SPOTS = {
     { col: 14, row: 17 }, { col: 7, row: 12 }, { col: 11, row: 18 },
   ],
 };
+
+// The Dragon Vault showcases one selected profile on this clear central cell.
+// Keeping the spot beside the authored map data makes moving the display dais
+// a one-line change when the interior layout is revised.
+export const VAULT_PREVIEW_SPOT = { col: 12, row: 12 };

@@ -10,7 +10,7 @@ A **Phaser 3** prototype for a two-layer game:
    **sprite-based wyverns**.
 2. **Base** — a base-building / roster-management sim that runs *between* missions.
 
-Current stage: **small prototype** — one wyvern, a few missions, proving the
+Current stage: **small prototype** — three demo wyverns, a few missions, proving the
 concept. Scope decisions should favor "prove it fast" over "build it to scale."
 It runs today with **zero art files**: placeholder textures are generated at load.
 
@@ -61,9 +61,11 @@ roster. Don't unify their rendering or scene logic.
   residents, under the HTML/CSS Roost panel (`#ui-overlay`). Clicking the
   barred gate at the massif's base (or the overlay button) enters the Vault;
   Launch Mission starts a mission.
-- `scenes/VaultScene.js` — the sanctuary **interior**: the Emberkeep
-  Dragonvault, same resident/overlay treatment. The daylight glow over the
-  entry bridge (or the overlay button) returns to the grounds.
+- `scenes/VaultScene.js` — the sanctuary **interior**: the Emberkeep Dragon
+  Vault showcase. One selected demo wyvern stands on the central dais while
+  the HTML/CSS vault panel shows its profile and previews its six animation
+  states. The daylight glow over the entry bridge (or the overlay button)
+  returns to the grounds; management controls stay on BaseScene.
 - `scenes/AtlasScene.js` — the **world atlas**: the Shattered Cradle overworld
   and the game's mission select. Pans/zooms its own camera, places the island
   from `systems/atlasWorld.js`, and puts a clickable marker on each POI in
@@ -119,6 +121,8 @@ roster. Don't unify their rendering or scene logic.
   are unaffected by them.
 - `data/species.js` — the sanctuary species registry (id, name, emoji,
   hpBase, hpPerLevel). Pure data, same pattern as `data/biomes.js`.
+- `data/wyverns.js` — the three immutable demo profiles, their one-to-five
+  mission ratings/tags, and their profile-specific asset/animation key helper.
 - `systems/roster.js` — shared base/roster data model for every recruited
   animal (any species, not just wyverns) + xp/leveling (`gainXp`), bonding
   (`raiseBond`), and recruiting (`recruitAnimal`), backing each roster
@@ -157,6 +161,9 @@ the two design prototypes. To reshape either one, edit those calls.
 - **Travel between them is in-world:** BaseScene finds the `barredDoor` prop
   and VaultScene finds the `glow` prop by type in `placed.decor` and makes it
   clickable. Moving those props in the layout moves the doors.
+- **The vault is a showcase, not a second management screen:** its overlay is
+  built by `ui/vaultPanel.js`, and `VAULT_PREVIEW_SPOT` in `data/sanctuary.js`
+  controls where the selected demo wyvern stands.
 - **One-off tile details** (like the monolith's niche) are `TILE_OVERLAYS`
   entries in `tileArt.js`, named by a cell's `overlay` field. They bake to
   their own texture key, so the shared biome+variant texture stays clean.
@@ -212,7 +219,8 @@ camera) → `ui/atlasPanel.js` (the overlay).
 - **Wyvern states are string-keyed and centralized.** Add new actions to
   `WYVERN_STATES` in `config.js`, register the animation in
   `PreloadScene.createWyvernAnimations()`, and trigger via `wyvern.setState(...)`.
-  Animation keys follow the pattern `wyvern-<state>`.
+  Animation keys follow the profile-specific pattern `<assetKey>-<state>`
+  (for example `wyvern-embertooth-guard`).
 - **One-shot states lock the entity.** Attack/hurt/death set `this.locked = true`;
   the `animationcomplete` handler unlocks and returns to idle. Don't add movement
   code that ignores `locked`.
@@ -231,7 +239,7 @@ The mission HUD has an on-screen command bar — **Guard / Scout / Attack /
 Recon / Protect** — that sets the wyvern's standing order. Orders are
 deliberately a separate concept from `WYVERN_STATES`:
 
-- `WYVERN_STATES` (idle/fly/attack/hurt/death) are **animation frames**,
+- `WYVERN_STATES` (idle/fly/guard/attack/hurt/death) are **animation frames**,
   driven every tick by input and combat.
 - `WYVERN_ORDERS` (`config.js`) are the **standing behavior mode** that gates
   or steers that input — set via `wyvern.setOrder(order)`, read every frame
@@ -254,11 +262,10 @@ needs behavior beyond the four existing effect fields.
 
 ## Replacing placeholders (the common next steps)
 
-- **Real wyvern art:** see `assets/sprites/wyverns/README.md`. Preload
-  currently bakes emoji glyphs to canvas textures (`createEmojiTexture`) as
-  the placeholder. Load a real atlas instead, swap frame configs to
-  `generateFrameNames(...)` ranges, change the `Wyvern`/`Enemy` constructor
-  texture from `'wyvern-placeholder'`/`'enemy-placeholder'` to the real key.
+- **Real wyvern art:** see `assets/sprites/wyverns/README.md`. Embertooth uses
+  the Ultimate Atlas configured in `data/wyverns.js`; profiles without an
+  atlas still receive a colored emoji placeholder. Add later atlas paths and
+  frame-name arrays to the profile data—VaultScene and Wyvern need no changes.
 - **Hand-authored iso maps:** author in Tiled (isometric, 64x32), load with
   `this.load.tilemapTiledJSON`, and have `buildTerrain()` in
   `systems/terrain.js` read biomes/heights from the loaded map instead of

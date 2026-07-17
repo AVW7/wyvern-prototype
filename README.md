@@ -19,8 +19,10 @@ Any static server works (`npx serve`, VS Code Live Server, etc.).
 
 ## What you'll see
 
-1. **Roost** (base sim) — roster panel with one wyvern and a "Launch Mission" button.
-2. Click Launch — the **isometric mission** loads: a diamond-grid map with raised
+1. **Roost** (base sim) — manage the roster and enter the Emberkeep Dragon Vault.
+2. **Dragon Vault** — select one of three demo wyverns, inspect its mission
+   profile, and preview idle/fly/guard/attack/hurt/death placeholders.
+3. Click World Atlas and choose a destination — the **isometric mission** loads: a diamond-grid map with raised
    tiles, and a wyvern sprite you control.
    - Move: Arrow keys / WASD
    - Attack: Space
@@ -38,6 +40,7 @@ wyvern-prototype/
 │   │   ├── BootScene.js     One-time setup
 │   │   ├── PreloadScene.js  Asset loading + placeholder texture/anim generation
 │   │   ├── BaseScene.js     Management sim (HTML/CSS overlay)
+│   │   ├── VaultScene.js    Wyvern profile + animation showcase
 │   │   └── MissionScene.js  Iso background + wyvern + depth sorting
 │   ├── entities/
 │   │   └── Wyvern.js        Sprite + animation state machine + controls

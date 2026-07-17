@@ -2,12 +2,18 @@
 // missions read the same state. Swap the array for saved/loaded data later,
 // or move to a proper store when the sim grows.
 import { SPECIES } from '../data/species.js';
+import { DEMO_WYVERNS } from '../data/wyverns.js';
 
-const roster = [
-  {
-    id: 'wyv-01', name: 'Embertooth', species: 'wyvern', level: 1, hp: SPECIES.wyvern.hpBase, xp: 0, bond: 0,
-  },
-];
+// Clone the catalog rows so progression remains mutable while the character
+// definitions stay immutable and reusable by the preloader.
+const roster = DEMO_WYVERNS.map((profile) => ({
+  ...profile,
+  species: 'wyvern',
+  xp: 0,
+  bond: 0,
+  stats: { ...profile.stats },
+  missionTags: [...profile.missionTags],
+}));
 
 export function getRoster() {
   return roster;
@@ -15,6 +21,13 @@ export function getRoster() {
 
 export function getAnimal(id) {
   return roster.find((a) => a.id === id);
+}
+
+// The Dragon Vault intentionally showcases the three authored demo profiles,
+// not every generic animal recruited through the management prototype.
+export function getShowcaseWyverns() {
+  const ids = new Set(DEMO_WYVERNS.map((profile) => profile.id));
+  return roster.filter((animal) => ids.has(animal.id));
 }
 
 // Add an animal to the roost (breeding/recruiting later).

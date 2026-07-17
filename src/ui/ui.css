@@ -207,6 +207,182 @@ button:active { transform: scale(0.97); }
 }
 .btn-primary:hover { background: linear-gradient(135deg, #8b4bff, #7c3aed); }
 
+/* --- Dragon Vault showcase (VaultScene / ui/vaultPanel.js) --- */
+
+.vault-roster-panel {
+  width: 286px;
+  padding-bottom: 16px;
+  border-color: #57402b;
+  background: linear-gradient(160deg, rgba(29, 20, 35, 0.94), rgba(19, 14, 27, 0.9));
+}
+.vault-header {
+  background: linear-gradient(135deg, rgba(196, 106, 47, 0.28), rgba(124, 58, 237, 0.05));
+  border-color: #57402b;
+}
+.vault-eyebrow {
+  margin: 0 0 4px;
+  color: #d7a45d;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+}
+.vault-roster { display: flex; flex-direction: column; gap: 8px; }
+.vault-wyvern-card {
+  --wyvern-accent: #8b5cf6;
+  width: 100%;
+  justify-content: flex-start;
+  padding: 10px;
+  text-align: left;
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.035);
+}
+.vault-wyvern-card::before {
+  content: '';
+  width: 3px;
+  align-self: stretch;
+  border-radius: 999px;
+  background: var(--wyvern-accent);
+  opacity: 0.5;
+}
+.vault-wyvern-card.is-selected {
+  border-color: var(--wyvern-accent);
+  background: color-mix(in srgb, var(--wyvern-accent) 18%, rgba(24, 18, 34, 0.94));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--wyvern-accent) 22%, transparent);
+}
+.vault-wyvern-card.is-selected::before { opacity: 1; }
+.vault-avatar {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  font-size: 19px;
+  border: 1px solid color-mix(in srgb, var(--wyvern-accent) 75%, #ffffff);
+  border-radius: 10px;
+  background: radial-gradient(circle at 35% 25%, var(--wyvern-accent), #21172e 72%);
+}
+.vault-card-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; }
+.vault-card-copy strong { font-size: 12px; }
+.vault-card-copy small { margin-top: 2px; color: #9b8bbd; font-size: 9px; }
+.vault-card-level { color: #d7a45d; font-size: 9px; font-weight: 800; }
+
+.vault-profile-panel {
+  --wyvern-accent: #8b5cf6;
+  right: 24px;
+  left: auto;
+  width: 302px;
+  border-color: color-mix(in srgb, var(--wyvern-accent) 45%, #3a2d52);
+  background: linear-gradient(160deg, rgba(24, 17, 33, 0.94), rgba(15, 12, 23, 0.9));
+}
+.vault-profile-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.vault-profile-heading h1 { font-size: 21px; }
+.vault-profile-glyph {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  font-size: 26px;
+  border: 1px solid color-mix(in srgb, var(--wyvern-accent) 72%, #ffffff);
+  border-radius: 14px;
+  background: radial-gradient(circle at 35% 25%, var(--wyvern-accent), #21172e 74%);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--wyvern-accent) 25%, transparent);
+}
+.vault-trait {
+  margin-bottom: 18px;
+  padding: 11px 12px;
+  border-left: 3px solid var(--wyvern-accent);
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 255, 255, 0.035);
+}
+.vault-trait small {
+  display: block;
+  color: #8a7aa8;
+  font-size: 8px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.vault-trait strong { display: block; margin-top: 3px; color: #f0d6a6; font-size: 13px; }
+.vault-trait p { margin: 6px 0 0; color: #bcaed1; font-size: 10px; line-height: 1.45; }
+.vault-stats { display: flex; flex-direction: column; gap: 9px; }
+.vault-stat-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 30px;
+  align-items: center;
+  gap: 8px;
+  color: #bcaed1;
+  font-size: 10px;
+}
+.vault-stat-row strong { color: #e6d9f3; font-size: 9px; text-align: right; }
+.vault-rating { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+.vault-rating i {
+  height: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.vault-rating i.is-filled {
+  border-color: color-mix(in srgb, var(--wyvern-accent) 75%, #ffffff);
+  background: var(--wyvern-accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--wyvern-accent) 35%, transparent);
+}
+.vault-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 16px; }
+.vault-tag {
+  padding: 3px 7px;
+  color: #d8c9ec;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+  border: 1px solid color-mix(in srgb, var(--wyvern-accent) 48%, #3a2d52);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--wyvern-accent) 11%, rgba(255, 255, 255, 0.03));
+}
+
+.vault-action-dock {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  width: min(610px, calc(100vw - 680px));
+  min-width: 520px;
+  padding: 9px 11px 11px;
+  transform: translateX(-50%);
+  border: 1px solid #493654;
+  border-radius: 12px;
+  background: rgba(20, 14, 30, 0.9);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(6px);
+}
+.vault-action-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #8a7aa8;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-align: center;
+  text-transform: uppercase;
+}
+.vault-actions { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.vault-action { padding: 7px 5px; gap: 4px; color: #bcaed1; font-size: 10px; }
+.vault-action.is-active {
+  color: #fff1d3;
+  border-color: #c4813c;
+  background: linear-gradient(135deg, rgba(196, 106, 47, 0.42), rgba(124, 58, 237, 0.2));
+  box-shadow: 0 0 12px rgba(196, 106, 47, 0.2);
+}
+
+@media (max-width: 1080px) {
+  .vault-roster-panel { width: 250px; }
+  .vault-profile-panel { width: 270px; }
+  .vault-action-dock { bottom: 78px; width: 500px; min-width: 0; }
+}
+
+@media (max-height: 640px) {
+  .vault-roster-panel, .vault-profile-panel { max-height: calc(100vh - 120px); overflow-y: auto; }
+  .vault-action-dock { bottom: 12px; }
+}
+
 /* --- World atlas overlay (AtlasScene / ui/atlasPanel.js) --- */
 
 /* Taller than the roost panel: it carries two lists. The map pans behind it. */
