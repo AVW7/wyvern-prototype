@@ -10,16 +10,6 @@
         "8000"
       ],
       "port": 8000
-    },
-    {
-      "name": "wyvern-prototype-8010",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": [
-        "-m",
-        "http.server",
-        "8010"
-      ],
-      "port": 8010
     }
   ]
 }

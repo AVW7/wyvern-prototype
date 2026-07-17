@@ -42,15 +42,27 @@ the browser devtools console, and confirm no errors + expected behavior.
 ## Architecture & flow
 
 Scene order (registered in `src/main.js`):
-**Boot → Preload → Base → Mission → (back to Base)**
+**Boot → Preload → Base ⇄ Vault**, and **Base/Vault → Mission → (back to Base)**
+
+The three playable layers — sanctuary grounds, vault interior, mission — are
+**deliberately separate scenes that share no scene-level code**. They share
+only low-level systems (draw/tileArt/decorArt/textureBake) and the roster.
+Don't unify their rendering or scene logic.
 
 - `scenes/BootScene.js` — one-time setup, hands off to Preload.
 - `scenes/PreloadScene.js` — loads assets and generates the wyvern/enemy
-  placeholder textures + animations. Real `this.load.*` calls go here
-  (examples are commented in place). Terrain textures are NOT baked here —
-  they bake lazily on first use (see `systems/textureBake.js`).
-- `scenes/BaseScene.js` — the management sim. Renders as an **HTML/CSS overlay**
-  (`#ui-overlay`), not canvas objects. Launches missions.
+  placeholder textures + animations, plus one `species-<id>` emoji texture per
+  sanctuary species (residents). Real `this.load.*` calls go here (examples are
+  commented in place). Terrain textures are NOT baked here — they bake lazily
+  on first use (see `systems/textureBake.js`).
+- `scenes/BaseScene.js` — the sanctuary **grounds**: the hand-authored Mossy
+  Monolith island rendered on canvas, with the roster standing on it as
+  residents, under the HTML/CSS Roost panel (`#ui-overlay`). Clicking the
+  barred gate at the massif's base (or the overlay button) enters the Vault;
+  Launch Mission starts a mission.
+- `scenes/VaultScene.js` — the sanctuary **interior**: the Emberkeep
+  Dragonvault, same resident/overlay treatment. The daylight glow over the
+  entry bridge (or the overlay button) returns to the grounds.
 - `scenes/MissionScene.js` — builds the procedural iso island, spawns the
   wyvern and enemies, resolves combat, depth-sorts every frame, and shows the
   order bar / win-lose overlay.
@@ -69,10 +81,23 @@ Scene order (registered in `src/main.js`):
   Phaser.
 - `systems/decorArt.js` — 18 procedural props (trees, crystals, ruins,
   obelisks...) in a `DECOR_DRAWERS` registry. Pure drawing, no Phaser.
-- `systems/textureBake.js` — bakes tileArt/decorArt/backdrop into Phaser
+- `systems/textureBake.js` — bakes tileArt/decorArt/backdrops into Phaser
   canvas textures on demand, cached by key. The only bridge between the pure
   drawing modules and Phaser.
-- `data/biomes.js` — the 8 biome palettes + their prop lists. Pure data.
+- `data/sanctuary.js` — the two hand-authored sanctuary maps
+  (`buildSanctuaryExterior` / `buildSanctuaryInterior`) + `RESIDENT_SPOTS`.
+  Same `{ tiles, cols, rows }` contract as `terrain.js`, but cells may be
+  `null` (holes in the island silhouette) and may carry an `overlay`.
+- `systems/sanctuaryRender.js` — sanctuary-only view building: camera fit,
+  backdrop, tile/prop placement, residents, ambient prop tweens. Used by
+  BaseScene and VaultScene; **not** by MissionScene, which keeps its own
+  inline placement.
+- `ui/roostPanel.js` — the Roost overlay widget (roster cards, recruit row,
+  travel/launch buttons) shared by the two sanctuary scenes. Pure DOM.
+- `data/biomes.js` — the 16 biome palettes + their prop lists. Pure data:
+  8 mission biomes, then the sanctuary materials (moss/bluestone/springwater
+  outside; flagstone/masonry/warmstone/timber/iron inside). `pickBiome()` can
+  never return a sanctuary palette, so missions are unaffected by them.
 - `data/species.js` — the sanctuary species registry (id, name, emoji,
   hpBase, hpPerLevel). Pure data, same pattern as `data/biomes.js`.
 - `systems/roster.js` — shared base/roster data model for every recruited
@@ -97,6 +122,25 @@ Scene order (registered in `src/main.js`):
 - To add a biome: add a palette row in `data/biomes.js` (+ optional top-texture
   entry in `tileArt.js`). To add a prop: drawer + registry entry in
   `decorArt.js`, list it in a biome's `decor`. Nothing else needs wiring.
+
+### The sanctuary (Base + Vault)
+
+Both sanctuary maps are hand-authored in `data/sanctuary.js` — no noise, no
+seed: the layouts are literal `fill`/`setTile`/`setProp` sequences ported from
+the two design prototypes. To reshape either one, edit those calls.
+
+- **To add a resident spot:** add a cell to `RESIDENT_SPOTS.outside/inside`.
+  The roster fills spots in order and wraps with a small offset if it outgrows
+  the list.
+- **To add an interior prop:** write a drawer + registry entry in
+  `decorArt.js` (see the interior-props section), then `setProp` it in the
+  interior layout. Keep it inside `DECOR_BOX` or bump the box.
+- **Travel between them is in-world:** BaseScene finds the `barredDoor` prop
+  and VaultScene finds the `glow` prop by type in `placed.decor` and makes it
+  clickable. Moving those props in the layout moves the doors.
+- **One-off tile details** (like the monolith's niche) are `TILE_OVERLAYS`
+  entries in `tileArt.js`, named by a cell's `overlay` field. They bake to
+  their own texture key, so the shared biome+variant texture stays clean.
 
 ### Sanctuary species
 
