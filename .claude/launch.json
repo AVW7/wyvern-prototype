@@ -5,8 +5,7 @@
       "name": "wyvern-prototype",
       "runtimeExecutable": "python3",
       "runtimeArgs": [
-        "-m",
-        "http.server",
+        "devserver.py",
         "8000"
       ],
       "port": 8000

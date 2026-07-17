@@ -27,8 +27,13 @@ It runs today with **zero art files**: placeholder textures are generated at loa
 ES modules require an HTTP server (opening `file://` throws CORS errors):
 
 ```bash
-python3 -m http.server 8000   # then open http://localhost:8000
+python3 devserver.py 8000   # then open http://localhost:8000
 ```
+
+`devserver.py` is `http.server` with `Cache-Control: no-store` added (stdlib
+only — no tooling). Use it rather than `python3 -m http.server`: that sends no
+cache headers, so browsers heuristically cache `src/*.js` and keep serving the
+old module after an edit.
 
 There is no test suite. To sanity-check syntax after edits:
 
