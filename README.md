@@ -11,11 +11,15 @@ ES modules need to be served over HTTP (opening `index.html` via `file://` will
 fail with a CORS error). From this folder:
 
 ```bash
-python3 -m http.server 8000
+python3 devserver.py 8000
 # then open http://localhost:8000
 ```
 
-Any static server works (`npx serve`, VS Code Live Server, etc.).
+`devserver.py` is stdlib-only `http.server` plus a `Cache-Control: no-store`
+header, so edits under `src/` show up on a normal reload. Any static server
+works (`npx serve`, VS Code Live Server, etc.), but with plain
+`python3 -m http.server` browsers cache the ES modules and keep running stale
+code until you hard-reload.
 
 ## What you'll see
 
