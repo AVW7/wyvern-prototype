@@ -496,6 +496,199 @@ function drawSleepingDragon(ctx, x, y, s) {
   rect(ctx, x + 6 * s, y - 3 * s, 8 * s, 3 * s, '#3d2930');
 }
 
+// ---- Atlas props + POI markers (The Shattered Cradle) --------------------
+// Ported from the world-atlas design. The biome props (conifer/butte/coral)
+// are rolled from the atlas biomes' decor lists like any other prop; the POI
+// markers below them are hand-placed by AtlasScene from data/atlas.js, the
+// same way the vault's interior props are placed by data/sanctuary.js.
+
+function drawConifer(ctx, x, y, s, variant, colors) {
+  drawObjectShadow(ctx, x, y, s, 9, 0.24);
+  rect(ctx, x - 1 * s, y - 12 * s, 3 * s, 13 * s, '#2a4a2a');
+  const body = colors.top;
+  const lit = colors.light;
+  for (let i = 0; i < 3; i++) {
+    const yy = -(30 - i * 8);
+    const w = (6 + i * 3);
+    polygon(ctx, [
+      { x, y: y + yy * s },
+      { x: x + w * s, y: y + (yy + 11) * s },
+      { x: x - w * s, y: y + (yy + 11) * s },
+    ], i % 2 ? body : mixColor(body, lit, 0.3), colors.outline, Math.max(1, s));
+  }
+  if (variant % 2) rect(ctx, x - 3 * s, y - 22 * s, 3 * s, 2 * s, lit);
+}
+
+// A rust-stone mesa butte: the badlands' signature wind-carved column.
+function drawButte(ctx, x, y, s, variant, colors) {
+  drawObjectShadow(ctx, x, y, s, 12, 0.26);
+  const h = 14 + (variant % 3) * 4;
+  rect(ctx, x - 5 * s, y - h * s, 10 * s, h * s, '#9a4a2a');
+  rect(ctx, x - 5 * s, y - h * s, 4 * s, h * s, colors.top);
+  rect(ctx, x + 2 * s, y - h * s, 3 * s, h * s, '#6a2e20');
+  // Wind-carved strata bands.
+  for (let yy = -h + 3; yy < -2; yy += 4) {
+    rect(ctx, x - 5 * s, y + yy * s, 10 * s, 1 * s, alphaColor('#3a1a10', 0.5));
+  }
+  polygon(ctx, [
+    { x: x - 7 * s, y: y - h * s },
+    { x: x + 7 * s, y: y - h * s },
+    { x: x + 4 * s, y: y - (h + 4) * s },
+    { x: x - 4 * s, y: y - (h + 4) * s },
+  ], colors.light, colors.outline, Math.max(1, s));
+}
+
+function drawCoral(ctx, x, y, s, variant) {
+  drawObjectShadow(ctx, x, y, s, 8, 0.14);
+  const tones = ['#ff9a6a', '#5ad8a0', '#ffd06a'];
+  for (let i = 0; i < 3; i++) {
+    const ox = (i - 1) * 5 * s;
+    const c = tones[(variant + i) % tones.length];
+    ctx.strokeStyle = c;
+    ctx.lineWidth = Math.max(1, 1.6 * s);
+    ctx.beginPath();
+    ctx.moveTo(x + ox, y);
+    ctx.lineTo(x + ox, y - (6 + i * 2) * s);
+    ctx.moveTo(x + ox, y - (4 + i) * s);
+    ctx.lineTo(x + ox + 3 * s, y - (8 + i) * s);
+    ctx.stroke();
+  }
+}
+
+// --- POI markers ---
+
+function drawWhiteSpire(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 10, 0.3);
+  rect(ctx, x - 3 * s, y - 28 * s, 6 * s, 28 * s, '#ffffff');
+  rect(ctx, x + 1 * s, y - 28 * s, 2 * s, 28 * s, '#c2cddb');
+  polygon(ctx, [
+    { x: x - 4 * s, y: y - 28 * s }, { x: x + 4 * s, y: y - 28 * s },
+    { x, y: y - 38 * s },
+  ], '#7dd3fc', '#3a6a8a', Math.max(1, s));
+  ctx.save();
+  ctx.shadowColor = '#7dd3fc';
+  ctx.shadowBlur = Math.max(2, 5 * s);
+  rect(ctx, x - 1 * s, y - 20 * s, 2 * s, 8 * s, '#e6f7ff');
+  ctx.restore();
+}
+
+function drawArena(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 13, 0.24);
+  ctx.strokeStyle = '#9aa7b8';
+  ctx.lineWidth = Math.max(1, 1.4 * s);
+  ctx.beginPath();
+  ctx.ellipse(x, y - 4 * s, 13 * s, 6 * s, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#5a6478';
+  ctx.beginPath();
+  ctx.ellipse(x, y - 4 * s, 7 * s, 3 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Broken tiers around the rim.
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    rect(ctx, x + Math.cos(a) * 12 * s, y - 4 * s + Math.sin(a) * 5 * s, 2 * s, 3 * s, '#77766f');
+  }
+}
+
+function drawCitadel(ctx, x, y, s, variant) {
+  drawObjectShadow(ctx, x, y, s, 12, 0.28);
+  rect(ctx, x - 8 * s, y - 16 * s, 16 * s, 16 * s, '#c46a2f');
+  rect(ctx, x - 8 * s, y - 16 * s, 5 * s, 16 * s, '#d68a4f');
+  rect(ctx, x + 4 * s, y - 16 * s, 4 * s, 16 * s, '#8a3a2a');
+  rect(ctx, x - 8 * s, y - 4 * s, 16 * s, 4 * s, '#6a2e20');
+  // Crenellations.
+  for (let i = -8; i < 8; i += 4) rect(ctx, x + i * s, y - 19 * s, 2 * s, 3 * s, '#e8c07a');
+  if (variant % 2) rect(ctx, x + 2 * s, y - 24 * s, 5 * s, 4 * s, '#e8c07a');
+  rect(ctx, x - 2 * s, y - 8 * s, 4 * s, 8 * s, '#2a1a12');
+}
+
+function drawPyramid(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 14, 0.26);
+  polygon(ctx, [
+    { x, y: y - 22 * s }, { x: x + 14 * s, y }, { x: x - 14 * s, y },
+  ], '#e6d8a0', '#8a7a4a', Math.max(1, s));
+  polygon(ctx, [
+    { x, y: y - 22 * s }, { x: x + 14 * s, y }, { x: x + 2 * s, y },
+  ], '#b8a67a');
+  // Half-buried: a sand drift across the base.
+  rect(ctx, x - 14 * s, y - 2 * s, 28 * s, 3 * s, alphaColor('#d3c68a', 0.8));
+}
+
+function drawCherry(ctx, x, y, s, variant) {
+  drawObjectShadow(ctx, x, y, s, 10, 0.2);
+  rect(ctx, x - 1 * s, y - 12 * s, 3 * s, 13 * s, '#5a3a3a');
+  const blossom = ['#ff8aa0', '#ffb0c0', '#ff9ab0'];
+  [[0, -18, 8], [-6, -14, 5], [6, -15, 5]].forEach(([ox, oy, r], i) => {
+    ctx.fillStyle = blossom[(variant + i) % blossom.length];
+    ctx.beginPath();
+    ctx.arc(x + ox * s, y + oy * s, r * s, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  rect(ctx, x - 8 * s, y - 6 * s, 2 * s, 2 * s, '#ffb0c0');
+}
+
+function drawSanctum(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 12, 0.2);
+  ctx.save();
+  ctx.shadowColor = '#4ac8ff';
+  ctx.shadowBlur = Math.max(3, 8 * s);
+  ctx.fillStyle = 'rgba(80,180,220,0.9)';
+  ctx.beginPath();
+  ctx.arc(x, y - 8 * s, 10 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.restore();
+  // A drowned lintel breaking the surface.
+  rect(ctx, x - 7 * s, y - 12 * s, 14 * s, 4 * s, '#a0e0ff');
+  rect(ctx, x - 5 * s, y - 18 * s, 3 * s, 7 * s, '#7ec8e8');
+  rect(ctx, x + 2 * s, y - 18 * s, 3 * s, 7 * s, '#7ec8e8');
+}
+
+function drawJungleRuin(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 13, 0.26);
+  rect(ctx, x - 9 * s, y - 15 * s, 18 * s, 15 * s, '#1a5c2a');
+  polygon(ctx, [
+    { x: x - 11 * s, y: y - 15 * s }, { x: x + 11 * s, y: y - 15 * s },
+    { x, y: y - 26 * s },
+  ], '#2e7a3a', '#0e331a', Math.max(1, s));
+  rect(ctx, x - 3 * s, y - 8 * s, 6 * s, 8 * s, '#08200f');
+  // Vines crawling the stone.
+  rect(ctx, x - 7 * s, y - 13 * s, 2 * s, 9 * s, '#5ad86a');
+  rect(ctx, x + 5 * s, y - 11 * s, 2 * s, 7 * s, '#4a9c4a');
+}
+
+function drawOutpost(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 10, 0.24);
+  rect(ctx, x - 6 * s, y - 12 * s, 12 * s, 12 * s, '#4a3a2a');
+  rect(ctx, x - 6 * s, y - 12 * s, 4 * s, 12 * s, '#6a5238');
+  polygon(ctx, [
+    { x: x - 8 * s, y: y - 12 * s }, { x: x + 8 * s, y: y - 12 * s },
+    { x, y: y - 20 * s },
+  ], '#8a6a4a', '#2a1f16', Math.max(1, s));
+  rect(ctx, x - 2 * s, y - 7 * s, 4 * s, 7 * s, '#1c1510');
+  // Watch-fire smoke.
+  rect(ctx, x + 4 * s, y - 24 * s, 2 * s, 3 * s, alphaColor('#b59aa1', 0.5));
+}
+
+function drawFrosthold(ctx, x, y, s) {
+  drawObjectShadow(ctx, x, y, s, 11, 0.22);
+  rect(ctx, x - 7 * s, y - 13 * s, 14 * s, 13 * s, '#d8e8f8');
+  rect(ctx, x + 3 * s, y - 13 * s, 4 * s, 13 * s, '#a8c0d8');
+  polygon(ctx, [
+    { x: x - 9 * s, y: y - 13 * s }, { x: x + 9 * s, y: y - 13 * s },
+    { x, y: y - 22 * s },
+  ], '#a8c0d8', '#54708a', Math.max(1, s));
+  rect(ctx, x - 2 * s, y - 8 * s, 4 * s, 8 * s, '#2d4356');
+  // Hearth smoke — the sign that anything up here still lives.
+  ctx.save();
+  ctx.globalAlpha = 0.4;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x + 3 * s, y - 26 * s, 2.5 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 // The prop registry. Keys here are what biomes list in their `decor` array.
 // `colors` is the owning biome's palette, so rocks pick up local stone tone.
 export const DECOR_DRAWERS = {
@@ -531,6 +724,22 @@ export const DECOR_DRAWERS = {
   crystalProp: (ctx, x, y, s, v) => drawCrystalCluster(ctx, x, y, s * 0.85, v, '#72f0e8', '#2c7180'),
   nest: (ctx, x, y, s) => drawNest(ctx, x, y, s),
   sleepingDragon: (ctx, x, y, s) => drawSleepingDragon(ctx, x, y, s),
+  // Atlas biome props (rolled from the atlas biomes' decor lists).
+  conifer: (ctx, x, y, s, v, colors) => drawConifer(ctx, x, y, s, v, colors),
+  butte: (ctx, x, y, s, v, colors) => drawButte(ctx, x, y, s, v, colors),
+  coral: (ctx, x, y, s, v) => drawCoral(ctx, x, y, s, v),
+  // Atlas POI markers (hand-placed by AtlasScene from data/atlas.js). Each
+  // POI's `kind` in that file is a key here. `whiteSpire` rather than `spire`
+  // because `spire` is already the crystal-forest prop above.
+  whiteSpire: (ctx, x, y, s) => drawWhiteSpire(ctx, x, y, s),
+  arena: (ctx, x, y, s) => drawArena(ctx, x, y, s),
+  citadel: (ctx, x, y, s, v) => drawCitadel(ctx, x, y, s, v),
+  pyramid: (ctx, x, y, s) => drawPyramid(ctx, x, y, s),
+  cherry: (ctx, x, y, s, v) => drawCherry(ctx, x, y, s, v),
+  sanctum: (ctx, x, y, s) => drawSanctum(ctx, x, y, s),
+  jungleRuin: (ctx, x, y, s) => drawJungleRuin(ctx, x, y, s),
+  outpost: (ctx, x, y, s) => drawOutpost(ctx, x, y, s),
+  frosthold: (ctx, x, y, s) => drawFrosthold(ctx, x, y, s),
 };
 
 // Draws a prop with its base at (x, y). Unknown types are a programming error

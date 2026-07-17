@@ -207,6 +207,121 @@ button:active { transform: scale(0.97); }
 }
 .btn-primary:hover { background: linear-gradient(135deg, #8b4bff, #7c3aed); }
 
+/* --- World atlas overlay (AtlasScene / ui/atlasPanel.js) --- */
+
+/* Taller than the roost panel: it carries two lists. The map pans behind it. */
+.atlas-panel { width: 300px; bottom: 24px; overflow-y: auto; }
+
+.atlas-regions, .atlas-pois { list-style: none; margin: 0 0 18px; padding: 0; }
+.atlas-regions li, .atlas-pois li { margin-bottom: 5px; }
+
+.atlas-region, .atlas-poi {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 9px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: transparent;
+  text-align: left;
+}
+.atlas-region.is-active, .atlas-poi.is-active {
+  background: rgba(138, 92, 246, 0.22);
+  border-color: #8b5cf6;
+}
+.atlas-poi.is-unknown { opacity: 0.6; }
+
+.region-swatch {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.region-swatch.small { width: 8px; height: 8px; display: inline-block; vertical-align: middle; }
+
+.region-info, .poi-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.region-name, .poi-name {
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.poi-name em { color: #d8a25a; font-style: normal; }
+.region-type, .poi-meta { font-size: 9px; color: #8a7aa8; letter-spacing: 0.4px; }
+
+.region-explored { flex-shrink: 0; font-size: 10px; font-weight: 700; color: #b9a8dc; text-align: right; }
+.explored-bar {
+  display: block;
+  width: 36px;
+  height: 3px;
+  margin-top: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.explored-fill { display: block; height: 100%; }
+
+.poi-glyph {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #3a2d52;
+  border-radius: 7px;
+}
+.poi-glyph.big { width: 38px; height: 38px; font-size: 18px; }
+
+/* The selected-site card. Bottom-center, clear of the region panel. */
+.poi-card {
+  top: auto;
+  left: 50%;
+  bottom: 24px;
+  width: 420px;
+  transform: translateX(-50%);
+  padding: 16px;
+}
+.poi-card h1 { font-size: 17px; }
+.poi-card-head { display: flex; align-items: flex-start; gap: 11px; }
+.poi-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #b9a8dc;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #3a2d52;
+  border-radius: 999px;
+}
+.tag-found { color: #6fcf8a; border-color: #2a6b3d; background: rgba(20, 58, 34, 0.6); }
+.tag-unknown { color: #d8a25a; border-color: #6b4a2a; background: rgba(58, 38, 16, 0.6); }
+.poi-lore { margin: 11px 0 13px; font-size: 12px; line-height: 1.5; color: #c9bfe0; }
+
+/* Hover readout. Lives on <body>, not in #ui-overlay, so pointer moves never
+   re-render the panel. */
+#atlas-tooltip {
+  position: fixed;
+  z-index: 50;
+  display: none;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #c9bfe0;
+  background: rgba(20, 14, 30, 0.95);
+  border: 1px solid #3a2d52;
+  border-radius: 7px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 /* In-mission HUD */
 .hud {
   position: absolute;

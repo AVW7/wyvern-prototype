@@ -59,7 +59,7 @@ export default class VaultScene extends Phaser.Scene {
       travelLabel: '🌿 Step Outside',
       collapsed: this.panelCollapsed,
       onTravel: () => this.stepOutside(),
-      onLaunch: () => this.launchMission(),
+      onLaunch: () => this.openAtlas(),
       onTrain: (id) => { gainXp(id, 25); this.buildOverlay(); },
       onFeed: (id) => { raiseBond(id, 15); this.buildOverlay(); },
       onRecruit: (speciesId) => {
@@ -77,9 +77,9 @@ export default class VaultScene extends Phaser.Scene {
     this.scene.start('Base');
   }
 
-  launchMission() {
-    // Clear the overlay so the mission canvas is unobstructed, then switch scene.
+  // Missions are chosen on the world map now — see BaseScene.openAtlas().
+  openAtlas() {
     document.getElementById('ui-overlay').innerHTML = '';
-    this.scene.start('Mission', { missionId: 'mission01' });
+    this.scene.start('Atlas');
   }
 }

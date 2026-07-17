@@ -64,6 +64,54 @@ export const BIOMES = {
     accent: '#b49aff', decor: ['obelisk', 'obsidian', 'glow', 'spires'],
   },
 
+  // --- Atlas palettes (systems/atlasWorld.js only) ---
+  // The Shattered Cradle's regions. Like the sanctuary rows below, pickBiome()
+  // in terrain.js can't return these, so missions never see them. The atlas's
+  // grass and desert regions reuse the `grass` and `sand` rows above.
+  // Colors come from the world-atlas design.
+  badlands: {
+    label: 'Mesa Badlands',
+    top: '#c46a2f', light: '#d68a4f', mid: '#a8552a', dark: '#6a2e20',
+    left: '#8a3a2a', right: '#6a2e20', soil: '#9a4a2a', rock: '#5f3527', outline: '#2c1610',
+    accent: '#e8c07a', decor: ['butte', 'rock', 'bones'],
+  },
+  taiga: {
+    label: 'Taiga Highlands',
+    top: '#2f4a3a', light: '#3f5d4a', mid: '#27402f', dark: '#1b2c24',
+    left: '#22362c', right: '#1b2c24', soil: '#3a2f24', rock: '#39433d', outline: '#0c1611',
+    accent: '#6fb56d', decor: ['conifer', 'rock', 'pine'],
+  },
+  snow: {
+    label: 'Frostpeaks',
+    top: '#e8f4ff', light: '#ffffff', mid: '#c2d6e8', dark: '#a8c0d8',
+    left: '#a8c0d8', right: '#7a9ab5', soil: '#8fa8bf', rock: '#6e8399', outline: '#3d5468',
+    accent: '#ffffff', decor: ['ice', 'rock'],
+  },
+  darkwood: {
+    label: 'Darkwood',
+    top: '#1e4d2b', light: '#2a6b3d', mid: '#183d22', dark: '#0f2e1b',
+    left: '#143a22', right: '#0f2e1b', soil: '#33281c', rock: '#2b332c', outline: '#071409',
+    accent: '#4f9c5a', decor: ['conifer', 'tree', 'deadTree', 'rock'],
+  },
+  jungle: {
+    label: 'Jungle Expanse',
+    top: '#1a5c2a', light: '#2e7a3a', mid: '#144a22', dark: '#0e331a',
+    left: '#123d20', right: '#0e331a', soil: '#3d2f1e', rock: '#2c3a2c', outline: '#061a0b',
+    accent: '#5ad86a', decor: ['tree', 'conifer', 'mushroom', 'ruin'],
+  },
+  ocean: {
+    label: 'Open Water',
+    top: '#0f2a4a', light: '#2f6a9a', mid: '#0c2340', dark: '#081a30',
+    left: '#0a1f38', right: '#081a30', soil: '#0c2340', rock: '#12304a', outline: '#04101f',
+    accent: '#7dd3fc', decor: [],
+  },
+  atoll: {
+    label: 'Tidal Atoll',
+    top: '#1a4a6a', light: '#4ac8ff', mid: '#153f55', dark: '#102f45',
+    left: '#143a55', right: '#102f45', soil: '#154055', rock: '#1e5a6a', outline: '#07202f',
+    accent: '#5ad8a0', decor: ['coral'],
+  },
+
   // --- Sanctuary palettes (data/sanctuary.js hand-authored maps only) ---
   // Mission terrain never picks these: pickBiome() in terrain.js can't return
   // them, so they exist purely for the base's exterior island and vault

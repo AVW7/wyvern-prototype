@@ -403,6 +403,20 @@ const TOP_TEXTURES = {
   warmstone: groutTexture,
 };
 
+// The atlas biomes (data/biomes.js) reuse the treatments above rather than
+// define their own — each one's palette already carries its character, and the
+// atlas is viewed zoomed out where surface detail reads as texture, not shape.
+// Assigned after the literal because these alias methods defined inside it.
+// A biome with no entry here is still valid: drawTopTexture falls back to the
+// base scatter, which is why `ocean` needs nothing.
+TOP_TEXTURES.badlands = TOP_TEXTURES.sand;
+TOP_TEXTURES.taiga = TOP_TEXTURES.grass;
+TOP_TEXTURES.darkwood = TOP_TEXTURES.grass;
+TOP_TEXTURES.jungle = TOP_TEXTURES.grass;
+TOP_TEXTURES.snow = TOP_TEXTURES.ice;
+TOP_TEXTURES.atoll = TOP_TEXTURES.springwater;
+TOP_TEXTURES.ocean = TOP_TEXTURES.springwater;
+
 // Shared slab/grout detail for the vault's stone materials. Not in the
 // TOP_TEXTURES literal because three keys reference the same drawer.
 function groutTexture(ctx, { d, colors, s, rand, point }) {

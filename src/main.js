@@ -4,6 +4,7 @@ import BootScene from './scenes/BootScene.js';
 import PreloadScene from './scenes/PreloadScene.js';
 import BaseScene from './scenes/BaseScene.js';
 import VaultScene from './scenes/VaultScene.js';
+import AtlasScene from './scenes/AtlasScene.js';
 import MissionScene from './scenes/MissionScene.js';
 
 const config = {
@@ -23,8 +24,9 @@ const config = {
     arcade: { debug: false },
   },
   // Scene order: first entry boots first. Flow is Boot -> Preload -> Base,
-  // then Base <-> Vault (the sanctuary interior) and Base/Vault -> Mission.
-  scene: [BootScene, PreloadScene, BaseScene, VaultScene, MissionScene],
+  // then Base <-> Vault (the sanctuary interior), and Base/Vault -> Atlas
+  // (the world map / mission select) -> Mission -> Base.
+  scene: [BootScene, PreloadScene, BaseScene, VaultScene, AtlasScene, MissionScene],
 };
 
 // eslint-disable-next-line no-new

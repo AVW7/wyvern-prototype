@@ -25,6 +25,10 @@ export default class MissionScene extends Phaser.Scene {
 
   init(data) {
     this.missionId = data.missionId || 'mission01';
+    // The atlas passes the chosen POI's seed; that's what makes each
+    // destination its own island. Falling back to undefined lets buildTerrain
+    // use TERRAIN.seed, so a mission started without the atlas still works.
+    this.seed = data.seed;
     this.missionOver = false;
     this.lastAutoAttackAt = 0;
   }
@@ -57,6 +61,7 @@ export default class MissionScene extends Phaser.Scene {
   // of any height anchors with origin (0.5, 0).
   buildIsoBackground() {
     const { tiles } = buildTerrain({
+      seed: this.seed,
       exclude: [WYVERN_START, ...DEMO_ENEMY_SPAWNS],
     });
 

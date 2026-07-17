@@ -11,9 +11,10 @@ import { SPECIES } from '../data/species.js';
  * @param {object} opts
  * @param {string}   opts.subtitle      line under the "Roost" title
  * @param {string}   opts.travelLabel   label of the scene-travel button
+ * @param {string}   [opts.launchLabel] label of the launch button
  * @param {boolean}  opts.collapsed     panel collapsed to a pill?
  * @param {Function} opts.onTravel      travel button clicked
- * @param {Function} opts.onLaunch      Launch Mission clicked
+ * @param {Function} opts.onLaunch      launch button clicked
  * @param {Function} opts.onTrain       (animalId) Train clicked
  * @param {Function} opts.onFeed        (animalId) Feed clicked
  * @param {Function} opts.onRecruit     (speciesId) recruit button clicked
@@ -21,7 +22,7 @@ import { SPECIES } from '../data/species.js';
  * @param {Function} opts.onExpand      collapsed pill clicked
  */
 export function buildRoostOverlay({
-  subtitle, travelLabel, collapsed,
+  subtitle, travelLabel, collapsed, launchLabel = '<span class="btn-icon">🗺️</span>World Atlas',
   onTravel, onLaunch, onTrain, onFeed, onRecruit, onCollapse, onExpand,
 }) {
   const overlay = document.getElementById('ui-overlay');
@@ -52,7 +53,7 @@ export function buildRoostOverlay({
       <h2>Companions <span class="roster-count">${roster.length}</span></h2>
       <ul class="roster">${rows}</ul>
       <div class="base-actions">
-        <button id="btn-launch" class="btn-primary"><span class="btn-icon">⚔️</span>Launch Mission</button>
+        <button id="btn-launch" class="btn-primary">${launchLabel}</button>
         <h2 class="recruit-label">Recruit</h2>
         <div class="recruit-row">${recruitButtons}</div>
       </div>

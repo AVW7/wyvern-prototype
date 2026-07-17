@@ -42,12 +42,13 @@ the browser devtools console, and confirm no errors + expected behavior.
 ## Architecture & flow
 
 Scene order (registered in `src/main.js`):
-**Boot → Preload → Base ⇄ Vault**, and **Base/Vault → Mission → (back to Base)**
+**Boot → Preload → Base ⇄ Vault**, and **Base/Vault → Atlas → Mission → (back
+to Base)**
 
-The three playable layers — sanctuary grounds, vault interior, mission — are
-**deliberately separate scenes that share no scene-level code**. They share
-only low-level systems (draw/tileArt/decorArt/textureBake) and the roster.
-Don't unify their rendering or scene logic.
+The four playable layers — sanctuary grounds, vault interior, world atlas,
+mission — are **deliberately separate scenes that share no scene-level code**.
+They share only low-level systems (draw/tileArt/decorArt/textureBake) and the
+roster. Don't unify their rendering or scene logic.
 
 - `scenes/BootScene.js` — one-time setup, hands off to Preload.
 - `scenes/PreloadScene.js` — loads assets and generates the wyvern/enemy
@@ -63,9 +64,15 @@ Don't unify their rendering or scene logic.
 - `scenes/VaultScene.js` — the sanctuary **interior**: the Emberkeep
   Dragonvault, same resident/overlay treatment. The daylight glow over the
   entry bridge (or the overlay button) returns to the grounds.
-- `scenes/MissionScene.js` — builds the procedural iso island, spawns the
-  wyvern and enemies, resolves combat, depth-sorts every frame, and shows the
-  order bar / win-lose overlay.
+- `scenes/AtlasScene.js` — the **world atlas**: the Shattered Cradle overworld
+  and the game's mission select. Pans/zooms its own camera, places the island
+  from `systems/atlasWorld.js`, and puts a clickable marker on each POI in
+  `data/atlas.js`. Launching one starts a Mission **with that POI's seed**.
+  Keeps its own tile placement and camera — it does not use `sanctuaryRender`.
+- `scenes/MissionScene.js` — builds the procedural iso island (from the seed
+  the atlas passed, else `TERRAIN.seed`), spawns the wyvern and enemies,
+  resolves combat, depth-sorts every frame, and shows the order bar / win-lose
+  overlay.
 - `entities/Wyvern.js` — the sprite + animation **state machine** + input +
   standing order.
 - `entities/Enemy.js` — minimal sprite state machine (idle/hurt/death), no
@@ -94,10 +101,22 @@ Don't unify their rendering or scene logic.
   inline placement.
 - `ui/roostPanel.js` — the Roost overlay widget (roster cards, recruit row,
   travel/launch buttons) shared by the two sanctuary scenes. Pure DOM.
-- `data/biomes.js` — the 16 biome palettes + their prop lists. Pure data:
-  8 mission biomes, then the sanctuary materials (moss/bluestone/springwater
-  outside; flagstone/masonry/warmstone/timber/iron inside). `pickBiome()` can
-  never return a sanctuary palette, so missions are unaffected by them.
+- `systems/atlasWorld.js` — the atlas's island generator: region blobs →
+  per-cell biome/height/prop, plus the southern atoll ring. Returns the same
+  `{ tiles, cols, rows }` contract as `terrain.js`. Deliberately **not**
+  `terrain.js`: that one models a random climate, this one rebuilds an
+  authored world. Sea is a real `ocean` tile, never a `null` hole.
+- `data/atlas.js` — the atlas's hand-authored world: `REGIONS` (7),
+  `REGION_BLOBS` (the island silhouette in 8 rows), and `POIS` (12 mission
+  destinations, each with its own terrain `seed`). Pure data.
+- `ui/atlasPanel.js` — the atlas overlay (region list, POI card, hover
+  tooltip). Pure DOM, same shape as `roostPanel.js`.
+- `data/biomes.js` — the 23 biome palettes + their prop lists. Pure data:
+  8 mission biomes, then the atlas regions (badlands/taiga/snow/darkwood/
+  jungle/ocean/atoll), then the sanctuary materials (moss/bluestone/
+  springwater outside; flagstone/masonry/warmstone/timber/iron inside).
+  `pickBiome()` can never return an atlas or sanctuary palette, so missions
+  are unaffected by them.
 - `data/species.js` — the sanctuary species registry (id, name, emoji,
   hpBase, hpPerLevel). Pure data, same pattern as `data/biomes.js`.
 - `systems/roster.js` — shared base/roster data model for every recruited
@@ -141,6 +160,38 @@ the two design prototypes. To reshape either one, edit those calls.
 - **One-off tile details** (like the monolith's niche) are `TILE_OVERLAYS`
   entries in `tileArt.js`, named by a cell's `overlay` field. They bake to
   their own texture key, so the shared biome+variant texture stays clean.
+
+### The world atlas
+
+`data/atlas.js` (what exists) → `systems/atlasWorld.js` (where it goes) →
+`tileArt`/`decorArt`/`textureBake` (how it looks) → `AtlasScene` (place +
+camera) → `ui/atlasPanel.js` (the overlay).
+
+- **To add a mission destination:** add a `POIS` row. Its `kind` must be a key
+  in `DECOR_DRAWERS`, and its `seed` is what makes its mission a distinct
+  island. Nothing else needs wiring — the marker, the list row, and the launch
+  button all come from that one row.
+- **To reshape the island:** move/resize the `REGION_BLOBS`. Each cell takes
+  the biome of the nearest blob; anything far from all of them becomes sea.
+- **x/y are grid axes, not compass directions.** The map is drawn
+  isometrically, so a blob's position on screen is a 45° turn from its
+  coordinates — placing one by eye will put it somewhere surprising. Convert
+  from screen terms (`x = (sx+sy)/2`, `y = (sy-sx)/2`); see the note above
+  `REGION_BLOBS`. The current layout matches the reference world map: taiga N,
+  badlands NW, desert W, grass centre, snow NE, darkwood E, jungle SE,
+  atoll S.
+- **The camera frames the island, not the grid** (`AtlasScene.fitCamera`), so
+  how far a blob sits from the origin barely matters — a compact island just
+  renders at a higher zoom. What matters is staying inside the grid: past
+  `±ATLAS.cols/2` the coastline is clipped instead of fading into open sea.
+  The open sea fades out at the grid's edge (`ATLAS.seaFade`) so its diamond
+  boundary never reads as a horizon.
+- **To retune a region's terrain:** edit its `HEIGHT_CURVES` entry in
+  `atlasWorld.js` — that's what makes snow spike and badlands step into mesas.
+- **Atlas heights are relative to `ATLAS_BASE_HEIGHT`**, not
+  `TERRAIN.baseHeight`. Ocean sits below the plane; peaks rise above it.
+- The atlas has **no persistence**: `explored`/`discovered` are static data.
+  Wiring them to real progress is ROADMAP Phase 4.
 
 ### Sanctuary species
 

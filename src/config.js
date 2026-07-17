@@ -61,6 +61,52 @@ export const SANCTUARY = {
   torchFlicker: { alphaTo: 0.72, durationMs: 780 },
 };
 
+// The world atlas: the overworld map layer (AtlasScene) and the game's mission
+// select. One hand-seeded island — "The Shattered Cradle" — built by
+// systems/atlasWorld.js from the region blobs in data/atlas.js. Like the
+// sanctuary, tuning here never touches missions: the atlas has its own
+// generator and never calls buildTerrain().
+export const ATLAS = {
+  seed: 'CRADLE-01',
+  // The map is square and centered on the origin, so world coords run
+  // -cols/2..+cols/2 — that's the space data/atlas.js POI x/y live in.
+  // The island itself spans about ±30, so the grid must be comfortably wider
+  // than that or the coastline gets clipped by the grid edge instead of
+  // fading into open sea. 68 leaves a ~4-tile ocean ring all the way round.
+  cols: 68,
+  rows: 68,
+  // Share of land tiles that get a prop. Lower than TERRAIN.decorDensity
+  // because the atlas is ~18x the mission map's tile count.
+  decorDensity: 0.28,
+  variants: 4,
+  // Distance past a region blob's radius where land gives way to sea. Above
+  // 1.0 so blobs bleed into each other and the coastline isn't a circle.
+  seaLevel: 1.12,
+  // Tiles over which the open sea fades out at the grid's edge. The grid is a
+  // square in world space, so it projects to a diamond on screen — without
+  // this, the water's texture stops along a hard diagonal horizon and the map
+  // reads as a tile grid floating in a void instead of an island in an ocean.
+  seaFade: 7,
+  // Camera. The atlas opens on the whole island — it's a world map, and the
+  // point is to see the shape of the world at a glance. AtlasScene computes
+  // that fit zoom from the island's own bounds (not the grid's — framing the
+  // empty sea would shrink the world) and uses it as both the opening zoom
+  // and the zoom-out floor, since there's nothing past the island worth
+  // pulling back to. So only the ceiling is configured here.
+  zoom: { max: 2.2, step: 1.12 },
+  // Screen px kept clear around the map when fitting the camera.
+  cameraMargin: 24,
+  // Screen px the map shifts right so it clears the region panel. Mirrors
+  // SANCTUARY.panelBias — same problem, same fix.
+  panelBias: 320,
+  // Pan momentum: how much of the drag velocity survives each frame, and the
+  // speed below which the camera is considered stopped.
+  panDamping: 0.88,
+  panEpsilon: 0.01,
+  // Screen px of slack around the island the camera may pan past.
+  panMargin: 220,
+};
+
 // Wyvern animation state names. Keep these as the single source of truth so
 // the entity, the preloader, and any AI all reference the same strings.
 export const WYVERN_STATES = {

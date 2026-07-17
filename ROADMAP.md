@@ -23,10 +23,15 @@ Fixing that is higher priority than new content because every later feature
 
 ## Phase 2 — Mission variety
 
-- **Multiple missions.** `DEMO_ENEMY_SPAWNS` and the `'mission01'` id are
-  the seams (see CLAUDE.md). Add a small mission list (id, enemy spawns,
-  terrain seed, reward) and a mission-select step in `BaseScene` before
-  launch, replacing the single always-on "Launch Mission" button.
+- **Multiple missions.** *Done* — the world atlas (`AtlasScene` +
+  `data/atlas.js`) is the mission-select step. Its 12 POIs are the mission
+  list, and each carries its own terrain `seed`, which `MissionScene` now
+  passes to `buildTerrain()` — so every destination is a distinct island. The
+  Roost's launch button opens the atlas instead of firing `'mission01'`.
+- **Per-mission enemies + rewards.** Still open, and now the obvious next
+  step: a POI row carries `danger` but nothing reads it. `DEMO_ENEMY_SPAWNS`
+  and `COMBAT.enemyHp` are the remaining hardcoded seams — move spawn
+  counts/stats onto the POI row and scale them by `danger`.
 - **More enemy variety.** `Enemy.js` is a single hp/damage profile today.
   Parameterize per-mission enemy stats/counts instead of always using
   `COMBAT.enemyHp`.
@@ -49,7 +54,9 @@ Fixing that is higher priority than new content because every later feature
 
 - **Save/load.** Roster and base state currently reset on page refresh
   (in-memory module state). Add `localStorage` persistence — this is a
-  prototype-friendly zero-backend option, no build step required.
+  prototype-friendly zero-backend option, no build step required. The atlas
+  needs this too: each POI's `discovered` and each region's `explored` are
+  hardcoded in `data/atlas.js`, so the map can't record where you've been.
 - **Real art.** Swap the emoji/procedural placeholders for an Aseprite atlas
   and Tiled maps once the loop above is fun — see "Replacing placeholders"
   in CLAUDE.md for the exact swap points already wired.
