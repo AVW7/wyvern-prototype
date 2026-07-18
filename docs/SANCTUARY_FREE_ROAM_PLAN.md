@@ -33,19 +33,33 @@ either click/tap or the interaction key.
 
 ## Current baseline and gaps
 
-- `BaseScene` builds a fixed fitted view and only wires the barred vault door.
-- `buildSanctuaryView()` computes one camera zoom and center; it has no pan,
-  follow, cursor-anchored zoom, or bounds.
-- `spawnSanctuaryResidents()` returns no resident handles and animates everyone
-  with a stationary bob, so no resident can become the controlled character.
-- Sanctuary props carry only a `type` and sprite reference; they have no stable
-  interaction ID, action, range, label, or availability state.
+- `BaseScene.buildWorld()` builds a fixed fitted view and only wires the barred
+  vault door (`wireEntrance()` finds the `barredDoor` prop by type).
+- `buildSanctuaryView()` computes one camera zoom and center via the private
+  `sanctuaryBounds()`; it has no pan, follow, cursor-anchored zoom, or bounds
+  export. It is **shared with `VaultScene`**, so any signature change must stay
+  compatible with both callers (`src/scenes/BaseScene.js:42`,
+  `src/scenes/VaultScene.js:79`).
+- `spawnSanctuaryResidents(scene, layer, view, zoom)` returns nothing and adds
+  each resident as fire-and-forget sprites. Atlas-textured wyverns **already get
+  an accent aura, a ground shadow, an idle animation, and a name label**; the
+  gap is that none of these are returned as a handle, and every resident is
+  animated with a stationary `y: -=amplitude` bob tween — so no resident can yet
+  become a footprint-driven controlled character, and Milestone 2 must *reuse*
+  the existing shadow/label rather than add a second one.
+- Sanctuary props carry only `{ type, variant, offsetX, offsetY }` plus a sprite
+  reference; they have no stable interaction ID, action, range, label, or
+  availability state.
+- Authored cells already carry `blocked: height >= TERRAIN.blockedAt` (set in
+  `makeBuilder` in `data/sanctuary.js`), and cells can be `null` holes. A
+  walkable mask can start from these two facts without new authoring.
 - The map already has the right visual foundations: hand-authored cells,
-  elevation, separate prop sprites, ground-footprint depth, and `screenToGrid()`
-  in the shared iso system.
+  elevation, separate prop sprites, ground-footprint depth (`setData('depth', …)`
+  keyed off the ground plane), and `screenToGrid()` in the shared iso system.
 - `AtlasScene` already proves cursor-anchored wheel zoom, bounded pan, fit zoom,
-  and panel-aware framing. Reuse its math and behavior, but keep the sanctuary
-  implementation sanctuary-specific as required by the scene architecture.
+  panel-aware framing, and pan momentum (`ATLAS.panDamping`/`panEpsilon`). Reuse
+  its math and behavior, but keep the sanctuary implementation sanctuary-specific
+  as required by the scene architecture.
 
 ## Design rules
 
@@ -111,8 +125,10 @@ Initial interactions:
 
 ## Camera specification
 
-- Add `SANCTUARY.zoom = { max: 2.2, step: 1.12 }`; derive `min` from fitted map
-  bounds as the atlas does.
+- Add `SANCTUARY.zoom = { max: 2.2, step: 1.12 }` (mirroring `ATLAS.zoom`);
+  derive `min` from fitted map bounds as the atlas does. The current fit uses
+  `SANCTUARY.cameraMargin` (30) and `SANCTUARY.panelBias` (120) — reuse both so
+  the opening overview is unchanged and `min` never zooms past the fitted view.
 - Open in overview mode. Pressing movement or selecting **Follow** transitions
   to follow mode and tracks the controlled footprint with gentle lerp.
 - Mouse wheel zooms toward the pointer, keeping its world point pinned.
@@ -133,9 +149,13 @@ Initial interactions:
 - Convert intended movement consistently with the isometric diamond. The
   controls should feel like movement across the ground, not movement along
   arbitrary screen axes.
-- Start with a walkable-cell mask generated from non-null cells and
-  `height < blockedAt`. Add explicit ramps/bridges where elevation changes are
+- Start with a walkable-cell mask generated from non-null cells whose existing
+  `cell.blocked` flag is false (already `height >= TERRAIN.blockedAt` in the
+  authored data). Add explicit ramps/bridges where elevation changes are
   traversable.
+- The controlled resident must **not** keep the shared `y: -=amplitude` bob
+  tween — that tween mutates sprite `y` directly and would fight footprint-driven
+  movement. Kill/skip it for the controlled actor and drive its lift separately.
 - Dragons may visually lift while moving, but the first slice still respects
   island edges and authored no-go cells. A later “high flight” mode can relax
   obstacles if it proves fun.
@@ -155,6 +175,26 @@ Initial interactions:
    so actions remain visible even when the sprite is airborne.
 7. Profile depth sorting only after the playable slice exists; the sanctuary
    population is currently small enough for a per-frame sort while moving.
+
+## Known implementation risks
+
+These are grounded in the current code, not hypothetical:
+
+- **Rebuild wipes live state.** `BaseScene.buildWorld()` runs on every recruit
+  (via `onRecruit`) and destroys the whole world layer, and `create()` runs on
+  every return from Vault/Mission. Neither preserves the controlled selection,
+  camera mode, or camera position. The controller must re-resolve a valid
+  selected wyvern and re-seat the camera after any rebuild, and fall back
+  gracefully if the previously selected animal was removed.
+- **`tweens.killAll()` at the top of `buildWorld()`** stops ambient prop tweens
+  intentionally; a movement/lift loop built on the update tick (not a tween)
+  survives rebuilds better and avoids being silently cancelled here.
+- **Shared render helper.** `buildSanctuaryView()` is called by both BaseScene
+  and VaultScene; keep its return shape additive so the Vault showcase is not
+  disturbed by camera/bounds changes.
+- **Panel bias vs. follow.** `panelBias` shifts the whole view right so the
+  fitted map clears the Roost panel. In follow mode the same bias must be
+  applied to the follow target (or the followed wyvern hides behind the panel).
 
 ## Multi-model review workspace
 
@@ -259,10 +299,13 @@ outside the authored sanctuary or breaking the vault gate.
 
 ### Milestone 2 — One controllable wyvern
 
-- Return resident handles from `spawnSanctuaryResidents()`.
+- Return resident handles (`{ animal, sprite, label, shadow, aura }`) from
+  `spawnSanctuaryResidents()` without changing what non-controlled residents
+  look like.
 - Select the first authored roster wyvern by default; allow roster selection.
-- Add normalized movement, footprint/shadow, flight lift, camera follow, and
-  continuous depth sorting.
+- Add normalized movement, flight lift, camera follow, and continuous depth
+  sorting — reusing the resident's existing shadow/label instead of adding new
+  ones, and disabling its bob tween while it is controlled.
 - Prevent leaving walkable sanctuary cells.
 
 **Exit:** a selected wyvern can roam the island smoothly at minimum and maximum
@@ -307,6 +350,9 @@ obvious depth-order popping or resident overlap loops.
 - [ ] Panning does not accidentally select or activate an interaction.
 - [ ] Actor shadow, label, and depth all follow the ground footprint.
 - [ ] Existing Base → Vault → Base and Base → Atlas → Mission flows still work.
+- [ ] Recruiting an animal (which rebuilds the world) preserves a valid
+      controlled selection and does not leave the camera in an invalid state.
+- [ ] The VaultScene showcase is visually unchanged by the shared-helper edits.
 - [ ] No sanctuary code imports an Atlas or Mission scene.
 - [ ] JavaScript syntax checks pass and the browser console has no errors.
 
