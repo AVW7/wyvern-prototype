@@ -66,7 +66,7 @@ export default class BaseScene extends Phaser.Scene {
   buildOverlay() {
     buildRoostOverlay({
       subtitle: 'Sanctuary grounds &middot; roster management',
-      travelLabel: '🏰 Enter the Vault',
+      travelLabel: 'Enter the Vault',
       collapsed: this.panelCollapsed,
       onTravel: () => this.enterVault(),
       onLaunch: () => this.openAtlas(),

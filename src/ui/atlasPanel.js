@@ -3,6 +3,7 @@
 // #ui-overlay and wires the caller's handlers; it knows nothing about Phaser.
 // Same shape as ui/roostPanel.js.
 import { getRegion } from '../data/atlas.js';
+import { createNavIsland } from './uiKit.js';
 
 // Marker glyphs for the POI list, mirroring the baked art in decorArt.js.
 const KIND_GLYPHS = {
@@ -43,20 +44,29 @@ export function buildAtlasOverlay({
     ? pois
     : pois.filter((p) => p.regionId === selectedRegionId);
   const found = pois.filter((p) => p.discovered).length;
-  const backButton = '<button id="btn-atlas-back" class="btn-view">🏝️ Back to Sanctuary</button>';
+  
+  const navButtons = [
+    { label: '🏝️ Sanctuary', onClick: onBack }
+  ];
+  if (selectedPoi) {
+    navButtons.push({
+      label: '⚔️ Launch Mission',
+      onClick: () => onLaunch(selectedPoi.id),
+      primary: true
+    });
+  }
+  const navIsland = createNavIsland(navButtons);
 
   // Collapsed, the panel is a pill and the map gets the whole canvas — the
   // uninterrupted view of the world.
   if (collapsed) {
     overlay.innerHTML = `
       <button id="btn-expand" class="panel-pill">🗺️ Atlas</button>
-      ${selectedPoi ? renderPoiCard(selectedPoi) : ''}
-      ${backButton}`;
+      ${selectedPoi ? renderPoiCard(selectedPoi) : ''}`;
     document.getElementById('btn-expand').onclick = onExpand;
-    document.getElementById('btn-atlas-back').onclick = onBack;
+    overlay.appendChild(navIsland);
     if (selectedPoi) {
       document.getElementById('btn-poi-close').onclick = onClearPoi;
-      document.getElementById('btn-poi-launch').onclick = () => onLaunch(selectedPoi.id);
     }
     return;
   }
@@ -73,10 +83,10 @@ export function buildAtlasOverlay({
       <h2>Destinations <span class="roster-count">${listed.length}</span></h2>
       <ul class="atlas-pois">${listed.map((p) => renderPoiRow(p, selectedPoi)).join('')}</ul>
     </div>
-    ${selectedPoi ? renderPoiCard(selectedPoi) : ''}
-    ${backButton}`;
+    ${selectedPoi ? renderPoiCard(selectedPoi) : ''}`;
+    
+  overlay.appendChild(navIsland);
 
-  document.getElementById('btn-atlas-back').onclick = onBack;
   document.getElementById('btn-collapse').onclick = onCollapse;
 
   overlay.querySelectorAll('.atlas-region').forEach((el) => {
@@ -88,7 +98,6 @@ export function buildAtlasOverlay({
 
   if (selectedPoi) {
     document.getElementById('btn-poi-close').onclick = onClearPoi;
-    document.getElementById('btn-poi-launch').onclick = () => onLaunch(selectedPoi.id);
   }
 }
 
@@ -150,7 +159,6 @@ function renderPoiCard(poi) {
         </div>
       </div>
       <p class="poi-lore">${poi.lore}</p>
-      <button id="btn-poi-launch" class="btn-primary"><span class="btn-icon">⚔️</span>Launch Mission</button>
     </div>`;
 }
 

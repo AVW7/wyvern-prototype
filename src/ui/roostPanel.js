@@ -4,9 +4,10 @@
 // The scenes stay separate; only this UI widget is common between them.
 import { getRoster } from '../systems/roster.js';
 import { SPECIES } from '../data/species.js';
+import { createNavIsland } from './uiKit.js';
 
 /**
- * Renders the roster panel + travel button into the overlay.
+ * Renders the roster panel + nav island into the overlay.
  *
  * @param {object} opts
  * @param {string}   opts.subtitle      line under the "Roost" title
@@ -22,18 +23,21 @@ import { SPECIES } from '../data/species.js';
  * @param {Function} opts.onExpand      collapsed pill clicked
  */
 export function buildRoostOverlay({
-  subtitle, travelLabel, collapsed, launchLabel = '<span class="btn-icon">🗺️</span>World Atlas',
+  subtitle, travelLabel, collapsed, launchLabel = 'World Atlas',
   onTravel, onLaunch, onTrain, onFeed, onRecruit, onCollapse, onExpand,
 }) {
   const overlay = document.getElementById('ui-overlay');
-  const travelButton = `<button id="btn-travel" class="btn-view">${travelLabel}</button>`;
+  
+  const navIsland = createNavIsland([
+    { label: travelLabel, icon: '🏰', onClick: onTravel },
+    { label: launchLabel, icon: '🗺️', onClick: onLaunch, primary: true }
+  ]);
 
   if (collapsed) {
     overlay.innerHTML = `
-      <button id="btn-expand" class="panel-pill">🐉 Roost</button>
-      ${travelButton}`;
+      <button id="btn-expand" class="panel-pill">🐉 Roost</button>`;
     document.getElementById('btn-expand').onclick = onExpand;
-    document.getElementById('btn-travel').onclick = onTravel;
+    overlay.appendChild(navIsland);
     return;
   }
 
@@ -53,16 +57,14 @@ export function buildRoostOverlay({
       <h2>Companions <span class="roster-count">${roster.length}</span></h2>
       <ul class="roster">${rows}</ul>
       <div class="base-actions">
-        <button id="btn-launch" class="btn-primary">${launchLabel}</button>
         <h2 class="recruit-label">Recruit</h2>
         <div class="recruit-row">${recruitButtons}</div>
       </div>
-    </div>
-    ${travelButton}`;
+    </div>`;
+
+  overlay.appendChild(navIsland);
 
   document.getElementById('btn-collapse').onclick = onCollapse;
-  document.getElementById('btn-launch').onclick = onLaunch;
-  document.getElementById('btn-travel').onclick = onTravel;
   roster.forEach((a) => {
     document.getElementById(`train-${a.id}`).onclick = () => onTrain(a.id);
     document.getElementById(`feed-${a.id}`).onclick = () => onFeed(a.id);

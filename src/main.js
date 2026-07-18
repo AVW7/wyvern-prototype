@@ -36,5 +36,31 @@ const config = {
   scene: [BootScene, PreloadScene, BaseScene, VaultScene, AtlasScene, MissionScene],
 };
 
-// eslint-disable-next-line no-new
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+game.events.once('ready', () => {
+  const updateStageRect = () => {
+    const canvas = game.canvas;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    document.documentElement.style.setProperty('--stage-left', `${rect.left}px`);
+    document.documentElement.style.setProperty('--stage-top', `${rect.top}px`);
+    document.documentElement.style.setProperty('--stage-width', `${rect.width}px`);
+    document.documentElement.style.setProperty('--stage-height', `${rect.height}px`);
+  };
+
+  game.scale.on('resize', updateStageRect);
+  // Also call it once initially
+  setTimeout(updateStageRect, 0);
+  
+  // Prevent keyboard propagation for inputs in #ui-overlay
+  const uiOverlay = document.getElementById('ui-overlay');
+  if (uiOverlay) {
+    uiOverlay.addEventListener('keydown', (e) => {
+      const tag = document.activeElement ? document.activeElement.tagName : '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        e.stopPropagation();
+      }
+    });
+  }
+});

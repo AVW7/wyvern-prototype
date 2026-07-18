@@ -56,6 +56,12 @@ export default class VaultScene extends Phaser.Scene {
     this.previewFlightLift = 0;
     this.previewFlightPhase = 0;
     this.previewTuning = defaultPreviewTuning();
+    this.uiVisibility = {
+      roster: true,
+      profile: true,
+      actions: true,
+      navigation: true,
+    };
     this.fallbackMotion = { offsetY: 0 };
     this.lastDiagnosticUpdate = 0;
 
@@ -195,7 +201,16 @@ export default class VaultScene extends Phaser.Scene {
       onTune: (name, value) => this.setPreviewTuning(name, value),
       onResetTuning: () => this.resetPreviewTuning(),
       onTravel: () => this.stepOutside(),
+      onAtlas: () => { this.cleanUp(); this.scene.start('Atlas'); },
+      visibility: this.uiVisibility,
+      onToggleVisibility: (section) => this.toggleUiVisibility(section),
     });
+  }
+
+  toggleUiVisibility(section) {
+    if (!(section in this.uiVisibility)) return;
+    this.uiVisibility[section] = !this.uiVisibility[section];
+    this.buildOverlay();
   }
 
   playPreviewAction(action, rebuildOverlay = true) {

@@ -1,6 +1,7 @@
 // Dragon Vault showcase overlay. Pure DOM: profile selection and action
 // controls live here while VaultScene owns the Phaser preview sprite.
 import { WYVERN_STATES } from '../config.js';
+import { createNavIsland } from './uiKit.js';
 
 export const VAULT_ACTIONS = [
   WYVERN_STATES.IDLE,
@@ -34,12 +35,22 @@ export function buildVaultOverlay({
   onTune,
   onResetTuning,
   onTravel,
+  onAtlas,
+  visibility = {},
+  onToggleVisibility,
 }) {
   const overlay = document.getElementById('ui-overlay');
+  const isVisible = (section) => visibility[section] !== false;
+  const navIsland = createNavIsland([
+    { label: '🌿 Grounds', onClick: onTravel },
+    { label: '🗺️ World Atlas', onClick: onAtlas }
+  ]);
+  navIsland.classList.toggle('is-hidden', !isVisible('navigation'));
+
   const selected = wyverns.find((wyvern) => wyvern.id === selectedId) || wyverns[0];
   if (!selected) {
-    overlay.innerHTML = '<button id="btn-travel" class="btn-view">🌿 Step Outside</button>';
-    document.getElementById('btn-travel').onclick = onTravel;
+    overlay.innerHTML = '';
+    overlay.appendChild(navIsland);
     return;
   }
 
@@ -90,7 +101,15 @@ export function buildVaultOverlay({
       : 'Generated placeholder';
 
   overlay.innerHTML = `
-    <section class="panel vault-roster-panel" aria-label="Dragon Vault roster">
+    <div class="vault-visibility-strip" aria-label="Vault interface visibility">
+      <span>Panels</span>
+      ${renderVisibilityToggle('roster', 'Roster', isVisible('roster'))}
+      ${renderVisibilityToggle('profile', 'Profile', isVisible('profile'))}
+      ${renderVisibilityToggle('actions', 'Actions', isVisible('actions'))}
+      ${renderVisibilityToggle('navigation', 'Travel', isVisible('navigation'))}
+    </div>
+
+    <section class="panel vault-roster-panel${isVisible('roster') ? '' : ' is-hidden'}" aria-label="Dragon Vault roster">
       <div class="panel-header vault-header">
         <p class="vault-eyebrow">EMBERKEEP</p>
         <h1>Dragon Vault</h1>
@@ -99,7 +118,7 @@ export function buildVaultOverlay({
       <div class="vault-roster">${cards}</div>
     </section>
 
-    <section class="panel vault-profile-panel" aria-label="Selected wyvern profile"
+    <section class="panel vault-profile-panel${isVisible('profile') ? '' : ' is-hidden'}" aria-label="Selected wyvern profile"
       style="--wyvern-accent:${selected.accent}">
       <div class="vault-profile-heading">
         <span class="vault-profile-glyph">🐉</span>
@@ -122,7 +141,15 @@ export function buildVaultOverlay({
       <h2>Mission profile</h2>
       <div class="vault-stats">${statRows}</div>
       <div class="vault-tags">${tags}</div>
-      <section class="vault-technical" aria-label="Dragon rendering diagnostics">
+    </section>
+
+    <div class="vault-action-dock${isVisible('actions') ? '' : ' is-hidden'}" aria-label="Animation previews">
+      <span class="vault-action-label">Preview action</span>
+      <div class="vault-actions">${actions}</div>
+    </div>
+    
+    <section class="panel vault-debug-panel" id="vault-debug" aria-label="Dragon rendering diagnostics">
+      <div class="vault-technical">
         <div class="vault-technical-heading">
           <h2>Technical preview</h2>
           <span class="vault-asset-status${assetClass}" data-vault-diagnostic="assetStatus">
@@ -132,14 +159,25 @@ export function buildVaultOverlay({
         <dl class="vault-diagnostics" aria-live="polite">${diagnosticRows}</dl>
         <div class="vault-tuning">${tuningRows}</div>
         <button type="button" class="vault-reset-tuning">Reset presentation</button>
-      </section>
-    </section>
+      </div>
+    </section>`;
 
-    <div class="vault-action-dock" aria-label="Animation previews">
-      <span class="vault-action-label">Preview action</span>
-      <div class="vault-actions">${actions}</div>
-    </div>
-    <button id="btn-travel" class="btn-view">🌿 Step Outside</button>`;
+  overlay.appendChild(navIsland);
+
+  overlay.querySelectorAll('[data-vault-visibility]').forEach((button) => {
+    button.onclick = () => onToggleVisibility?.(button.dataset.vaultVisibility);
+  });
+  
+  if (window._vaultDebugListener) {
+    document.removeEventListener('keydown', window._vaultDebugListener);
+  }
+  window._vaultDebugListener = (e) => {
+    if (e.key === '\`' || e.key === '~') {
+      const debugPanel = document.getElementById('vault-debug');
+      if (debugPanel) debugPanel.classList.toggle('is-open');
+    }
+  };
+  document.addEventListener('keydown', window._vaultDebugListener);
 
   overlay.querySelectorAll('.vault-wyvern-card').forEach((button) => {
     button.onclick = () => onSelect(button.dataset.wyvernId);
@@ -156,12 +194,12 @@ export function buildVaultOverlay({
   });
   const resetButton = overlay.querySelector('.vault-reset-tuning');
   if (resetButton) resetButton.onclick = onResetTuning;
-  document.getElementById('btn-travel').onclick = onTravel;
 }
 
 export function updateVaultDiagnostics(diagnostics = {}) {
   const overlay = document.getElementById('ui-overlay');
-  if (!overlay) return;
+  const debugPanel = document.getElementById('vault-debug');
+  if (!overlay || !debugPanel || !debugPanel.classList.contains('is-open')) return;
   Object.entries(diagnosticValues(diagnostics)).forEach(([name, value]) => {
     const element = overlay.querySelector(`[data-vault-diagnostic="${name}"]`);
     if (element) element.textContent = value;
@@ -235,6 +273,11 @@ function renderRating(value) {
   return Array.from({ length: 5 }, (_, index) => (
     `<i class="${index < value ? 'is-filled' : ''}"></i>`
   )).join('');
+}
+
+function renderVisibilityToggle(section, label, visible) {
+  return `<button type="button" class="vault-visibility-toggle${visible ? ' is-visible' : ''}"
+    data-vault-visibility="${section}" aria-pressed="${visible}">${label}</button>`;
 }
 
 function escapeHtml(value) {

@@ -134,7 +134,7 @@ export default class MissionScene extends Phaser.Scene {
     overlay.innerHTML = `
       <div class="hud">
         <span>Mission: ${this.missionId}</span>
-        <button id="btn-return">Return to Base</button>
+        <button id="btn-return" class="btn-primary" style="padding: 4px 12px; font-size: 12px; min-height: auto;">Return to Base</button>
       </div>
       <div class="order-bar">${orderButtons}</div>
       <div class="controls-hint">Arrows/WASD move &middot; Space attack &middot; orders steer behavior</div>`;

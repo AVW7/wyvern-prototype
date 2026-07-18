@@ -1,6 +1,6 @@
 # Sanctuary Free-Roam Redesign
 
-**Status:** Planned  
+**Status:** Closed  
 **Project mode:** Multi-AI collaboration  
 **Last updated:** 2026-07-18  
 **Primary scene:** `src/scenes/BaseScene.js`
@@ -271,8 +271,371 @@ the human owner has accepted, and record your work in AI_CONTRIBUTIONS.md.
 
 ### Recorded reviews
 
-No external sanctuary-plan reviews have been recorded yet. Replace this line
-with the first `R-001` review; later reviewers append below it.
+### Review R-001 — Gemini 3.5 Flash
+
+- **Date:** 2026-07-18
+- **Model ID:** AI-003
+- **Focus:** Full plan / Camera / Movement / Interaction / Rendering
+- **Files inspected:** [BaseScene.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/scenes/BaseScene.js), [VaultScene.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/scenes/VaultScene.js), [sanctuaryRender.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/systems/sanctuaryRender.js), [iso.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/systems/iso.js), [config.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/config.js), [sanctuary.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/data/sanctuary.js), [wyverns.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/data/wyverns.js), [roster.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/systems/roster.js)
+- **Summary:** The proposed Sanctuary Free-Roam Redesign plan is highly robust and fits nicely within the current multi-scene architecture. It addresses the transition from a static roster display to an interactive sandbox without compromising the clean separation of base/vault/atlas/mission scenes. However, key details around logical screen-space coordinate interpolation, continuous collision handling, camera transition states, and the impact of the roster rebuild loop need must-fix specifications to ensure smooth gameplay.
+- **Must fix before implementation:**
+  1. **Camera Mode Transitions and Follow State:** Panning in follow mode must explicitly toggle the mode back to survey/overview or suspend follow tracking (with a timeout or manual reactivation) to prevent the camera lerp fighting the user's manual pan inputs.
+  2. **Collision and Elevation Resolution on Continuous Footprint:** Since movement is continuous, checking single cells for `blocked` is insufficient (causes clipping on tile boundaries). A sliding/footprint-aabb collision check must be detailed. Ramps/elevations (like stairs in the interior) require mapping transition zones in `data/sanctuary.js` so that height is interpolated smoothly based on the footprint's offset.
+  3. **Rebuild State Preservation:** The `onRecruit` logic in `BaseScene.js` currently recreates the world and overlay entirely, resetting scene variables. The plan must specify how selected wyvern state, camera position, zoom, and mode are serialized or persisted in memory (e.g., in a temporary base state object or on the scene itself) to prevent jerky resets during gameplay.
+- **Recommended changes:**
+  1. **Uncontrolled Resident Wandering:** Restrict wander regions in `data/sanctuary.js` per resident spot to keep dragons from wandering into lava or falling off the island edges.
+  2. **Interaction Target Weighting:** Since isometric projection causes overlapping targets visually, weighting by screen-space distance or a cone of sight from the controlled wyvern's facing direction is recommended over pure grid distance.
+  3. **Camera Panel Bias Scaling:** Scale `panelBias` proportionally with zoom: at `zoom.max` (2.2), a hard 120px offset shifts the camera focus significantly more in world coordinates than at fit zoom (0.5).
+- **Keep as designed:**
+  1. **Separation of Scenes:** Keeping Base, Vault, Atlas, and Mission scene logic separate is a vital architectural guardrail.
+  2. **Direct Dragon Control:** Directly roaming as a selected wyvern (rather than a rider) is the right priority to focus on creature animations and movement.
+- **Risks and edge cases:**
+  1. **Empty Roster/Roster Changes:** If the player recruits a new animal or if a wyvern is somehow absent, the default selected wyvern must degrade gracefully.
+  2. **`tweens.killAll()` Conflict:** Rebuilding the world kills all tweens, which could disrupt any movement/lift loops if implemented as tweens. Implementing movement and lift entirely on the scene `update` tick (as recommended in the plan) avoids this risk.
+- **Suggested first vertical slice:**
+  Milestone 1 + a partial Milestone 2: Build the sanctuary camera controller and render the first roster wyvern with basic keyboard movement (WASD) on a flat plane without collisions, ensuring camera follow lerps correctly.
+- **Confidence / unknowns:**
+  High confidence in the Phaser 3 implementation details. Unverified: how the high-resolution Embertooth atlas performs under continuous rotation/facing updates if directional frames are present or if flipping `flipX` is the sole horizontal mirroring mechanism.
+
+### Review R-002 — Claude Fable 5
+
+- **Date:** 2026-07-18
+- **Model ID:** AI-004
+- **Attribution correction (2026-07-18):** this review was first signed
+  "Claude Opus 4.8"; the authoring session's actual model is `claude-fable-5`
+  (Claude Fable 5). Corrected by the same session per the registry's
+  no-guessed-versions rule; see C-007 in `AI_CONTRIBUTIONS.md`.
+- **Focus:** Full plan, weighted to engine implementation seams and art direction
+- **Files inspected:** `src/scenes/BaseScene.js`, `src/scenes/AtlasScene.js`,
+  `src/scenes/PreloadScene.js`, `src/systems/sanctuaryRender.js`,
+  `src/systems/textureBake.js`, `src/systems/iso.js`,
+  `src/systems/wyvernPresentation.js`, `src/systems/wyvernAtlas.js`,
+  `src/entities/Wyvern.js`, `src/data/sanctuary.js`, `src/data/wyverns.js`,
+  `src/config.js`, `src/main.js`, `assets/sprites/wyverns/README.md`
+- **Summary:** The plan's architecture and milestone shape are sound and I would
+  not restructure them. What is missing is mostly at the level of "this specific
+  line will break when Milestone 1 lands." Five concrete failure seams exist in
+  current code, four of them inside Milestone 1's blast radius. Separately, the
+  art direction has an unresolved decision the camera work will force: the
+  procedural terrain and the painted dragons have quality curves that run in
+  opposite directions across a zoom range, so the zoom ceiling is an art
+  decision before it is a camera constant. On the plus side, the eight-direction
+  facing hook is already fully wired and can be used in Milestone 2 with zero
+  new art.
+
+- **Must fix before implementation:**
+
+  1. **The vault gate fires on `pointerdown`, so drag-pan will teleport the
+     player into the Vault.** `BaseScene.wireEntrance()` binds `pointerdown`
+     straight to `enterVault()`. `AtlasScene.setupInput()` already solved this
+     with `CLICK_SLOP` plus a `pendingPoiId` deferred to `pointerup`. Milestone 1
+     adds drag-pan, but the interaction system that would fix this is Milestone 3
+     — so between those two milestones every pan that begins over the gate is a
+     scene transition. Move the gate to click-slop semantics inside Milestone 1.
+
+  2. **`buildSanctuaryView()` never calls `cam.setBounds()`, and adding it
+     naively will discard the panel framing.** It currently does `setZoom()` then
+     `centerOn()` only. `AtlasScene.fitCamera()` documents the trap in its own
+     comment: Phaser force-centers the camera on its bounds whenever the view is
+     wider than they are, silently throwing away `centerOn()` and parking the map
+     behind the panel. The atlas pads its bounds by `biasWorld = panelBias / fit`
+     on both x sides to avoid it. The sanctuary needs the same padding, and the
+     plan's camera section should state it rather than leaving it to be
+     rediscovered.
+
+  3. **The backdrop is sized for the fitted view only, so panning will reveal its
+     edge.** `buildSanctuaryView()` places one image at `(lookX, lookY)` with
+     `setDisplaySize(GAME.width / zoom, GAME.height / zoom)` — exactly the
+     camera's footprint at fit zoom. Zooming in stays covered (fit is the zoom
+     floor), but any pan slack moves the camera off that rectangle and exposes
+     the void behind it. `AtlasScene` sidesteps this entirely with
+     `cameras.main.setBackgroundColor()` plus a sea fade. Cheapest sanctuary fix
+     is `backdrop.setScrollFactor(0)` so it is screen-locked; otherwise oversize
+     it by the pan margin or set a matching camera background color.
+
+  4. **Resident name labels bake their font size from the fit zoom.**
+     `spawnSanctuaryResidents()` sets `font: ${Math.round(11 / zoom)}px monospace`
+     using the zoom passed in from `BaseScene.buildWorld()`. Font size is baked
+     into the text texture, so once zoom is free the label renders at whatever
+     the camera happens to be — roughly 2.2× oversized at `zoom.max`, and it
+     cannot be corrected by rescaling without resampling. Author labels at one
+     fixed size and apply a clamped `label.setScale(1 / cam.zoom)` per frame (or
+     use `setResolution`). This belongs in Milestone 1, because Milestone 1 is
+     what introduces free zoom.
+
+  5. **`panelBias` is resolved once at fit time and then passed around as if
+     constant.** `lookX` bakes `panelBias / zoom` at build time, and
+     `this.world.zoom` is handed to `spawnSanctuaryResidents()` as a stable
+     value. R-001 raised bias scaling; the mechanism is that *every* stored
+     consumer of that fit zoom goes stale the moment the camera can zoom. Follow
+     mode must recompute the bias from live `cam.zoom` each frame.
+
+- **Recommended changes:**
+
+  1. **Stop rebuilding the whole world on recruit.** `onRecruit` calls
+     `buildWorld()`, which runs `tweens.killAll()` and destroys the backdrop,
+     the layer, and every tile — when the only thing that changed is the resident
+     set. Splitting resident spawning into its own `refreshResidents()` removes
+     the camera-reset problem, the `killAll()` collision, and R-001's must-fix 3
+     outright instead of working around them. Tiles, props, and the backdrop are
+     unchanged and their textures are already cached, so the rebuild buys
+     nothing.
+
+  2. **Wire eight-way facing in Milestone 2 — the hook is already live and needs
+     no art.** `PreloadScene.createWyvernAnimations()` registers all eight
+     directional keys for every state, falling back to the east baseline when
+     art is absent. `wyvernAnimationKey(profile, state, direction)` already takes
+     a direction. A sanctuary controller can compute a heading and call
+     directional keys today; un-authored directions play the baseline safely.
+     Doing this now means directional art later lands with zero code change,
+     which is strictly better than shipping `setFlipX` and retrofitting.
+
+  3. **Resolve plan question 3 to screen-space, matching the mission layer.**
+     `Wyvern.update(delta)` already stores a screen-space footprint (`this.x`,
+     `this.groundY`), normalizes input in screen space, and is delta-timed
+     (`SPEED` is px/ms). `screenToGrid()` rounds the inverse transform, which is
+     the correct nearest-diamond test, so it is a valid per-frame collision
+     lookup for a continuous screen-space position. Screen-space also yields
+     uniform apparent speed in every direction for free; grid-space does not,
+     because the 2:1 diamond makes equal grid rates produce unequal screen rates.
+
+  4. **On R-001's must-fix 2 (sliding AABB collision): probably more than the
+     first slice needs.** Recorded as disagreement, not correction. With a
+     screen-space footprint and a point-in-cell test, axis-separated movement
+     produces sliding for free — attempt the x step and revert it if the
+     destination cell is null or `blocked`, then attempt the y step
+     independently. A full AABB sweep only earns its cost if the dragon's
+     footprint should be wider than one cell, which is not yet decided.
+
+  5. **The depth sort is not the performance risk; `roundPixels` is.** The
+     exterior is 24×24 with roughly 350–380 non-null cells, 9 props, and 4
+     display objects per atlas-textured resident — a per-frame `sortByDepth()`
+     over ~400 objects is not a 60fps problem, and the plan is right to defer
+     profiling. The real per-frame risk is `roundPixels: true` in `main.js`
+     combined with camera-follow lerp at fractional zoom: rounded sprite
+     positions under a smoothly moving fractional-zoom camera produce visible
+     stepping on exactly the sprite the player is watching. Test follow at a
+     non-integer zoom before tuning the lerp constant.
+
+- **Art direction (game-art lens):**
+
+  6. **The two art styles' quality curves run in opposite directions across the
+     new zoom range — the zoom ceiling is an art decision.** `ensureTileTexture()`
+     bakes tiles at exactly `ISO.tileWidth`/`tileHeight` (64×32), 1:1 with
+     display, so any zoom above the fit is pure magnification. Dragons are
+     painted atlases whose source poses are ~600–750 px tall (sprite README)
+     displayed at `WYVERN_ART.sanctuaryHeight` 64. Zooming in improves the dragon
+     and degrades the terrain; zooming out does the reverse. Worse, `pixelArt:
+     true` means nearest-neighbour magnification, so copying the atlas's
+     continuous `zoom.step` of 1.12 lands the sanctuary on non-integer zooms
+     where baked tile pixels double unevenly and shimmer during pan. Recommend
+     `SANCTUARY.zoom` use discrete stops (1.0, 1.5, 2.0) rather than a
+     multiplicative step, and cap `max` at 2.0. Baking tiles at 2× is the real
+     fix but costs memory across 23 biome palettes × 4 variants × height levels,
+     which is not a prototype-speed choice.
+
+  7. **For directional art, author `n` and `s` next — not a full eight-way set,
+     and not on Embertooth's current page.** The README's directions are
+     screen-space with `e` as the required baseline. If sanctuary controls are
+     screen-aligned (recommendation 3), the dominant headings are screen
+     up/down/left/right = `n`, `s`, `e`, `w`. `e` exists and `w` can stay a
+     temporary mirror under the README's own mirroring caveat, so two authored
+     views cover the four most-used headings. Memory constraint: Embertooth's
+     active atlas is already 4096×4350, about 68 MiB decoded and above the
+     4096 px portable cap the README documents — new frames cannot go on that
+     page without first trimming the required-state export. Treat directional
+     art as a budgeted Milestone 4 task; the code hook (recommendation 2) lands
+     in Milestone 2 regardless.
+
+  8. **Sanctuary flight needs shadow altitude response, and the constants do not
+     exist yet.** `Wyvern.updateFlightPose()` already scales and fades the mission
+     shadow with `flightRatio` (`setScale(1 - flightRatio * 0.22)`, alpha ×
+     `(1 - flightRatio * 0.44)`), but `spawnSanctuaryResidents()` creates a static
+     ellipse from `WYVERN_ART.sanctuaryShadow` with no lift coupling, and
+     `SANCTUARY` has no flight-lift constant at all. Without shadow separation a
+     lifting dragon reads as a *bigger* dragon rather than a higher one — the
+     clearest altitude cue available in an isometric view. Propose
+     `SANCTUARY.flightLift` around 14–18 against the 64 px sanctuary sprite
+     height, with scale/alpha response mirroring the mission numbers.
+
+  9. **Selection must not be carried by accent color alone.** Residents already
+     get an accent aura from `wyvernAccentColor` (Embertooth `#d97706`,
+     Cinderlash `#dc3f50`, Galeclaw `#38a9c9`). The exterior is almost entirely
+     the `moss` palette, so Galeclaw's cyan has the weakest value separation from
+     the ground of the three. Keep the accent aura for identity and give
+     selection its own high-value ring — brightness, not hue — so "which dragon
+     am I controlling" survives both the green ground and color-vision
+     differences.
+
+  10. **Replace the gate's alpha-pulse affordance with a footprint marker.**
+      `wireEntrance()` signals interactivity by tweening the whole gate sprite
+      between alpha 1.0 and 0.8. At fit zoom that prop is small and the cue is
+      nearly invisible, and spending sprite alpha on affordance conflicts with
+      alpha as a state channel (the atlas already uses it for
+      discovered/filtered). A pulsing ellipse at the prop's ground point reads at
+      every zoom, matches the resident aura's visual language, and is exactly
+      this plan's own rendering item 6.
+
+  11. **Slow the sanctuary fly cadence with no new art.**
+      `WYVERN_ART.frameRates.fly` is 11. A dragon cruising its home island at
+      combat wing-cadence reads wrong. Apply a sanctuary playback rate (~0.7×) to
+      the existing fly animation via `setPlaybackRate` rather than authoring a
+      second animation or forking the frame-rate table.
+
+  12. **Asset path naming has already drifted and directional exports will
+      compound it.** Embertooth resolves to
+      `.../Embertooth/wyvern_final_required_bundle/wyvern_required_atlas.png`;
+      Cinderlash to `.../Cinderlash/wyvern_atlas_4096.png`. The README already
+      prescribes `<profile-slug>.png` / `<profile-slug>.json` for new exports and
+      warns that production hosts are case-sensitive, while folders are
+      `Embertooth`/`Cinderlash` against keys `wyvern-embertooth`/
+      `wyvern-cinderlash`. Worth normalizing before directional files multiply
+      the filenames.
+
+- **Keep as designed:**
+  1. Scene separation (D-002). Nothing in this review needs it relaxed.
+  2. Direct dragon control for the first slice (D-001), and I would strengthen
+     the reasoning: the sprite contract's ground pivot is authored for a grounded
+     dragon and no profile has mount or rider frames, so riding is an art project
+     before it is a code project.
+  3. Footprint-driven depth. `placeSanctuaryTiles()`, `placeDecor()`, and
+     `Wyvern` already agree on it; do not churn it.
+  4. Movement and lift on the update tick rather than tweens, for the
+     `killAll()` reason the plan already gives.
+
+- **Risks and edge cases:**
+  1. **Galeclaw has `atlas: null`.** It renders through the `species-<id>` branch
+     in `spawnSanctuaryResidents()` with origin (0.5, 0.85) and no aura, shadow,
+     or idle animation. Milestone 2 plans to "reuse the existing shadow/label" —
+     for this profile there is no shadow to reuse. Either restrict control to
+     atlas-backed profiles or give the placeholder branch a shadow.
+  2. **Recruited non-wyvern species land in that same branch.** `CLAUDE.md`
+     already notes they cannot go on missions; free-roam raises the same question
+     for the sanctuary and should answer it explicitly rather than by crash.
+  3. **`RESIDENT_SPOTS.outside` has six entries** and the roster wraps past that
+     with a ±14 px offset, so a wrapped resident can occupy the same cell as the
+     controlled dragon.
+  4. **`tweens.killAll()` is scene-wide**, so any tween-based interaction effect
+     from Milestone 3 dies silently if a recruit happens mid-effect.
+
+- **Suggested first vertical slice:** Narrower than Milestone 1 as written.
+  Ship only: bounds with bias padding, cursor-anchored zoom at discrete stops,
+  screen-locked backdrop, per-frame label rescale, and the gate moved to
+  `pointerup` with click slop. No movement, no follow, no actor. That slice is
+  independently verifiable against the existing Base → Vault flow and clears
+  four of the five must-fix seams before anything depends on them.
+
+- **Confidence / unknowns:** Source was read, not run. I did not execute
+  `npm run dev` or `npm run check`, so nothing here is an observed-behavior
+  claim — in particular the `roundPixels`/fractional-zoom stepping, the tile
+  magnification shimmer, and how the painted atlas actually resolves at zoom 2.0
+  are predictions from the code and should be confirmed in a browser during
+  Milestone 1. I did not inspect `tileArt.js` drawing internals, `ui/roostPanel.js`,
+  or the Vitest suite.
+
+### Review R-003 — Claude Fable 5
+
+- **Date:** 2026-07-18
+- **Model ID:** AI-004
+- **Focus:** Verification and accessibility (reviewer question 8), plus an
+  executed run of the project's check gate. Deliberately narrow: R-001 and
+  R-002 covered design and implementation seams; neither systematically
+  answered question 8, and R-002 left its own gate unrun.
+- **Files inspected:** `tests/wyvernAtlas.test.js`,
+  `tests/wyvernPresentation.test.js`, `src/ui/roostPanel.js`, `src/ui/ui.css`,
+  `package.json`, plus re-reads of `AtlasScene.js`, `Wyvern.js`, `main.js`.
+- **Summary:** The check gate is green today — that is now an observed fact,
+  not an assumption. But the entire automated test surface is wyvern-atlas
+  shaped: two files, nine tests, all covering the sprite contract and
+  presentation math. Nothing the free-roam initiative depends on — iso math,
+  sanctuary data invariants, walkability — has a contract, and the plan's
+  acceptance checklist has no accessibility line at all. The gaps below are
+  additions to the plan's checklist and milestone exits, not code changes.
+- **Executed verification (observed results, 2026-07-18):**
+  - `npm run check:syntax` — pass, 35 modules.
+  - `npm run validate:atlas` — 0 errors, 1 warning: Embertooth's 4096×4350
+    page exceeds the portable 4096 px target. Pre-existing; confirms the
+    budget constraint R-002 item 7 argued from the README.
+  - `npx vitest run` — 9/9 pass (2 files).
+  - `npx vite build` — pass, 37 modules transformed.
+  - Environment caveat: run on a Linux copy of the worktree because the
+    checked-in `node_modules` contains macOS-native bindings; the mounted
+    worktree was not modified. Browser smoke test still **not run** — canvas
+    behavior remains unverified, as `CLAUDE.md` itself warns.
+- **Must fix before implementation:** None. Everything below is a
+  verification-plan gap, not an implementation blocker.
+- **Recommended changes:**
+  1. **Add pure-data contract tests alongside the milestones, in the repo's
+     own established pattern.** `wyvernAtlas.js` shows the house style:
+     validate authored data with a pure module, test it without Phaser.
+     Candidates, all pure today: (a) `gridToScreen`/`screenToGrid` round-trip
+     — Milestone 2 promotes `screenToGrid` from "handy for click-to-move
+     later" (its own comment) to load-bearing collision lookup, which is when
+     it earns a test; (b) `RESIDENT_SPOTS` cells must be non-null, unblocked,
+     prop-free — the data file claims this in comments, I hand-verified all
+     six outside spots hold today, and Milestone 4's "tune layout" task is
+     exactly when a silent regression would land; (c) once Milestone 3's
+     `INTERACTIONS` list exists: unique ids, in-bounds cells, `kind` present
+     in `DECOR_DRAWERS`, range positive; (d) the Milestone 2 walkable-mask
+     builder, if written as a pure function of `tiles`, is testable before
+     any scene wiring exists.
+  2. **Add an accessibility line to the acceptance checklist: honor
+     `prefers-reduced-motion`.** `grep` finds no reduced-motion handling
+     anywhere in `src/`. The initiative adds camera lerp, cursor zoom, flight
+     bob, and pulse affordances on top of the existing ambient tweens — this
+     is the point where motion comfort becomes a real concern (D-003 says
+     "validate motion comfort" but no checklist item enforces it). Cheap
+     here: one `SANCTUARY` flag read from
+     `matchMedia('(prefers-reduced-motion: reduce)')` that snaps the follow
+     camera (no lerp) and skips ambient bob/flicker registration.
+  3. **Add a keyboard/DOM-focus acceptance check.** `Wyvern` binds
+     WASD/arrows/Space through Phaser's global keyboard plugin, and a
+     sanctuary controller will do the same. `#ui-overlay` children take
+     pointer events (`ui.css` lines 23–26) but nothing isolates *keyboard*
+     input: world keys should not act while the user is clicking through the
+     Roost panel, and Space is triple-booked — plan pan modifier, mission
+     attack, and browser page-scroll. Checklist item: panel interaction never
+     moves the dragon; movement keys never scroll the page.
+  4. **Add a pointer-loss check to the manual route.** The atlas pan
+     (`pointerup` handler, `AtlasScene.js`) has no handling for a pointer
+     released outside the canvas/window; the sanctuary camera will inherit
+     the pattern. Route step: start a drag, release the button outside the
+     window, return — the camera must not still be glued to the cursor.
+  5. **Pin the two open art/perf predictions to Milestone 1's exit.** R-002's
+     `roundPixels` stepping and tile-magnification shimmer are one-minute
+     browser checks once the camera exists. Add to the route: at a
+     non-integer zoom, follow a moving dragon and watch tile edges and label
+     glyphs for shimmer/stepping. Cheap to check, expensive to discover in
+     Milestone 4.
+  6. **Check the panel-bias assumption at one non-16:9 window size.** The
+     canvas letterboxes inside `#game` (`Scale.FIT`) while the DOM panel
+     positions against the window — at a wide window the panel can sit
+     partly over the letterbox bar rather than the canvas, which changes how
+     much world `panelBias` actually needs to clear. The checklist pins
+     1280×720 only. One manual-route step at a very wide and a portrait-ish
+     window catches it; I have not browser-verified the overlap myself.
+  7. **Give the Milestone 4 performance item a number.** "Profile depth
+     sorting" has no target. Propose: 60 fps sustained in follow mode at max
+     zoom with 8 residents (one past the six authored spots, so wrap logic is
+     live), measured with browser dev tools at Milestone 4 exit.
+- **Keep as designed:**
+  1. The check gate itself (`syntax → atlas → vitest → build`) is the right
+     shape; nothing above requires changing it, only feeding it more
+     contracts.
+  2. Keeping HTML for panels and Phaser objects for world UI — the
+     `pointer-events` split in `ui.css` already does the pointer isolation
+     correctly; only keyboard isolation is missing.
+- **Risks and edge cases:** Covered under recommendations 3, 4, and 6 — they
+  are all "works on the dev machine, breaks on someone else's window/input"
+  class failures, which is exactly what a multi-model project with no shared
+  test hardware should push into checklists.
+- **Suggested first vertical slice:** No change to R-002's proposal; this
+  review adds exit criteria to it, not scope.
+- **Confidence / unknowns:** The four gate results are observed. The
+  letterbox/panel overlap (item 6) and pointer-loss behavior (item 4) are
+  read from source and standard browser behavior, not run — treat both as
+  "verify," not "known broken." I did not measure real fps anywhere.
+
 
 ### Decision log
 
