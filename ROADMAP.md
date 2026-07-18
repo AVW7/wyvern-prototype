@@ -3,6 +3,20 @@
 Prioritized next steps for the prototype. Ordered so each phase is playable
 and demoable on its own — don't jump ahead of unfinished phases.
 
+## Active design initiative — Sanctuary free roam
+
+The sanctuary is planned to evolve from a fitted roster diorama into an
+explorable home space: directly control a selected wyvern, follow or survey it
+with cursor-anchored zoom, and interact with residents and landmarks in the
+isometric world. The staged design, architecture seams, acceptance criteria,
+and explicit deferrals live in
+[`docs/SANCTUARY_FREE_ROAM_PLAN.md`](docs/SANCTUARY_FREE_ROAM_PLAN.md).
+
+Implementation should land milestone-by-milestone so the existing
+Base/Vault/Atlas/Mission loop remains playable after every change. This is a
+multi-AI initiative; implementation sessions should also update
+[`AI_CONTRIBUTIONS.md`](AI_CONTRIBUTIONS.md).
+
 ## Phase 1 — Close the base ↔ mission loop
 
 The two layers currently don't talk to each other beyond one hardcoded read.

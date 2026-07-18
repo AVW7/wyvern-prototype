@@ -1,5 +1,12 @@
 # Wyvern Prototype
 
+> **Multi-AI project:** this prototype is intentionally developed with human
+> direction and is set up for contributions from Codex, Claude, Gemini, and
+> other models.
+> See the [shared AI context](AI_CONTEXT.md), [model contribution
+> registry](AI_CONTRIBUTIONS.md), and [sanctuary free-roam
+> plan](docs/SANCTUARY_FREE_ROAM_PLAN.md).
+
 A Phaser 3 scaffold for a two-layer game: an **isometric-background action mission**
 with **sprite wyverns**, plus a **base/roster management sim** between missions.
 Runs with zero art files — placeholder textures are generated at load so the shell
@@ -29,6 +36,19 @@ supported because the game uses ES modules and loaded assets.
 | `npm test` | Run the pure atlas-contract tests |
 | `npm run build` | Create the static production build, including runtime assets, in `dist/` |
 | `npm run check` | Syntax, atlas validation, tests, and production build |
+
+## Multi-AI collaboration
+
+- `AI_CONTEXT.md` is the shared model-neutral handoff and read order.
+- `CLAUDE.md` is the established detailed architecture reference.
+- `AGENTS.md` and `GEMINI.md` route Codex/agents and Gemini into the same
+  context rather than duplicating project rules.
+- `AI_CONTRIBUTIONS.md` is an append-only model registry and contribution log.
+- `docs/SANCTUARY_FREE_ROAM_PLAN.md` captures the planned explorable sanctuary,
+  camera zoom/follow behavior, interactions, milestones, and acceptance checks.
+
+Models should add themselves only after a material contribution, then append a
+work record with the files/evidence and verification performed.
 
 ## What you'll see
 

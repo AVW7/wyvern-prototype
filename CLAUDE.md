@@ -2,6 +2,15 @@
 
 Context for AI agents (and humans) working on this repo. Read this first.
 
+## Multi-AI project
+
+This repository intentionally supports collaboration among Claude, Codex,
+Gemini, other models, and humans. Read `AI_CONTEXT.md` for the shared handoff,
+`docs/SANCTUARY_FREE_ROAM_PLAN.md` for the active sanctuary design initiative,
+and `AI_CONTRIBUTIONS.md` before recording material work. After contributing,
+append a truthful contribution row; do not infer an exact model version that
+was not recorded.
+
 ## What this is
 
 A **Phaser 3** prototype for a two-layer game:
