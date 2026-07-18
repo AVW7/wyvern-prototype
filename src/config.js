@@ -88,6 +88,10 @@ export const SANCTUARY = {
     flightResponseMs: 140,
     bobAmplitude: 2.5,
     maxDeltaMs: 50,
+    // Max height levels the wyvern climbs onto in one step. Gentle hills and
+    // terraces (rise <= this) are walkable and ridden up; a taller rise reads
+    // as a cliff/wall it's stopped by and must go around.
+    climbStep: 1,
   },
   // Non-controlled residents make short trips around their authored home
   // spots. They never leave the same walkable mask as the controlled wyvern.

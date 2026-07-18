@@ -70,7 +70,10 @@ function openTiles(size = 5) {
 }
 
 describe('sanctuary movement', () => {
-  it('builds a walkable mask from authored holes and blocked/no-go cells', () => {
+  it('marks holes and no-go cells unwalkable but keeps raised cells on the mask', () => {
+    // Raised/`blocked` cells stay walkable — elevation is gated per step by the
+    // climb rule, so the actor can walk up a hill; only holes and explicit
+    // no-go cells are removed from the mask.
     const mask = createWalkableMask([[
       cell(),
       null,
@@ -78,10 +81,44 @@ describe('sanctuary movement', () => {
       cell(1, { noGo: true }),
     ]]);
 
-    expect(mask).toEqual([[true, false, false, false]]);
+    expect(mask).toEqual([[true, false, true, false]]);
     expect(canOccupy(mask, 0.49, 0)).toBe(true);
     expect(canOccupy(mask, 1, 0)).toBe(false);
     expect(canOccupy(mask, { col: Number.NaN, row: 0 })).toBe(false);
+  });
+
+  it('walks up a gentle hill but is stopped by a taller cliff', () => {
+    const climbTuning = {
+      speed: 1280, maxDeltaMs: 100, collisionRadius: 0, collisionStep: 4, climbStep: 1,
+    };
+    // Flat home area on cols 0-2; everything at col >= 3 is raised terrain.
+    const region = (obstacleHeight) => {
+      const tiles = openTiles(6);
+      for (let row = 0; row < 6; row += 1) {
+        for (let col = 3; col < 6; col += 1) tiles[row][col] = cell(obstacleHeight);
+      }
+      return tiles;
+    };
+
+    const climber = residentAt(2, 2);
+    createSanctuaryMovement({
+      scene: sceneWith({ RIGHT: { isDown: true } }),
+      layer: { sort: vi.fn() },
+      tiles: region(2), // +1 rise — a hill the actor climbs onto
+      resident: climber,
+      tuning: climbTuning,
+    }).update(0, 100);
+    expect(Math.round(climber.footprint.col)).toBeGreaterThanOrEqual(3);
+
+    const stopped = residentAt(2, 2);
+    createSanctuaryMovement({
+      scene: sceneWith({ RIGHT: { isDown: true } }),
+      layer: { sort: vi.fn() },
+      tiles: region(3), // +2 rise — a cliff it can't climb, so it never enters
+      resident: stopped,
+      tuning: climbTuning,
+    }).update(0, 100);
+    expect(Math.round(stopped.footprint.col)).toBeLessThanOrEqual(2);
   });
 
   it('normalizes diagonal input and publishes one continuous footprint', () => {

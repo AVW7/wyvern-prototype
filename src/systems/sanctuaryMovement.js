@@ -23,6 +23,7 @@ const DEFAULT_MOVEMENT = Object.freeze({
   bobRate: 0.008,
   collisionRadius: 3,
   collisionStep: 5,
+  climbStep: 1, // height levels the actor climbs onto in one step (cliffs above this block)
   maxDeltaMs: 100,
   actionDurationMs: 650,
 });
@@ -66,12 +67,35 @@ function movementTuning(overrides = {}) {
 
 /**
  * Builds a pure row/column mask. Truthy entries are authored cells that may
- * be occupied; null holes, cliffs, and explicit no-go cells stay false.
+ * be occupied; null holes and explicit no-go cells stay false. Raised cells
+ * (hills, terraces) ARE walkable — elevation is gated per step by the climb
+ * rule in moveWithCollision, not by this flat mask, so the actor can walk up a
+ * hill while a sheer rise beyond climbStep still stops it.
  */
 export function createWalkableMask(tiles = []) {
   return tiles.map((row) => (row || []).map((cell) => Boolean(
-    cell && !cell.blocked && cell.noGo !== true && cell.walkable !== false,
+    cell && cell.noGo !== true && cell.walkable !== false,
   )));
+}
+
+/** Per-cell heights (baseHeight for holes), used by the climb-step gate. */
+export function createHeightGrid(tiles = []) {
+  return tiles.map((row) => (row || []).map(
+    (cell) => (cell ? finite(cell.height, TERRAIN.baseHeight) : TERRAIN.baseHeight),
+  ));
+}
+
+function heightAt(heights, col, row) {
+  return heights?.[Math.round(row)]?.[Math.round(col)] ?? TERRAIN.baseHeight;
+}
+
+// A rise larger than climbStep is a cliff/wall the actor can't step onto;
+// descending any distance is allowed (it can drop or fly down).
+function climbable(heights, climbStep, fromLogical, toLogical) {
+  if (!heights) return true;
+  const rise = heightAt(heights, toLogical.col, toLogical.row)
+    - heightAt(heights, fromLogical.col, fromLogical.row);
+  return rise <= climbStep;
 }
 
 /** Accepts continuous grid coordinates and resolves them to the current cell. */
@@ -315,7 +339,7 @@ function blockedBy(source, controller) {
 
 // Swept steps prevent a long frame from tunnelling through a one-cell cliff or
 // island edge. Axis retries provide natural sliding instead of sticky corners.
-function moveWithCollision(mask, logical, deltaCol, deltaRow, tuning) {
+function moveWithCollision(mask, logical, deltaCol, deltaRow, tuning, heights = null) {
   const distance = worldMetricLength(deltaCol, deltaRow);
   if (!(distance > 0)) return false;
   const stepLimit = Math.max(1, finite(tuning.collisionStep, DEFAULT_MOVEMENT.collisionStep));
@@ -323,6 +347,11 @@ function moveWithCollision(mask, logical, deltaCol, deltaRow, tuning) {
   const stepCol = deltaCol / steps;
   const stepRow = deltaRow / steps;
   const radius = Math.max(0, finite(tuning.collisionRadius, 0));
+  const climbStep = finite(tuning.climbStep, DEFAULT_MOVEMENT.climbStep);
+  // A destination is enterable when it's on the walkable mask AND the rise onto
+  // it from where the actor stands now is within one climb step.
+  const enterable = (dest) => canOccupyLogical(mask, dest, radius)
+    && climbable(heights, climbStep, logical, dest);
   let moved = false;
 
   for (let step = 0; step < steps; step += 1) {
@@ -330,24 +359,18 @@ function moveWithCollision(mask, logical, deltaCol, deltaRow, tuning) {
       col: logical.col + stepCol,
       row: logical.row + stepRow,
     };
-    if (canOccupyLogical(mask, target, radius)) {
+    if (enterable(target)) {
       logical.col = target.col;
       logical.row = target.row;
       moved = true;
       continue;
     }
 
-    if (stepCol !== 0 && canOccupyLogical(mask, {
-      col: target.col,
-      row: logical.row,
-    }, radius)) {
+    if (stepCol !== 0 && enterable({ col: target.col, row: logical.row })) {
       logical.col = target.col;
       moved = true;
     }
-    if (stepRow !== 0 && canOccupyLogical(mask, {
-      col: logical.col,
-      row: target.row,
-    }, radius)) {
+    if (stepRow !== 0 && enterable({ col: logical.col, row: target.row })) {
       logical.row = target.row;
       moved = true;
     }
@@ -465,6 +488,7 @@ export function createSanctuaryMovement({
   inputBlocked = false,
 } = {}) {
   const mask = createWalkableMask(tiles);
+  const heights = createHeightGrid(tiles);
   const config = movementTuning(tuning);
   const keys = suppliedKeys || scene?.input?.keyboard?.addKeys?.(
     'W,A,S,D,UP,DOWN,LEFT,RIGHT',
@@ -476,6 +500,7 @@ export function createSanctuaryMovement({
     layer,
     tiles: tiles || [],
     mask,
+    heights,
     resident: null,
     footprint: null,
     logical: null,
@@ -656,6 +681,7 @@ export function createSanctuaryMovement({
             worldInput.col * distance,
             worldInput.row * distance,
             config,
+            this.heights,
           );
           if (moved) {
             this.lastWorldVector = {
@@ -816,6 +842,7 @@ export function createSanctuaryWanderers({
   inputBlocked = false,
 } = {}) {
   const mask = createWalkableMask(tiles);
+  const heights = createHeightGrid(tiles);
   const config = wanderTuning(tuning);
   const random = typeof tuning.random === 'function' ? tuning.random : Math.random;
   const initialView = viewFrom(getView ?? view);
@@ -1041,6 +1068,7 @@ export function createSanctuaryWanderers({
               deltaCol / remaining * distance,
               deltaRow / remaining * distance,
               config,
+              heights,
             );
             if (moved) {
               record.lastWorldVector = {
