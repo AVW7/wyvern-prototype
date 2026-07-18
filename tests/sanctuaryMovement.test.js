@@ -6,6 +6,7 @@ import {
   createSanctuaryMovement,
   createSanctuaryWanderers,
   createWalkableMask,
+  findPath,
 } from '../src/systems/sanctuaryMovement.js';
 import {
   projectFootprint,
@@ -535,5 +536,108 @@ describe('sanctuary movement', () => {
     expect(first.sprite.getData('depth')).toBeCloseTo(
       Math.max(liveProjection.y, owningDepth) + 0.2,
     );
+  });
+
+  describe('A* pathfinding', () => {
+    it('finds a direct path on a simple open grid', () => {
+      const mask = [
+        [true, true, true],
+        [true, true, true],
+        [true, true, true],
+      ];
+      const heights = [
+        [1, 1, 1],
+        [1, 1, 1],
+        [1, 1, 1],
+      ];
+      const start = { col: 0, row: 0 };
+      const end = { col: 2, row: 2 };
+      const path = findPath(mask, heights, start, end);
+      expect(path).toBeDefined();
+      expect(path).not.toBeNull();
+      expect(path.length).toBeGreaterThan(0);
+      expect(path[0]).toEqual({ col: 1, row: 1 });
+      expect(path[path.length - 1]).toEqual({ col: 2, row: 2 });
+    });
+
+    it('respects climb constraints (cliffs) and finds alternate path', () => {
+      const mask = [
+        [true, true, true],
+        [true, true, true],
+        [true, true, true],
+      ];
+      const heights = [
+        [1, 1, 1],
+        [1, 5, 1],
+        [1, 1, 1],
+      ];
+      const start = { col: 0, row: 1 };
+      const end = { col: 2, row: 1 };
+      const path = findPath(mask, heights, start, end, { climbStep: 1 });
+      expect(path).toBeDefined();
+      expect(path).not.toBeNull();
+      path.forEach(node => {
+        expect(node).not.toEqual({ col: 1, row: 1 });
+      });
+      expect(path[path.length - 1]).toEqual({ col: 2, row: 1 });
+    });
+
+    it('returns null for unreachable targets', () => {
+      const mask = [
+        [true, false, true],
+        [true, false, true],
+        [true, false, true],
+      ];
+      const heights = [
+        [1, 1, 1],
+        [1, 1, 1],
+        [1, 1, 1],
+      ];
+      const start = { col: 0, row: 1 };
+      const end = { col: 2, row: 1 };
+      const path = findPath(mask, heights, start, end);
+      expect(path).toBeNull();
+    });
+
+    it('prevents corner cutting on diagonals', () => {
+      const mask = [
+        [true, false],
+        [false, true],
+      ];
+      const heights = [
+        [1, 1],
+        [1, 1],
+      ];
+      const start = { col: 0, row: 0 };
+      const end = { col: 1, row: 1 };
+      const path = findPath(mask, heights, start, end);
+      expect(path).toBeNull();
+    });
+
+    it('supports target range resolution', () => {
+      const mask = [
+        [true, true, true],
+        [true, true, true],
+        [true, true, true],
+      ];
+      const heights = [
+        [1, 1, 1],
+        [1, 1, 1],
+        [1, 1, 1],
+      ];
+      const start = { col: 0, row: 0 };
+      const end = { col: 2, row: 2 };
+      const p1 = projectFootprint(1, 1, TERRAIN.baseHeight);
+      const p2 = projectFootprint(2, 2, TERRAIN.baseHeight);
+      const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+
+      const path = findPath(mask, heights, start, end, { range: dist + 0.1 });
+      expect(path).toBeDefined();
+      expect(path).not.toBeNull();
+      const lastNode = path[path.length - 1];
+      const pLast = projectFootprint(lastNode.col, lastNode.row, TERRAIN.baseHeight);
+      const finalDist = Math.hypot(pLast.x - p2.x, pLast.y - p2.y);
+      expect(finalDist).toBeLessThanOrEqual(dist + 0.1);
+    });
   });
 });

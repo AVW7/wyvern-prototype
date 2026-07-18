@@ -7,7 +7,7 @@ visible without treating any model as the sole author.
 
 - **Distinct contributing model entries:** 8
 - **Providers represented:** 3
-- **Contribution records:** 24
+- **Contribution records:** 26
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -57,6 +57,8 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-022 | 2026-07-18 | AI-007 | Added Review R-004 to the Rotatable Camera plan with constraints for view-aware texture caching, lazy-loading directional sprite atlases, dynamic occlusion bounds, and tween input safety. | docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md | No code modified; documentation-only change. |
 | C-023 | 2026-07-18 | AI-008 | Added Review R-005 to the Rotatable Camera plan proposing scope reductions: sprite mirroring to halve art requirements and pre-baking tiles to prevent cache thrashing. | docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md | No code modified; documentation-only change. |
 | C-024 | 2026-07-18 | AI-002 | Implemented the rotatable sanctuary camera engineering through Milestone 4: nine-view forward/inverse projection, stepped yaw/elevation rig and transition lock, camera-relative logical movement, projected picking/range, in-place world reprojection, per-view tiles and procedural exterior props, projected ground affordances/world shadow, stable depth ties, visible controls, session persistence, and lifecycle safety. Directional wyvern atlas art remains an explicit Milestone 5 blocker. | `src/scenes/BaseScene.js`, `src/config.js`, `src/systems/sanctuary*.js`, `src/systems/tileArt.js`, `src/systems/textureBake.js`, `src/ui/roostPanel.js`, `src/ui/ui.css`, sanctuary tests, plan/context/README/roadmap/sprite docs | `npm run check` (50 modules; 11 test files / 135 tests; atlas validation and production build passed; existing Embertooth portability warning remains). A 1280×720 Chrome route covered all nine endpoints, transition lock, movement/Follow, Home, rebuild, panel, recruit, Vault, Atlas, and Mission before the final projected-prop/ground-shadow refinements; the post-refinement visual rerun remains pending. |
+| C-025 | 2026-07-18 | AI-003 | Implemented A* pathfinding for both ambient wanderers and the player-controlled wyvern, including cliff heights and diagonal corner-cutting checks, click-to-move, and out-of-range click-to-interact auto-navigation. | `src/systems/sanctuaryMovement.js`, `src/systems/sanctuaryInteractions.js`, `tests/sanctuaryMovement.test.js` | `npm run check` (all 12 test files / 143 tests passed, syntax check passed, atlas validation passed, production build passed). |
+| C-026 | 2026-07-18 | AI-003 | Redesigned the Roost companion management panel overlay on the grounds. Replaced all purple, violet, and lavender colors with a premium obsidian, gold, and bronze theme. Added glassmorphism depth, pulsing live free-roam connection dots, accessible tooltips, custom scrollbars, and animated progress bar shimmer sweeps. | `src/ui/ui.css`, `src/ui/roostPanel.js`, `docs/implementation_plan.md`, `task.md` | `npm run check` (all 12 test files / 143 tests passed, syntax check passed, atlas validation passed, production build passed). |
 
 ## How another model adds itself
 

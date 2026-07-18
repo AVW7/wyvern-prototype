@@ -11,6 +11,7 @@ import {
   unprojectVector,
 } from './sanctuaryProjection.js';
 import { applyGroundPlaneTransform } from './sanctuaryGroundPlane.js';
+import { findPath, nearestWalkable } from './sanctuaryMovement.js';
 
 const DEFAULT_VIEW = Object.freeze({ yawDeg: 0, elevationStep: 0 });
 
@@ -627,7 +628,44 @@ class SanctuaryInteractionController {
     // taps reliable without turning a drag ending over a target into a click.
     const releasedId = releaseHover?.target.id ?? null;
     if (releasedId && (!press.targetId || press.targetId === releasedId)) {
-      this.activate(releasedId, 'pointer');
+      const activated = this.activate(releasedId, 'pointer');
+      if (!activated) {
+        const target = this.resolveTarget(releasedId);
+        if (target && this.targetAvailable(target) && this.cooldownRemaining(target) === 0) {
+          const actorLogical = actorLogicalFootprint(this.actor);
+          const targetLogical = targetLogicalFootprint(target);
+          if (actorLogical && targetLogical && this.actor.mask && this.actor.setPath) {
+            const range = Number.isFinite(target.range) ? target.range : this.tuning.defaultRange;
+            const path = findPath(this.actor.mask, this.actor.heights, actorLogical, targetLogical, { range, climbStep: this.actor.climbStep ?? 1 });
+            if (path && path.length > 0) {
+              this.actor.setPath(path);
+              this.pendingTarget = target;
+            }
+          }
+        }
+      }
+    } else if (!dragged && !cameraSuppressed) {
+      const pointerLogical = this.pointerLogicalPoint(pointer);
+      const actorLogical = actorLogicalFootprint(this.actor);
+      if (pointerLogical && actorLogical && this.actor.mask && this.actor.setPath) {
+        let dest = pointerLogical;
+        if (!this.actor.mask[Math.round(dest.row)]?.[Math.round(dest.col)]) {
+          dest = nearestWalkable(this.actor.mask, dest.col, dest.row);
+        }
+        if (dest) {
+          const path = findPath(this.actor.mask, this.actor.heights, actorLogical, dest, { climbStep: this.actor.climbStep ?? 1 });
+          if (path && path.length > 0) {
+            this.actor.setPath(path);
+            this.pendingTarget = null;
+          } else {
+            const dist = distanceBetween(defaultPointFromLogical(actorLogical), defaultPointFromLogical(dest));
+            if (dist > 2) {
+              this.actor.setPath([{ col: dest.col, row: dest.row }]);
+              this.pendingTarget = null;
+            }
+          }
+        }
+      }
     }
     this.renderAffordances();
   }
@@ -703,9 +741,24 @@ class SanctuaryInteractionController {
       this.pointerPress = null;
       this.hovered = null;
       this.nearest = null;
+      this.pendingTarget = null;
       this.hideAffordances();
       return;
     }
+
+    if (this.pendingTarget) {
+      const resolution = this.targetResolution(this.pendingTarget);
+      if (resolution?.inRange) {
+        this.activate(this.pendingTarget, 'pointer');
+        this.pendingTarget = null;
+        if (this.actor?.setPath) {
+          this.actor.setPath(null);
+        }
+      } else if (!this.actor?.path || this.actor.path.length === 0) {
+        this.pendingTarget = null;
+      }
+    }
+
     this.nearest = this.resolveNearest();
     const pointer = this.scene.input.activePointer;
     if (pointer && !this.pointerPress) this.hovered = this.resolveHover(pointer);

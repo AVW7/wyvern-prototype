@@ -167,7 +167,7 @@ function canOccupyLogical(mask, logical, radius = 0) {
   ));
 }
 
-function nearestWalkable(mask, col, row) {
+export function nearestWalkable(mask, col, row) {
   let nearest = null;
   let nearestDistance = Infinity;
   for (let candidateRow = 0; candidateRow < mask.length; candidateRow += 1) {
@@ -181,6 +181,146 @@ function nearestWalkable(mask, col, row) {
     }
   }
   return nearest;
+}
+
+export function findPath(mask, heights, start, end, options = {}) {
+  const { range = 0, climbStep = 1 } = options;
+  const startCol = Math.round(start.col);
+  const startRow = Math.round(start.row);
+  const endCol = Math.round(end.col);
+  const endRow = Math.round(end.row);
+
+  const numRows = mask.length;
+  const numCols = mask[0]?.length || 0;
+  if (
+    startCol < 0 || startCol >= numCols ||
+    startRow < 0 || startRow >= numRows ||
+    endCol < 0 || endCol >= numCols ||
+    endRow < 0 || endRow >= numRows
+  ) {
+    return null;
+  }
+
+  const distToTarget = (c, r) => {
+    const p1 = projectFootprint(c, r, TERRAIN.baseHeight, DEFAULT_VIEW);
+    const p2 = projectFootprint(endCol, endRow, TERRAIN.baseHeight, DEFAULT_VIEW);
+    return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+  };
+
+  if (range > 0) {
+    if (distToTarget(startCol, startRow) <= range) {
+      return [];
+    }
+  } else if (startCol === endCol && startRow === endRow) {
+    return [];
+  }
+
+  const openSet = [];
+  const closedSet = new Set();
+  const toKey = (c, r) => `${c},${r}`;
+
+  const startNode = {
+    col: startCol,
+    row: startRow,
+    g: 0,
+    h: distToTarget(startCol, startRow),
+    parent: null,
+  };
+  startNode.f = startNode.g + startNode.h;
+  openSet.push(startNode);
+
+  while (openSet.length > 0) {
+    let currentIdx = 0;
+    for (let i = 1; i < openSet.length; i++) {
+      if (openSet[i].f < openSet[currentIdx].f) {
+        currentIdx = i;
+      }
+    }
+
+    const current = openSet[currentIdx];
+
+    const isGoal = range > 0
+      ? distToTarget(current.col, current.row) <= range
+      : (current.col === endCol && current.row === endRow);
+
+    if (isGoal) {
+      const path = [];
+      let temp = current;
+      while (temp) {
+        path.push({ col: temp.col, row: temp.row });
+        temp = temp.parent;
+      }
+      path.reverse();
+      if (path.length > 0 && path[0].col === startCol && path[0].row === startRow) {
+        path.shift();
+      }
+      return path;
+    }
+
+    openSet.splice(currentIdx, 1);
+    closedSet.add(toKey(current.col, current.row));
+
+    const neighbors = [
+      { col: current.col + 1, row: current.row, dist: 1 },
+      { col: current.col - 1, row: current.row, dist: 1 },
+      { col: current.col, row: current.row + 1, dist: 1 },
+      { col: current.col, row: current.row - 1, dist: 1 },
+      { col: current.col + 1, row: current.row + 1, dist: Math.SQRT2, diag: true, adj1: { col: current.col + 1, row: current.row }, adj2: { col: current.col, row: current.row + 1 } },
+      { col: current.col - 1, row: current.row + 1, dist: Math.SQRT2, diag: true, adj1: { col: current.col - 1, row: current.row }, adj2: { col: current.col, row: current.row + 1 } },
+      { col: current.col + 1, row: current.row - 1, dist: Math.SQRT2, diag: true, adj1: { col: current.col + 1, row: current.row }, adj2: { col: current.col, row: current.row - 1 } },
+      { col: current.col - 1, row: current.row - 1, dist: Math.SQRT2, diag: true, adj1: { col: current.col - 1, row: current.row }, adj2: { col: current.col, row: current.row - 1 } },
+    ];
+
+    for (const neighbor of neighbors) {
+      if (
+        neighbor.col < 0 || neighbor.col >= numCols ||
+        neighbor.row < 0 || neighbor.row >= numRows
+      ) {
+        continue;
+      }
+      if (!mask[neighbor.row][neighbor.col]) {
+        continue;
+      }
+      if (!climbable(heights, climbStep, current, neighbor)) {
+        continue;
+      }
+
+      if (neighbor.diag) {
+        const canAdj1 = mask[neighbor.adj1.row]?.[neighbor.adj1.col]
+          && climbable(heights, climbStep, current, neighbor.adj1);
+        const canAdj2 = mask[neighbor.adj2.row]?.[neighbor.adj2.col]
+          && climbable(heights, climbStep, current, neighbor.adj2);
+        if (!canAdj1 || !canAdj2) {
+          continue;
+        }
+      }
+
+      if (closedSet.has(toKey(neighbor.col, neighbor.row))) {
+        continue;
+      }
+
+      const gScore = current.g + neighbor.dist;
+      let openNeighbor = openSet.find((node) => node.col === neighbor.col && node.row === neighbor.row);
+
+      if (!openNeighbor) {
+        openNeighbor = {
+          col: neighbor.col,
+          row: neighbor.row,
+          g: gScore,
+          h: distToTarget(neighbor.col, neighbor.row),
+          parent: current,
+        };
+        openNeighbor.f = openNeighbor.g + openNeighbor.h;
+        openSet.push(openNeighbor);
+      } else if (gScore < openNeighbor.g) {
+        openNeighbor.g = gScore;
+        openNeighbor.f = openNeighbor.g + openNeighbor.h;
+        openNeighbor.parent = current;
+      }
+    }
+  }
+
+  return null;
 }
 
 function resolveInitialLogical(resident, mask, view = DEFAULT_VIEW) {
@@ -519,6 +659,8 @@ export function createSanctuaryMovement({
     actionState: null,
     actionRemainingMs: 0,
     flight: { lift: 0, bob: 0, phase: 0 },
+    path: null,
+    climbStep: config.climbStep,
 
     getFootprint() {
       return this.footprint ? { ...this.footprint } : null;
@@ -526,6 +668,11 @@ export function createSanctuaryMovement({
 
     getLogicalFootprint() {
       return this.logical ? { ...this.logical } : null;
+    },
+
+    setPath(nextPath) {
+      this.path = nextPath || null;
+      return this;
     },
 
     setInputBlocked(blocked) {
@@ -592,6 +739,7 @@ export function createSanctuaryMovement({
       this.resident = nextResident || null;
       this.isMoving = false;
       this.moved = false;
+      this.path = null;
       this.actionState = null;
       this.actionRemainingMs = 0;
       this.flight = { lift: 0, bob: 0, phase: this.flight?.phase || 0 };
@@ -670,6 +818,7 @@ export function createSanctuaryMovement({
         && !blockedBy(this.inputBlocked, this)) {
         const input = normalizedInput(keys);
         if (input.x !== 0 || input.y !== 0) {
+          this.path = null;
           const beforeCol = this.logical.col;
           const beforeRow = this.logical.row;
           const worldInput = logicalInputVector(input, this.view);
@@ -691,6 +840,47 @@ export function createSanctuaryMovement({
             this.direction = directionForWorld(
               this.lastWorldVector, this.view, this.direction,
             );
+          }
+        } else if (this.path && this.path.length > 0) {
+          const nextNode = this.path[0];
+          const deltaCol = nextNode.col - this.logical.col;
+          const deltaRow = nextNode.row - this.logical.row;
+          const remaining = worldMetricLength(deltaCol, deltaRow);
+
+          const isLastNode = this.path.length === 1;
+          const tolerance = isLastNode ? 2 : 6;
+
+          if (remaining <= tolerance) {
+            this.path.shift();
+            if (this.path.length === 0) {
+              this.path = null;
+            }
+          } else {
+            const distance = Math.min(
+              remaining,
+              Math.max(0, finite(config.speed, DEFAULT_MOVEMENT.speed)) * poseDelta / 1000,
+            );
+            const beforeCol = this.logical.col;
+            const beforeRow = this.logical.row;
+            moved = moveWithCollision(
+              this.mask,
+              this.logical,
+              deltaCol / remaining * distance,
+              deltaRow / remaining * distance,
+              config,
+              this.heights,
+            );
+            if (moved) {
+              this.lastWorldVector = {
+                col: this.logical.col - beforeCol,
+                row: this.logical.row - beforeRow,
+              };
+              this.direction = directionForWorld(
+                this.lastWorldVector, this.view, this.direction,
+              );
+            } else {
+              this.path = null;
+            }
           }
         }
       }
@@ -729,6 +919,7 @@ export function createSanctuaryMovement({
       this.enabled = false;
       this.isMoving = false;
       this.moved = false;
+      this.path = null;
       this.actionState = null;
       if (this.resident && this.footprint && this.logical
         && objectAlive(this.resident.sprite)) {
@@ -822,6 +1013,7 @@ function beginWanderPause(record, config, random) {
   const max = Math.max(min, finite(config.pauseMaxMs, DEFAULT_WANDER.pauseMaxMs));
   record.pauseRemainingMs = randomRange(random, min, max);
   record.target = null;
+  record.path = null;
 }
 
 /**
@@ -866,6 +1058,7 @@ export function createSanctuaryWanderers({
       state: WYVERN_STATES.IDLE,
       animationKey: null,
       target: null,
+      path: null,
       pauseRemainingMs: randomRange(
         random,
         Math.max(0, finite(config.pauseMinMs, DEFAULT_WANDER.pauseMinMs)),
@@ -1042,44 +1235,77 @@ export function createSanctuaryWanderers({
           record.pauseRemainingMs = Math.max(0, record.pauseRemainingMs - poseDelta);
         } else if (!record.target) {
           record.target = makeWanderTarget(record, mask, config, random);
-          if (!record.target) beginWanderPause(record, config, random);
+          if (record.target) {
+            record.path = findPath(mask, heights, record.logical, record.target, { climbStep: config.climbStep });
+            if (!record.path || record.path.length === 0) {
+              const dist = worldMetricLength(record.target.col - record.logical.col, record.target.row - record.logical.row);
+              if (dist > Math.max(2, finite(config.targetTolerance, DEFAULT_WANDER.targetTolerance))) {
+                record.path = [{ col: record.target.col, row: record.target.row }];
+              } else {
+                beginWanderPause(record, config, random);
+              }
+            }
+          } else {
+            beginWanderPause(record, config, random);
+          }
         }
 
         let moved = false;
         if (record.target && record.pauseRemainingMs === 0) {
-          const deltaCol = record.target.col - record.logical.col;
-          const deltaRow = record.target.row - record.logical.row;
-          const remaining = worldMetricLength(deltaCol, deltaRow);
-          const tolerance = Math.max(0.25, finite(
-            config.targetTolerance, DEFAULT_WANDER.targetTolerance,
-          ));
-          if (remaining <= tolerance) {
-            beginWanderPause(record, config, random);
-          } else {
-            const distance = Math.min(
-              remaining,
-              Math.max(0, finite(config.speed, DEFAULT_WANDER.speed)) * poseDelta / 1000,
-            );
-            const beforeCol = record.logical.col;
-            const beforeRow = record.logical.row;
-            moved = moveWithCollision(
-              mask,
-              record.logical,
-              deltaCol / remaining * distance,
-              deltaRow / remaining * distance,
-              config,
-              heights,
-            );
-            if (moved) {
-              record.lastWorldVector = {
-                col: record.logical.col - beforeCol,
-                row: record.logical.row - beforeRow,
-              };
-              record.direction = directionForWorld(
-                record.lastWorldVector, this.view, record.direction,
-              );
+          if (!record.path || record.path.length === 0) {
+            record.path = findPath(mask, heights, record.logical, record.target, { climbStep: config.climbStep });
+            if (!record.path || record.path.length === 0) {
+              const dist = worldMetricLength(record.target.col - record.logical.col, record.target.row - record.logical.row);
+              if (dist > Math.max(2, finite(config.targetTolerance, DEFAULT_WANDER.targetTolerance))) {
+                record.path = [{ col: record.target.col, row: record.target.row }];
+              } else {
+                beginWanderPause(record, config, random);
+              }
+            }
+          }
+
+          if (record.path && record.path.length > 0) {
+            const nextNode = record.path[0];
+            const deltaCol = nextNode.col - record.logical.col;
+            const deltaRow = nextNode.row - record.logical.row;
+            const remaining = worldMetricLength(deltaCol, deltaRow);
+            
+            const isLastNode = record.path.length === 1;
+            const tolerance = isLastNode
+              ? Math.max(2, finite(config.targetTolerance, DEFAULT_WANDER.targetTolerance))
+              : Math.max(6, finite(config.targetTolerance, DEFAULT_WANDER.targetTolerance));
+
+            if (remaining <= tolerance) {
+              record.path.shift();
+              if (record.path.length === 0) {
+                beginWanderPause(record, config, random);
+              }
             } else {
-              beginWanderPause(record, config, random);
+              const distance = Math.min(
+                remaining,
+                Math.max(0, finite(config.speed, DEFAULT_WANDER.speed)) * poseDelta / 1000,
+              );
+              const beforeCol = record.logical.col;
+              const beforeRow = record.logical.row;
+              moved = moveWithCollision(
+                mask,
+                record.logical,
+                deltaCol / remaining * distance,
+                deltaRow / remaining * distance,
+                config,
+                heights,
+              );
+              if (moved) {
+                record.lastWorldVector = {
+                  col: record.logical.col - beforeCol,
+                  row: record.logical.row - beforeRow,
+                };
+                record.direction = directionForWorld(
+                  record.lastWorldVector, this.view, record.direction,
+                );
+              } else {
+                beginWanderPause(record, config, random);
+              }
             }
           }
         }

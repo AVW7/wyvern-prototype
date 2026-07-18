@@ -117,7 +117,7 @@ export function buildRoostOverlay({
   const selected = roster.find((animal) => animal.id === selectedId);
   const rows = roster.map((animal) => renderCard(animal, animal.id === selectedId)).join('');
   const recruitButtons = Object.values(SPECIES)
-    .map((s) => `<button class="recruit-btn" data-species="${s.id}"><span class="btn-icon">${s.emoji}</span>${s.name}</button>`)
+    .map((s) => `<button class="recruit-btn" data-species="${s.id}" title="Recruit a new ${s.name}"><span class="btn-icon">${s.emoji}</span>${s.name}</button>`)
     .join('');
 
   overlay.innerHTML = `
@@ -130,16 +130,23 @@ export function buildRoostOverlay({
       <h2>Companions <span class="roster-count">${roster.length}</span></h2>
       <div class="sanctuary-toolbar">
         <div class="controlled-animal">
-          <span>Free roam</span>
+          <span>Free roam${selected ? '<span class="live-dot" title="Live connection"></span>' : ''}</span>
           <strong>${selected?.name ?? 'Choose a wyvern'}</strong>
         </div>
         <div class="camera-modes" role="group" aria-label="Sanctuary camera mode">
-          ${['overview', 'follow', 'survey'].map((mode) => `
-            <button class="camera-mode${cameraMode === mode ? ' is-active' : ''}"
-              data-camera-mode="${mode}" aria-pressed="${cameraMode === mode}">
-              ${mode === 'overview' ? '⌂' : mode === 'follow' ? '◎' : '✥'}
-              <span>${mode}</span>
-            </button>`).join('')}
+          ${['overview', 'follow', 'survey'].map((mode) => {
+            const title = mode === 'overview' 
+              ? 'Overview: fit all to screen' 
+              : mode === 'follow' 
+                ? 'Follow: snap and track selected companion' 
+                : 'Survey: free camera panning';
+            return `
+              <button class="camera-mode${cameraMode === mode ? ' is-active' : ''}"
+                data-camera-mode="${mode}" aria-pressed="${cameraMode === mode}" title="${title}">
+                ${mode === 'overview' ? '⌂' : mode === 'follow' ? '◎' : '✥'}
+                <span>${mode}</span>
+              </button>`;
+          }).join('')}
         </div>
       </div>
       ${cameraRigMarkup(cameraView, cameraTransitioning)}
@@ -213,8 +220,8 @@ function renderCard(a, selected) {
         </div>
         <div class="bond-bar"><div class="bond-fill" style="width:${bondPct}%"></div></div>
         <div class="card-actions">
-          <button id="train-${a.id}" class="icon-btn" title="Train">💪</button>
-          <button id="feed-${a.id}" class="icon-btn" title="Feed">🍖</button>
+          <button id="train-${a.id}" class="icon-btn" title="Train ${a.name} (+XP)">💪</button>
+          <button id="feed-${a.id}" class="icon-btn" title="Feed ${a.name} (+Bond)">🍖</button>
         </div>
       </div>
     </li>`;

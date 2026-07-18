@@ -49,18 +49,31 @@ game.events.once('ready', () => {
     document.documentElement.style.setProperty('--stage-height', `${rect.height}px`);
   };
 
+  // Listen to Phaser resize events
   game.scale.on('resize', updateStageRect);
-  // Also call it once initially
+  // Also listen to browser window resize events
+  window.addEventListener('resize', updateStageRect);
+
+  // Monitor DOM-level canvas size changes via ResizeObserver
+  const canvas = game.canvas;
+  if (canvas) {
+    const resizeObserver = new ResizeObserver(updateStageRect);
+    resizeObserver.observe(canvas);
+  }
+
+  // Call initially to set values
   setTimeout(updateStageRect, 0);
   
-  // Prevent keyboard propagation for inputs in #ui-overlay
+  // Prevent keyboard propagation for active inputs/buttons in #ui-overlay
   const uiOverlay = document.getElementById('ui-overlay');
   if (uiOverlay) {
-    uiOverlay.addEventListener('keydown', (e) => {
-      const tag = document.activeElement ? document.activeElement.tagName : '';
-      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+    const stopKeyboardProp = (e) => {
+      // If document focus is on any interactive element in the overlay, block propagation.
+      if (document.activeElement && document.activeElement !== document.body) {
         e.stopPropagation();
       }
-    });
+    };
+    uiOverlay.addEventListener('keydown', stopKeyboardProp, true);
+    uiOverlay.addEventListener('keyup', stopKeyboardProp, true);
   }
 });
