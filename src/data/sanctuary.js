@@ -10,6 +10,37 @@
 import { TERRAIN } from '../config.js';
 import { createNoise } from '../systems/noise.js';
 
+// Stable gameplay descriptors stay separate from decorative cell data so the
+// Vault and any future sanctuary renderer can consume the map without knowing
+// BaseScene's actions. Prop-backed targets identify the authored prop they
+// decorate; area targets (the spring) use their grid footprint directly.
+export const INTERACTIONS = {
+  outside: [
+    {
+      id: 'vault-gate', type: 'gate', propType: 'barredDoor', col: 10, row: 14,
+      label: 'Enter the Dragon Vault', action: 'vault', range: 78, once: false,
+    },
+    {
+      id: 'spring-main', type: 'spring', col: 9, row: 17,
+      label: 'Drink from the spring', action: 'restore', range: 68, once: false,
+    },
+    {
+      id: 'training-ring', type: 'training', propType: 'arena', col: 17, row: 15,
+      label: 'Train here', action: 'train', range: 70, once: false,
+    },
+    {
+      id: 'feeding-nest', type: 'nest', propType: 'nest', col: 4, row: 18,
+      label: 'Share a meal', action: 'feed', range: 68, once: false,
+    },
+    {
+      id: 'atlas-waystone', type: 'atlas', propType: 'obelisk', col: 20, row: 14,
+      label: 'Consult the world waystone', action: 'atlas', range: 72,
+      once: false, confirm: true,
+    },
+  ],
+  inside: [],
+};
+
 // Shared setTile/fill/setProp helpers in the design files' authoring idiom,
 // so layouts below read like the originals. (col, row) order matches the
 // designs' (x, y) — both index tiles[row][col].
@@ -24,6 +55,10 @@ function makeBuilder(seed, size, defaultBiome) {
       height,
       variant: Math.floor(hash2(col, row, 1300) * TERRAIN.variants),
       blocked: height >= TERRAIN.blockedAt,
+      // Raised shelves are visual cliffs in the first free-roam slice. Keep
+      // them explicitly out of the walkable mask until authored ramp metadata
+      // and matching transition art make an elevation change intentional.
+      walkable: height === TERRAIN.baseHeight,
       decor: null,
     };
   };
@@ -130,7 +165,16 @@ export function buildSanctuaryExterior() {
   b.setProp(4, 6, 'crystal', 2, 0);
   b.setProp(6, 18, 'glow', -4, -2);
 
-  return { tiles: b.tiles, cols: size, rows: size };
+  // Playable management landmarks. Their rules live in INTERACTIONS above;
+  // these props are visual anchors only and can be replaced without rewriting
+  // the interaction engine.
+  b.setProp(17, 15, 'arena');
+  b.setProp(4, 18, 'nest');
+  b.setProp(20, 14, 'obelisk');
+
+  return {
+    tiles: b.tiles, cols: size, rows: size, interactions: INTERACTIONS.outside,
+  };
 }
 
 // The Emberkeep Dragonvault interior: U-shaped keep open toward the camera,
@@ -194,7 +238,9 @@ export function buildSanctuaryInterior() {
   // VaultScene finds this glow by type and makes it clickable.
   b.setProp(9, 19, 'glow');
 
-  return { tiles: b.tiles, cols: size, rows: size };
+  return {
+    tiles: b.tiles, cols: size, rows: size, interactions: INTERACTIONS.inside,
+  };
 }
 
 // Where roster residents stand in each view. BaseScene walks this list in

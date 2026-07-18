@@ -27,6 +27,18 @@ function depthOf(obj) {
   return d != null ? d : obj.y;
 }
 
+function depthTieOf(obj) {
+  const tie = obj.getData ? obj.getData('depthTie') : null;
+  if (Number.isFinite(tie)) return tie;
+  // Projected endpoint views intentionally put many footprints on the same
+  // screen row. X is a stable geometric fallback for legacy objects that do
+  // not publish an authored tie key.
+  return Number.isFinite(obj.x) ? obj.x : 0;
+}
+
 export function sortByDepth(layer) {
-  layer.sort('_none', (a, b) => depthOf(a) - depthOf(b));
+  layer.sort('_none', (a, b) => {
+    const primary = depthOf(a) - depthOf(b);
+    return Math.abs(primary) > 1e-7 ? primary : depthTieOf(a) - depthTieOf(b);
+  });
 }

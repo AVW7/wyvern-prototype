@@ -3,18 +3,29 @@
 Prioritized next steps for the prototype. Ordered so each phase is playable
 and demoable on its own — don't jump ahead of unfinished phases.
 
-## Active design initiative — Sanctuary free roam
+## Active art/acceptance initiative — Rotatable sanctuary
 
-The sanctuary is planned to evolve from a fitted roster diorama into an
-explorable home space: directly control a selected wyvern, follow or survey it
-with cursor-anchored zoom, and interact with residents and landmarks in the
-isometric world. The staged design, architecture seams, acceptance criteria,
-and explicit deferrals live in
+The first sanctuary free-roam slice is implemented: directly control a selected
+wyvern, follow or survey it with cursor-anchored zoom, and interact with
+residents and landmarks in the isometric world.
+
+The camera/projection portion of the owner-directed follow-up is implemented:
+Base supports lower/default/higher elevation, 90° total yaw
+(`-45°..+45°`), camera-relative input, stable world-space collision/range,
+view-aware terrain and props, and persistent rig state. It is an explicit 2D
+world projection, not a flat Phaser camera rotation.
+
+The open gate is directional wyvern art. Complete eight-direction Idle/Fly is
+the first art slice; directional Attack/Guard/Special follows before final
+acceptance. The architecture, completed engineering milestones, remaining
+matrix, and acceptance criteria live in
+[`docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md`](docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md).
+The completed free-roam baseline remains in
 [`docs/SANCTUARY_FREE_ROAM_PLAN.md`](docs/SANCTUARY_FREE_ROAM_PLAN.md).
 
-Implementation should land milestone-by-milestone so the existing
-Base/Vault/Atlas/Mission loop remains playable after every change. This is a
-multi-AI initiative; implementation sessions should also update
+Directional assets and final polish should continue milestone-by-milestone so
+the existing Base/Vault/Atlas/Mission loop remains playable after every change.
+This is a multi-AI initiative; implementation sessions should also update
 [`AI_CONTRIBUTIONS.md`](AI_CONTRIBUTIONS.md).
 
 ## Phase 1 — Close the base ↔ mission loop
@@ -72,8 +83,11 @@ Fixing that is higher priority than new content because every later feature
   needs this too: each POI's `discovered` and each region's `explored` are
   hardcoded in `data/atlas.js`, so the map can't record where you've been.
 - **Real art.** Swap the emoji/procedural placeholders for an Aseprite atlas
-  and Tiled maps once the loop above is fun — see "Replacing placeholders"
-  in CLAUDE.md for the exact swap points already wired.
+  and Tiled maps once the loop above is fun. Sanctuary-ready wyverns now need
+  complete eight-direction Idle/Fly first, followed by Attack/Guard/Special for
+  the rotatable-camera milestone. Keep exports within the current one-page
+  loader or implement multi-page loading/validation explicitly; see
+  `assets/sprites/wyverns/README.md` and "Replacing placeholders" in CLAUDE.md.
 - **Audio.** No sound system exists yet; add hit/victory/ambient cues once
   the core loop is locked (avoid tuning audio against a loop that's still
   changing).
@@ -84,5 +98,7 @@ Fixing that is higher priority than new content because every later feature
   vision systems before there's a reason to hide anything).
 - Multiplayer/networking — out of scope for a prototype proving the core
   loop.
+- A free 360°/3D sanctuary camera — first prove the owner-requested 90° range
+  with the manual 2D isometric projection and directional art contract.
 - Any build tooling/bundler — keep zero-build per CLAUDE.md guardrails
   until art/code size actually demands it.

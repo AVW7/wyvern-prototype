@@ -5,13 +5,14 @@ visible without treating any model as the sole author.
 
 ## Count
 
-- **Distinct contributing model entries:** 6
+- **Distinct contributing model entries:** 8
 - **Providers represented:** 3
-- **Contribution records:** 17
+- **Contribution records:** 24
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
-contributed on 2026-07-18 (AI-003, Review R-001) and is counted above.
+contributed on 2026-07-18 (AI-003, Reviews R-001 and R-003; AI-007, Review R-004;
+AI-008, Review R-005) and is counted above.
 
 ## Model registry
 
@@ -19,10 +20,12 @@ contributed on 2026-07-18 (AI-003, Review R-001) and is counted above.
 | --- | --- | --- | --- | --- |
 | AI-001 | Claude (exact model unknown) | Anthropic | 2026-07-17 | Existing git history includes merged branch `claude/nervous-mcnulty-402e56`; the exact model/version was not recorded. |
 | AI-002 | Codex (GPT-5) | OpenAI | 2026-07-18 | Created the sanctuary free-roam brief and multi-AI collaboration context. |
-| AI-003 | Gemini 3.5 Flash (High) | Google | 2026-07-18 | Reviewed the Sanctuary Free-Roam Redesign plan and appended Review R-001. |
+| AI-003 | Gemini 3.5 Flash (High) | Google | 2026-07-18 | Reviewed the Sanctuary Free-Roam Redesign plan (Review R-001) and the Sanctuary Rotatable Camera plan (Review R-003). |
 | AI-004 | Claude Fable 5 (`claude-fable-5`) | Anthropic | 2026-07-18 | Reviewed the Sanctuary Free-Roam Redesign plan and appended Reviews R-002 and R-003. Correction: first registered as "Claude Opus 4.8", which was wrong — the session's environment reports `claude-fable-5`. Corrected same-day by the same session (C-007), per the no-guessed-versions rule. |
 | AI-005 | Claude Opus 4.8 (`claude-opus-4-8`) | Anthropic | 2026-07-18 | Built the sanctuary exterior (BaseScene grounds) and interior (VaultScene), porting the two `iso designs/` HTML prototypes onto the repo's existing tile/decor engine. Model ID reported by the session environment as `claude-opus-4-8`. |
 | AI-006 | Claude Sonnet 5 (`claude-sonnet-5`) | Anthropic | 2026-07-18 | Generalized the Base roster from wyvern-only to a multi-species companion system with a bond/interaction stat. Model ID reported by the session environment as `claude-sonnet-5`. |
+| AI-007 | Gemini 3.1 Pro (High) | Google | 2026-07-18 | Reviewed the Sanctuary Rotatable Camera plan (Review R-004), focusing on texture caching, input safety, and occlusion. |
+| AI-008 | Gemini 3.1 Pro (Low) | Google | 2026-07-18 | Reviewed the Sanctuary Rotatable Camera plan (Review R-005), advocating for scope reduction through sprite mirroring and pre-baked tiles. |
 
 ## Contribution log
 
@@ -47,6 +50,13 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-015 | 2026-07-18 | AI-002 | Revised the Vault overlay to let players independently hide and restore the roster, profile, animation actions, and travel navigation. Reflowed the profile and action dock so they reserve space above the navigation instead of overlapping it. | `src/ui/vaultPanel.js`, `src/scenes/VaultScene.js`, `src/ui/ui.css` | `npm run check` (syntax, atlas validation with one existing size warning, 11 tests, production build) |
 | C-016 | 2026-07-18 | AI-002 | Removed the duplicate castle icon from the Roost “Enter the Vault” navigation label, retaining the shared navigation icon. | src/scenes/BaseScene.js | npm test (11 tests passed) |
 | C-017 | 2026-07-18 | AI-003 | Closed the Sanctuary Free-Roam Redesign plan as requested, marking its status as Closed. | docs/SANCTUARY_FREE_ROAM_PLAN.md | No code modified; documentation-only change. |
+| C-018 | 2026-07-18 | AI-002 | Implemented sanctuary free roam through Milestone 4: overview/follow/survey camera, footprint movement and ambient residents, stable world interactions, selection/rebuild session state, in-world feedback, occlusion/readability, and compatible scene travel. | `src/scenes/BaseScene.js`, `src/config.js`, `src/data/sanctuary.js`, `src/systems/sanctuary*.js`, `src/ui/roostPanel.js`, `src/ui/ui.css`, sanctuary tests, plan/context docs | `npm run check` (7 test files / 38 tests); 1280×720 Chrome route through Base, Vault, Atlas, Mission, recruit/rebuild, keyboard and pointer actions with no JavaScript runtime errors; known Embertooth atlas portability warning remains |
+| C-019 | 2026-07-18 | AI-002 | Recorded the owner-directed sanctuary camera expansion and its art contract: zoom plus elevation/pitch, at least `-45°..+45°` yaw, camera-relative eight-direction movement, world/view direction separation, view-aware isometric projection, staged directional sprite coverage, risks, milestone, acceptance route, and multi-model review. | `docs/SANCTUARY_FREE_ROAM_PLAN.md`, `assets/sprites/wyverns/README.md`, `AI_CONTEXT.md`, `CLAUDE.md`, `ROADMAP.md`, `README.md` | Documentation/source consistency review, `git diff --check`, and `npm run check` (43 modules; 7 files / 38 tests; build passed; existing Embertooth portability warning); feature explicitly marked planned, not implemented |
+| C-020 | 2026-07-18 | AI-002 | Split the completed sanctuary free-roam baseline from the new rotatable-camera initiative. Created a standalone implementation plan with coordinate, projection, camera rig, rendering, movement, interaction, directional art, architecture, milestone, test-matrix, risk, decision, review, and handoff contracts; rerouted every model entry point and core project document. | `docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md`, `docs/SANCTUARY_FREE_ROAM_PLAN.md`, `AGENTS.md`, `GEMINI.md`, `AI_CONTEXT.md`, `CLAUDE.md`, `ROADMAP.md`, `README.md`, sprite contract | Documentation/source/link consistency review and `git diff --check`; new plan explicitly marked planned and predecessor marked implemented/closed |
+| C-021 | 2026-07-18 | AI-003 | Reviewed the Sanctuary Rotatable Camera and Directional Wyverns plan, contributing details on yaw/pitch projection matrices, camera-relative movement math, view-facing angle mapping, and iterative unprojection picking. | docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md | No code modified; documentation-only change. |
+| C-022 | 2026-07-18 | AI-007 | Added Review R-004 to the Rotatable Camera plan with constraints for view-aware texture caching, lazy-loading directional sprite atlases, dynamic occlusion bounds, and tween input safety. | docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md | No code modified; documentation-only change. |
+| C-023 | 2026-07-18 | AI-008 | Added Review R-005 to the Rotatable Camera plan proposing scope reductions: sprite mirroring to halve art requirements and pre-baking tiles to prevent cache thrashing. | docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md | No code modified; documentation-only change. |
+| C-024 | 2026-07-18 | AI-002 | Implemented the rotatable sanctuary camera engineering through Milestone 4: nine-view forward/inverse projection, stepped yaw/elevation rig and transition lock, camera-relative logical movement, projected picking/range, in-place world reprojection, per-view tiles and procedural exterior props, projected ground affordances/world shadow, stable depth ties, visible controls, session persistence, and lifecycle safety. Directional wyvern atlas art remains an explicit Milestone 5 blocker. | `src/scenes/BaseScene.js`, `src/config.js`, `src/systems/sanctuary*.js`, `src/systems/tileArt.js`, `src/systems/textureBake.js`, `src/ui/roostPanel.js`, `src/ui/ui.css`, sanctuary tests, plan/context/README/roadmap/sprite docs | `npm run check` (50 modules; 11 test files / 135 tests; atlas validation and production build passed; existing Embertooth portability warning remains). A 1280×720 Chrome route covered all nine endpoints, transition lock, movement/Follow, Home, rebuild, panel, recruit, Vault, Atlas, and Mission before the final projected-prop/ground-shadow refinements; the post-refinement visual rerun remains pending. |
 
 ## How another model adds itself
 

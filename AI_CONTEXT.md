@@ -10,8 +10,11 @@ is the sole owner of the design or implementation.
 2. `CLAUDE.md` — despite its historical filename, this is the detailed,
    model-neutral architecture and repository convention reference.
 3. `ROADMAP.md` — current product priorities.
-4. `docs/SANCTUARY_FREE_ROAM_PLAN.md` — active sanctuary redesign brief.
-5. `AI_CONTRIBUTIONS.md` — model registry and append-only work log.
+4. `docs/SANCTUARY_FREE_ROAM_PLAN.md` — implemented sanctuary baseline and
+   verification record.
+5. `docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md` — implemented camera/projection
+   engineering and the remaining directional-art acceptance work.
+6. `AI_CONTRIBUTIONS.md` — model registry and append-only work log.
 
 ## Collaboration contract
 
@@ -31,11 +34,31 @@ is the sole owner of the design or implementation.
 
 ## Current initiative
 
-The sanctuary free-roam redesign is planned, not implemented. Its first slice
-adds a sanctuary-specific camera controller, one directly controlled roster
-wyvern, world interactions, and clearer isometric action rendering. Read the
-full plan before modifying `BaseScene`, `sanctuaryRender`, sanctuary map data,
-or sanctuary camera behavior.
+The sanctuary free-roam first slice is implemented through Milestone 4. Base
+now has a sanctuary-specific overview/follow/survey camera, one directly
+controlled roster wyvern, bounded ambient residents, authored world
+interactions, and footprint-aware action rendering. Selection and camera state
+survive scene travel in memory.
+
+The rotatable-camera engineering in
+`docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md` is implemented through Milestone 4.
+Base retains zoom and pan while supporting three yaw endpoints
+(`-45°`, `0°`, `+45°`) and lower/default/higher elevation. A pure projection
+system drives view-aware terrain/props, bounds, residents, effects, and
+inverse picking. Movement input is camera-relative while collision, range,
+homes, and authored targets remain in logical world space. The rig and selected
+wyvern survive rebuilds and Base scene travel in memory.
+
+Milestone 5 remains open: configured wyvern atlases do not yet declare the
+complete eight-direction Idle/Fly and Attack/Guard/Special frames required for
+final visual acceptance. Runtime direction keys and east-facing fallback are
+working; do not describe the directional-art milestone as complete. Treat
+world direction, screen input, and sprite view-facing as separate values. Read
+the full plan and `assets/sprites/wyverns/README.md` before changing `BaseScene`,
+sanctuary systems, projection math, or wyvern exports.
+
+Durable save/load, controller/touch input, audio, mounted riding, and a free
+360°/3D camera remain deferred.
 
 ## Verification baseline
 

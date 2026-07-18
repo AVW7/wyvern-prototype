@@ -1,9 +1,12 @@
 # Sanctuary Free-Roam Redesign
 
-**Status:** Closed  
+**Status:** Implemented and closed — Milestones 1–4 browser-verified
+
 **Project mode:** Multi-AI collaboration  
 **Last updated:** 2026-07-18  
 **Primary scene:** `src/scenes/BaseScene.js`
+
+**Follow-up plan:** [`SANCTUARY_ROTATABLE_CAMERA_PLAN.md`](SANCTUARY_ROTATABLE_CAMERA_PLAN.md)
 
 ## Vision
 
@@ -31,35 +34,34 @@ The management panel remains available and collapsible. World interaction is
 not hidden inside the panel: nearby objects show an in-world prompt and accept
 either click/tap or the interaction key.
 
-## Current baseline and gaps
+## Follow-up work
 
-- `BaseScene.buildWorld()` builds a fixed fitted view and only wires the barred
-  vault door (`wireEntrance()` finds the `barredDoor` prop by type).
-- `buildSanctuaryView()` computes one camera zoom and center via the private
-  `sanctuaryBounds()`; it has no pan, follow, cursor-anchored zoom, or bounds
-  export. It is **shared with `VaultScene`**, so any signature change must stay
-  compatible with both callers (`src/scenes/BaseScene.js:42`,
-  `src/scenes/VaultScene.js:79`).
-- `spawnSanctuaryResidents(scene, layer, view, zoom)` returns nothing and adds
-  each resident as fire-and-forget sprites. Atlas-textured wyverns **already get
-  an accent aura, a ground shadow, an idle animation, and a name label**; the
-  gap is that none of these are returned as a handle, and every resident is
-  animated with a stationary `y: -=amplitude` bob tween — so no resident can yet
-  become a footprint-driven controlled character, and Milestone 2 must *reuse*
-  the existing shadow/label rather than add a second one.
-- Sanctuary props carry only `{ type, variant, offsetX, offsetY }` plus a sprite
-  reference; they have no stable interaction ID, action, range, label, or
-  availability state.
-- Authored cells already carry `blocked: height >= TERRAIN.blockedAt` (set in
-  `makeBuilder` in `data/sanctuary.js`), and cells can be `null` holes. A
-  walkable mask can start from these two facts without new authoring.
-- The map already has the right visual foundations: hand-authored cells,
-  elevation, separate prop sprites, ground-footprint depth (`setData('depth', …)`
-  keyed off the ground plane), and `screenToGrid()` in the shared iso system.
-- `AtlasScene` already proves cursor-anchored wheel zoom, bounded pan, fit zoom,
-  panel-aware framing, and pan momentum (`ATLAS.panDamping`/`panEpsilon`). Reuse
-  its math and behavior, but keep the sanctuary implementation sanctuary-specific
-  as required by the scene architecture.
+The owner-requested camera yaw/elevation and directional-art expansion is a
+separate initiative because this free-roam plan is already implemented. Use
+[`SANCTUARY_ROTATABLE_CAMERA_PLAN.md`](SANCTUARY_ROTATABLE_CAMERA_PLAN.md) as
+the canonical source for all new camera, projection, movement-direction, and
+sprite work. Do not reopen the completed milestones below.
+
+## Implemented baseline and remaining gaps
+
+- `BaseScene` now orchestrates an explorable exterior: selected-resident
+  control, ambient wanderers, camera modes, authored targets, world prompts,
+  roster actions, and the existing scene transitions.
+- `buildSanctuaryView()` exposes additive `{ bounds, tiles }` data while keeping
+  `VaultScene` compatible. `spawnSanctuaryResidents()` returns the live sprite,
+  aura, shadow, label, selection ring, tween, and footprint handles needed by
+  movement and interaction systems.
+- `INTERACTIONS.outside` provides stable gate, spring, training, nest/feed, and
+  atlas descriptors. Resident targets are added from the live roster without
+  changing the authored map contract.
+- Exterior base-height cells are walkable. Null cells and raised shelves are
+  cliffs; ramps and free high-altitude traversal remain deferred. Reachability
+  tests keep every initial resident and landmark on the main connected ground.
+- Selection, camera mode/view, and panel collapse survive in-memory scene
+  travel and world rebuilds. Durable save/load and completed one-time target
+  persistence remain deferred follow-up work.
+- The implementation remains sanctuary-specific and imports no Atlas or
+  Mission scene logic.
 
 ## Design rules
 
@@ -74,13 +76,13 @@ either click/tap or the interaction key.
 - Keep HTML/CSS for panels and fixed HUD; use Phaser objects for world prompts,
   selection rings, hover highlights, and action effects.
 
-## Proposed architecture
+## Implemented architecture
 
 | Concern | Owner | Responsibility |
 | --- | --- | --- |
 | Scene orchestration | `BaseScene.js` | Build/reset world, choose controlled wyvern, call update systems, transition scenes |
 | Camera | `systems/sanctuaryCamera.js` | Fit bounds, follow/survey modes, cursor zoom, pan, panel bias, reset view |
-| Residents | `systems/sanctuaryRender.js` | Return `{ animal, sprite, label, shadow }` handles instead of fire-and-forget sprites |
+| Residents | `systems/sanctuaryRender.js` | Return `{ animal, sprite, label, shadow, aura, selectionRing, footprint }` handles |
 | Player movement | `systems/sanctuaryMovement.js` | Input, footprint movement, island bounds, blocked cells, flight pose, animation |
 | Interactions | `systems/sanctuaryInteractions.js` | Registry, hover/nearest target, prompt, click/key activation, cooldown |
 | Authored world data | `data/sanctuary.js` | Walkable/blocked cells and stable interaction descriptors attached to props/areas |
@@ -124,6 +126,8 @@ Initial interactions:
   second action; do not trigger travel on accidental proximity.
 
 ## Camera specification
+
+### Implemented baseline
 
 - Add `SANCTUARY.zoom = { max: 2.2, step: 1.12 }` (mirroring `ATLAS.zoom`);
   derive `min` from fitted map bounds as the atlas does. The current fit uses
@@ -180,12 +184,9 @@ Initial interactions:
 
 These are grounded in the current code, not hypothetical:
 
-- **Rebuild wipes live state.** `BaseScene.buildWorld()` runs on every recruit
-  (via `onRecruit`) and destroys the whole world layer, and `create()` runs on
-  every return from Vault/Mission. Neither preserves the controlled selection,
-  camera mode, or camera position. The controller must re-resolve a valid
-  selected wyvern and re-seat the camera after any rebuild, and fall back
-  gracefully if the previously selected animal was removed.
+- **Rebuild/session regression.** `BaseScene.buildWorld()` now preserves the
+  controlled selection and camera view across recruit rebuilds and scene
+  travel. Future changes must keep that capture/restore path and lifecycle test.
 - **`tweens.killAll()` at the top of `buildWorld()`** stops ambient prop tweens
   intentionally; a movement/lift loop built on the update tick (not a tween)
   survives rebuilds better and avoids being silently cancelled here.
@@ -201,6 +202,10 @@ These are grounded in the current code, not hypothetical:
 This section is the shared place for Claude, Gemini, Codex, other models, and
 humans to critique the plan before implementation. Reviews are append-only:
 add a new review instead of rewriting another contributor's conclusions.
+
+This workspace is now historical. New camera/projection reviews continue in
+[`SANCTUARY_ROTATABLE_CAMERA_PLAN.md`](SANCTUARY_ROTATABLE_CAMERA_PLAN.md),
+starting with `R-003`.
 
 ### Questions for reviewers
 
@@ -238,9 +243,8 @@ CLAUDE.md, then inspect the relevant current source files. Do not implement the
 feature. Give concrete feedback on player fantasy, camera controls, logical
 movement, depth/occlusion, interaction priorities, architecture seams,
 milestone sizing, and verification. Distinguish must-fix issues from optional
-ideas. Append your response as the next review in the plan's Multi-model review
-workspace, preserve prior reviews, update the decision log only for decisions
-the human owner has accepted, and record your work in AI_CONTRIBUTIONS.md.
+ideas. Preserve prior reviews and decisions. This plan is implemented and
+closed; use docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md for new camera work.
 ```
 
 ### How to append a review
@@ -636,6 +640,73 @@ the human owner has accepted, and record your work in AI_CONTRIBUTIONS.md.
   read from source and standard browser behavior, not run — treat both as
   "verify," not "known broken." I did not measure real fps anywhere.
 
+### Review R-004 — Codex (GPT-5)
+
+- **Date:** 2026-07-18
+- **Model ID:** AI-002
+- **Focus:** Rotatable camera, isometric movement, sanctuary sprite contract
+- **Files inspected:** `AI_CONTEXT.md`, `CLAUDE.md`,
+  `docs/SANCTUARY_FREE_ROAM_PLAN.md`, `src/systems/sanctuaryCamera.js`,
+  `src/systems/sanctuaryMovement.js`, `src/systems/sanctuaryRender.js`,
+  `src/systems/wyvernAtlas.js`, `src/scenes/PreloadScene.js`,
+  `assets/sprites/wyverns/README.md`
+- **Summary:** The owner-directed 90° camera range is feasible only as a
+  projection/rendering feature, not a flat canvas rotation. Logical movement
+  is already eight-directional and the runtime already registers directional
+  animation keys; the next slice must separate world direction from view
+  facing, add view-aware terrain/props, and supply real directional art.
+- **Must fix before implementation:** Define the projection/inverse-projection
+  seam; preserve a stable world footprint; avoid `Phaser.Camera.rotation` as
+  the yaw implementation; budget atlas pages before commissioning full action
+  turntables; keep `E` reserved for interaction.
+- **Recommended changes:** Prototype three yaw headings and three elevation
+  steps; complete eight-direction Idle/Fly first; derive `viewDirection` after
+  projection; then add directional Attack/Guard/Special and finish action
+  acceptance.
+- **Keep as designed:** Scene separation, footprint-based collision/range/depth,
+  Overview/Follow/Survey modes, cursor zoom, panel-aware framing, and
+  placeholder fallback behavior.
+- **Risks and edge cases:** Camera-relative input reversal, pointer mismatch,
+  incorrect depth after yaw, single-view prop art, labels rotating with the
+  world, rebuild state loss, and atlas/GPU memory limits.
+- **Suggested first vertical slice:** Reproject a small prop-free sanctuary
+  test patch at `-45°`, `0°`, and `+45°`; move one dragon through all eight
+  world directions using complete directional Idle/Fly art; then add props,
+  interactions, and the full map.
+- **Confidence / unknowns:** High confidence in the current runtime and asset
+  gaps. Exact pitch range, continuous-versus-stepped transitions, and final
+  input bindings require owner playtesting.
+
+### Review R-005 — Codex (GPT-5)
+
+- **Date:** 2026-07-18
+- **Model ID:** AI-002
+- **Focus:** Plan separation and multi-model handoff
+- **Files inspected:** `AI_CONTEXT.md`, `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`,
+  `docs/SANCTUARY_FREE_ROAM_PLAN.md`,
+  `docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md`,
+  `assets/sprites/wyverns/README.md`
+- **Summary:** The implemented free-roam plan and planned rotatable-camera work
+  should not share milestone status. The predecessor now remains the closed
+  implementation record, while the new plan is the canonical source for yaw,
+  elevation, projection, camera-relative movement, and directional art.
+- **Must fix before implementation:** Route every model entry point and core
+  handoff document to the new plan; do not mark camera yaw/elevation as part of
+  the completed predecessor.
+- **Recommended changes:** Use the new plan's independent milestones, decision
+  IDs, acceptance matrix, and review workspace; preserve `R-001` and this
+  review here as historical context.
+- **Keep as designed:** The implemented free-roam architecture, verified
+  acceptance checklist, scene separation, footprint contract, and existing
+  contribution history.
+- **Risks and edge cases:** Two active plans would cause status drift,
+  duplicated decisions, conflicting implementation sequences, and false
+  claims that yaw/elevation already exist.
+- **Suggested first vertical slice:** Follow Milestone 1 in the new plan: pure
+  projection round trips and a small prop-free view at the nine proposed
+  yaw/elevation combinations.
+- **Confidence / unknowns:** High confidence in the documentation split. The
+  exact pitch range and stepped-versus-continuous controls remain owner choices.
 
 ### Decision log
 
@@ -647,10 +718,20 @@ the human project owner changes a decision status here.
 | D-001 | First slice directly controls a roster wyvern; mounted riding remains deferred. | Provisional | Working interpretation of “free roaming on the dragons”; invite reviewer challenge. |
 | D-002 | Base, Vault, Atlas, and Mission retain separate scene logic. | Accepted | Existing architecture guardrail in `CLAUDE.md`; low-level math may still be shared. |
 | D-003 | Camera opens in Overview and supports Follow plus Inspect-scale zoom. | Proposed | Core plan; validate control conflicts and motion comfort through reviews and Milestone 1. |
+| D-004 | Expand sanctuary camera yaw to at least 90° total, 45° left/right from the current heading. | Owner requested; implementation pending | Human request on 2026-07-18. |
+| D-005 | Interpret camera up/down as elevation/pitch in addition to existing vertical survey pan. | Proposed interpretation | Clarifies the 2026-07-18 request; exact range still needs owner playtesting. |
+| D-006 | Preserve eight-direction logical movement and derive camera-relative sprite facing after yaw. | Owner requested; implementation pending | Movement already has eight sectors; projection/art integration remains. |
+| D-007 | Require full eight-direction Idle/Fly first, then Attack/Guard/Special before final rotatable-camera acceptance. | Proposed | Stages art cost while preventing action-facing snaps in the completed feature. |
+
+`D-004` through `D-007` are preserved as historical records from before the
+plan split. Their active counterparts are `RC-001` through `RC-005` in
+[`SANCTUARY_ROTATABLE_CAMERA_PLAN.md`](SANCTUARY_ROTATABLE_CAMERA_PLAN.md).
 
 ## Delivery plan
 
 ### Milestone 1 — Camera foundation
+
+**Status:** Implemented and browser-verified at 1280×720 on 2026-07-18.
 
 - Make sanctuary bounds public from `sanctuaryRender.js`.
 - Add a sanctuary camera controller with overview, follow, survey, cursor zoom,
@@ -661,6 +742,8 @@ the human project owner changes a decision status here.
 outside the authored sanctuary or breaking the vault gate.
 
 ### Milestone 2 — One controllable wyvern
+
+**Status:** Implemented and browser-verified at 1280×720 on 2026-07-18.
 
 - Return resident handles (`{ animal, sprite, label, shadow, aura }`) from
   `spawnSanctuaryResidents()` without changing what non-controlled residents
@@ -676,6 +759,8 @@ zoom; other residents remain visible and management buttons still work.
 
 ### Milestone 3 — Interaction vertical slice
 
+**Status:** Implemented and browser-verified at 1280×720 on 2026-07-18.
+
 - Add stable interaction data and a nearest/hover target system.
 - Implement gate, spring, resident, training, and nest/feed interactions.
 - Add `E` plus click/tap activation, range feedback, and action result text.
@@ -685,6 +770,8 @@ zoom; other residents remain visible and management buttons still work.
 enter the Vault without using the side panel.
 
 ### Milestone 4 — Living sanctuary and render pass
+
+**Status:** Implemented and browser-verified at 1280×720 on 2026-07-18.
 
 - Give non-controlled residents small bounded wander/idles.
 - Add interaction reactions and action effects.
@@ -696,6 +783,9 @@ obvious depth-order popping or resident overlap loops.
 
 ### Milestone 5 — Persistence and polish
 
+**Status:** Deferred as designed; only in-memory scene-session preservation is
+included in the implemented slice.
+
 - Save selected resident, camera preference, and completed one-time sanctuary
   interactions with the broader save/load work.
 - Add controller/touch input only after keyboard/mouse behavior is stable.
@@ -703,21 +793,29 @@ obvious depth-order popping or resident overlap loops.
 
 ## Acceptance checklist
 
-- [ ] The selected wyvern can traverse every intended sanctuary zone and
+- [x] The selected wyvern can traverse every intended sanctuary zone and
       cannot disappear into null tiles or cliffs.
-- [ ] Overview, Follow, and Inspect distances are usable at 1280×720.
-- [ ] Zoom is cursor-anchored and clamped; panel collapse does not jump to an
+- [x] Overview, Follow, and Inspect distances are usable at 1280×720.
+- [x] Zoom is cursor-anchored and clamped; panel collapse does not jump to an
       invalid camera position.
-- [ ] At least five in-world targets have clear hover/nearby feedback.
-- [ ] `E` and click/tap trigger the same action path.
-- [ ] Panning does not accidentally select or activate an interaction.
-- [ ] Actor shadow, label, and depth all follow the ground footprint.
-- [ ] Existing Base → Vault → Base and Base → Atlas → Mission flows still work.
-- [ ] Recruiting an animal (which rebuilds the world) preserves a valid
+- [x] At least five in-world targets have clear hover/nearby feedback.
+- [x] `E` and click/tap trigger the same action path.
+- [x] Panning does not accidentally select or activate an interaction.
+- [x] Actor shadow, label, and depth all follow the ground footprint.
+- [x] Existing Base → Vault → Base and Base → Atlas → Mission flows still work.
+- [x] Recruiting an animal (which rebuilds the world) preserves a valid
       controlled selection and does not leave the camera in an invalid state.
-- [ ] The VaultScene showcase is visually unchanged by the shared-helper edits.
-- [ ] No sanctuary code imports an Atlas or Mission scene.
-- [ ] JavaScript syntax checks pass and the browser console has no errors.
+- [x] The VaultScene showcase is visually unchanged by the shared-helper edits.
+- [x] No sanctuary code imports an Atlas or Mission scene.
+- [x] JavaScript syntax checks pass and the browser console has no errors.
+
+Verification record: a 1280×720 Chrome pass exercised keyboard movement,
+wheel zoom, Home reset, panel collapse/expand, keyboard and pointer actions,
+resident selection, Base ↔ Vault, Base → Atlas → Mission → Base, atlas-marker
+confirmation, and recruit-triggered rebuild. The run produced no JavaScript
+runtime or console API errors. The existing placeholder path handled atlas
+image failures in the headless renderer; the command-line validator retains
+its documented Embertooth portability warning.
 
 ## Manual verification route
 
@@ -742,7 +840,9 @@ obvious depth-order popping or resident overlap loops.
 
 ## Handoff rule
 
-Any AI or human implementing a milestone should update its status here, record
-material decisions under the relevant section, and append a row to
-[`AI_CONTRIBUTIONS.md`](../AI_CONTRIBUTIONS.md). Do not mark a milestone done
-until its exit condition has been manually verified.
+This implemented plan is closed. Preserve its milestone statuses, acceptance
+record, reviews, and decisions. New camera/projection implementation belongs in
+[`SANCTUARY_ROTATABLE_CAMERA_PLAN.md`](SANCTUARY_ROTATABLE_CAMERA_PLAN.md).
+Persistence work remains a broader roadmap item. Every material contribution
+still requires an append-only row in
+[`AI_CONTRIBUTIONS.md`](../AI_CONTRIBUTIONS.md).

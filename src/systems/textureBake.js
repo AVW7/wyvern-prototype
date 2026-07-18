@@ -8,8 +8,25 @@
 import { ISO, TERRAIN, GAME } from '../config.js';
 import { BIOMES } from '../data/biomes.js';
 import { createNoise } from './noise.js';
-import { drawIsoTile, tileTextureSize, tileTextureKey } from './tileArt.js';
+import {
+  drawIsoTile,
+  drawProjectedIsoTile,
+  projectedTileGeometry,
+  TILE_OVERLAYS,
+  tileTextureSize,
+  tileTextureKey,
+} from './tileArt.js';
 import { drawDecor, decorTextureKey, DECOR_BOX } from './decorArt.js';
+import {
+  drawProjectedSanctuaryDecor,
+  EXTERIOR_SANCTUARY_DECOR_TYPES,
+} from './sanctuaryDecorArt.js';
+import {
+  normalizeView,
+  projectCellQuad,
+  projectionBasis,
+  viewKey,
+} from './sanctuaryProjection.js';
 
 // Randomness source for a baked texture's internal detail. Keyed on the biome
 // and variant only — never on map position, since one texture serves every tile
@@ -57,6 +74,151 @@ export function ensureDecorTexture(textures, biome, type, variant) {
   drawDecor(tex.getContext(), type, DECOR_BOX.baseX, DECOR_BOX.baseY, 1, variant, BIOMES[biome]);
   tex.refresh();
   return key;
+}
+
+function projectedTilePlacement(key, geometry, view) {
+  return {
+    key,
+    offsetX: geometry.offsetX,
+    offsetY: geometry.offsetY,
+    originX: geometry.originX,
+    originY: geometry.originY,
+    offset: { x: geometry.offsetX, y: geometry.offsetY },
+    origin: { x: geometry.originX, y: geometry.originY },
+    width: geometry.width,
+    height: geometry.height,
+    view,
+  };
+}
+
+/**
+ * Ensure a sanctuary-only tile texture for the active projected view.
+ *
+ * The returned offset is relative to `projectGrid(col, row, height, view)`.
+ * Callers place the image at that projected reference plus the offset and use
+ * the returned origin. An explicit quad may be supplied for a custom projected
+ * cell; translation-equivalent quads share one cache entry through shapeKey.
+ * Mission, Atlas, and Vault continue using ensureTileTexture unchanged.
+ */
+export function ensureProjectedSanctuaryTileTexture(
+  textures,
+  biome,
+  variant,
+  height,
+  overlay = null,
+  view = {},
+  quad = null,
+) {
+  if (overlay && !TILE_OVERLAYS[overlay]) {
+    throw new Error(`ensureProjectedSanctuaryTileTexture: unknown overlay "${overlay}"`);
+  }
+  const normalized = normalizeView(view);
+  const basis = projectionBasis(normalized);
+  const projectedQuad = quad ?? projectCellQuad(0, 0, height, normalized);
+  const wallLevels = Math.max(0, Number.isFinite(height) ? height : 0);
+  const wallOffset = {
+    x: -basis.height.x * wallLevels,
+    y: -basis.height.y * wallLevels,
+  };
+  const geometry = projectedTileGeometry(projectedQuad, wallOffset);
+  const overlaySuffix = overlay ? `-${overlay}` : '';
+  const key = `sanctuary-${tileTextureKey(biome, variant, height)}`
+    + `${overlaySuffix}-${viewKey(normalized)}-g${geometry.shapeKey}`;
+  const placement = projectedTilePlacement(key, geometry, normalized);
+  if (textures.exists(key)) return placement;
+
+  const tex = textures.createCanvas(key, geometry.width, geometry.height);
+  const rand = variantRand(biome, variant);
+  if (quad == null && normalized.yawDeg === 0 && normalized.elevationStep === 0) {
+    // Preserve the exact implemented sanctuary raster at the default view.
+    drawIsoTile(tex.getContext(), {
+      biome,
+      variant,
+      height,
+      tileWidth: ISO.tileWidth,
+      tileHeight: ISO.tileHeight,
+      elevation: ISO.elevation,
+      rand,
+      overlay,
+    });
+  } else {
+    drawProjectedIsoTile(tex.getContext(), {
+      biome,
+      variant,
+      height,
+      quad: projectedQuad,
+      wallOffset,
+      rand,
+      overlay,
+      geometry,
+    });
+  }
+  tex.refresh();
+  return placement;
+}
+
+function projectedDecorPlacement(key, normalized, basis) {
+  const elevationScale = basis.heightScale;
+  const width = DECOR_BOX.width;
+  const height = Math.max(1, Math.ceil(DECOR_BOX.height * elevationScale));
+  const baseX = DECOR_BOX.baseX;
+  const baseY = DECOR_BOX.baseY * elevationScale;
+  const originX = baseX / width;
+  const originY = baseY / height;
+  return {
+    key,
+    offsetX: 0,
+    offsetY: 0,
+    originX,
+    originY,
+    offset: { x: 0, y: 0 },
+    origin: { x: originX, y: originY },
+    width,
+    height,
+    baseX,
+    baseY,
+    elevationScale,
+    view: normalized,
+  };
+}
+
+/**
+ * Ensure a Base-only, view-aware exterior sanctuary prop while preserving the
+ * generic decor API. The projected drawer rebuilds ground and height pieces
+ * from the active basis; it does not transform a completed legacy bitmap.
+ */
+export function ensureProjectedSanctuaryDecorTexture(
+  textures,
+  biome,
+  type,
+  variant,
+  view = {},
+) {
+  const normalized = normalizeView(view);
+  const basis = projectionBasis(normalized);
+  if (!EXTERIOR_SANCTUARY_DECOR_TYPES.includes(type)) {
+    throw new Error(
+      `ensureProjectedSanctuaryDecorTexture: unsupported exterior prop "${type}"`,
+    );
+  }
+  const key = `sanctuary-${decorTextureKey(biome, type, variant)}-${viewKey(normalized)}`;
+  const placement = projectedDecorPlacement(key, normalized, basis);
+  if (textures.exists(key)) return placement;
+
+  const tex = textures.createCanvas(key, placement.width, placement.height);
+  const ctx = tex.getContext();
+  drawProjectedSanctuaryDecor(
+    ctx,
+    type,
+    placement.baseX,
+    placement.baseY,
+    1,
+    variant,
+    BIOMES[biome],
+    basis,
+  );
+  tex.refresh();
+  return placement;
 }
 
 // Atmospheric backdrop behind the island: vertical dusk gradient, a radial
@@ -113,13 +275,15 @@ export function ensureBackdropTexture(textures) {
   return key;
 }
 
-// Sanctuary backdrops, one per view. Unlike the mission backdrop (whose
-// diorama shadow is baked at fixed world coordinates), these are stretched by
-// BaseScene to cover whatever the zoomed-out camera sees — so the shadow is
-// baked at a viewport-relative spot (center, just below middle) where the
-// island/keep always sits after the camera fit.
-export function ensureSanctuaryBackdropTexture(textures, view) {
-  const key = `sanctuary-backdrop-${view}`;
+// Sanctuary backdrops, one per scene view. Base requests a sky-only variant
+// because its projected island shadow is a separate world object that must pan
+// with the map. Fixed-view Vault retains its historical baked shadow.
+export function ensureSanctuaryBackdropTexture(
+  textures,
+  view,
+  { dioramaShadow = true } = {},
+) {
+  const key = `sanctuary-backdrop-${view}${dioramaShadow ? '' : '-sky'}`;
   if (textures.exists(key)) return key;
 
   const w = GAME.width;
@@ -166,14 +330,17 @@ export function ensureSanctuaryBackdropTexture(textures, view) {
     }
   }
 
-  // Soft diorama shadow at the viewport-relative spot the map settles into.
-  ctx.save();
-  ctx.globalAlpha = 0.3;
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.ellipse(w * 0.5, h * 0.64, w * 0.34, h * 0.15, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  if (dioramaShadow) {
+    // Fixed-view Vault keeps the historical baked shadow. Rotatable Base asks
+    // for sky-only art and owns a separate projected world-space shadow.
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(w * 0.5, h * 0.64, w * 0.34, h * 0.15, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
 
   tex.refresh();
   return key;

@@ -6,15 +6,17 @@ Context for AI agents (and humans) working on this repo. Read this first.
 
 This repository intentionally supports collaboration among Claude, Codex,
 Gemini, other models, and humans. Read `AI_CONTEXT.md` for the shared handoff,
-`docs/SANCTUARY_FREE_ROAM_PLAN.md` for the active sanctuary design initiative,
+`docs/SANCTUARY_FREE_ROAM_PLAN.md` for the implemented sanctuary baseline,
+`docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md` for the active follow-up initiative,
 and `AI_CONTRIBUTIONS.md` before recording material work. After contributing,
 append a truthful contribution row; do not infer an exact model version that
 was not recorded.
 
 When asked to review the sanctuary design, use the questions and append-only
 template under **Multi-model review workspace** in
-`docs/SANCTUARY_FREE_ROAM_PLAN.md`. Preserve earlier reviews and leave final
-decision statuses to the human project owner.
+`docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md`. Preserve the historical reviews in
+the predecessor plan and leave final decision statuses to the human project
+owner.
 
 ## What this is
 
@@ -75,10 +77,11 @@ roster. Don't unify their rendering or scene logic.
   commented in place). Terrain textures are NOT baked here — they bake lazily
   on first use (see `systems/textureBake.js`).
 - `scenes/BaseScene.js` — the sanctuary **grounds**: the hand-authored Mossy
-  Monolith island rendered on canvas, with the roster standing on it as
-  residents, under the HTML/CSS Roost panel (`#ui-overlay`). Clicking the
-  barred gate at the massif's base (or the overlay button) enters the Vault;
-  Launch Mission starts a mission.
+  Monolith island rendered on canvas, with the roster roaming as residents
+  under the HTML/CSS Roost panel (`#ui-overlay`). The selected wyvern is
+  directly controllable; the scene orchestrates camera modes, bounded movement,
+  world interactions, ambient wandering, roster actions, and travel to the
+  Vault or Atlas.
 - `scenes/VaultScene.js` — the sanctuary **interior**: the Emberkeep Dragon
   Vault showcase. One selected demo wyvern stands on the central dais while
   the HTML/CSS vault panel shows its profile and previews its six animation
@@ -99,29 +102,54 @@ roster. Don't unify their rendering or scene logic.
 - `entities/Enemy.js` — minimal sprite state machine (idle/hurt/death), no
   input; hp and combat resolution live in `MissionScene`.
 - `systems/iso.js` — `gridToScreen` / `screenToGrid` / `sortByDepth`.
+- `systems/sanctuaryCamera.js` — Base-only overview/follow/survey camera,
+  panel-aware fit, bounded pan, cursor-anchored zoom, three-step yaw,
+  lower/default/higher elevation, transition locking, and full-rig reset.
+- `systems/sanctuaryMovement.js` — Base-only logical-world collision and
+  camera-relative normalized input, projected flight presentation, resident
+  handoff, and bounded ambient wandering. Navigation never uses the visually
+  lifted sprite position. World motion is projected into eight view-facing
+  animation sectors whenever an actor or the camera moves.
+- `systems/sanctuaryProjection.js` — Phaser-free forward/inverse position,
+  footprint, vector, cell-quad, bounds, and view-direction projection for all
+  nine supported yaw/elevation combinations. The default view remains
+  compatible with `gridToScreen()`.
+- `systems/sanctuaryGroundPlane.js` — pure projection transforms for radial
+  ground affordances. Elevation changes their foreshortening while upright
+  sprites, labels, prompts, and glyphs remain unchanged.
+- `systems/sanctuaryDecorArt.js` — Base-only procedural exterior prop drawers
+  built from active-view ground and height points. Generic `decorArt.js`
+  remains the fixed-view contract for Vault, Atlas, and Mission.
+- `systems/sanctuaryInteractions.js` — Base-only authored/live target registry,
+  nearest/hover affordances, range/cooldown handling, and the shared E/click
+  activation path.
 - `systems/terrain.js` — procedural island generator: per-cell biome, height
   (1-5 with island falloff), and prop. Pure function of `TERRAIN.seed`.
 - `systems/noise.js` — seeded hash / value / fractal noise (deterministic).
 - `systems/draw.js` — low-level canvas helpers (pixel-snapped rects/polygons,
   color mixing, diamond geometry) shared by `tileArt.js` and `decorArt.js`.
-- `systems/tileArt.js` — draws one iso tile to a canvas ctx: gradient
-  sidewalls, soil strata, per-biome top texture, lit rim. Pure drawing, no
-  Phaser.
+- `systems/tileArt.js` — draws default and projected iso tile geometry to a
+  canvas ctx: visible sidewalls, soil strata, per-biome top texture, lit rim,
+  and overlays. Pure drawing, no Phaser.
 - `systems/decorArt.js` — 18 procedural props (trees, crystals, ruins,
   obelisks...) in a `DECOR_DRAWERS` registry. Pure drawing, no Phaser.
-- `systems/textureBake.js` — bakes tileArt/decorArt/backdrops into Phaser
-  canvas textures on demand, cached by key. The only bridge between the pure
-  drawing modules and Phaser.
+- `systems/textureBake.js` — bakes tile/decor/backdrop art into Phaser canvas
+  textures on demand. Base variants are cached by normalized view; generic
+  fixed-view keys and rasters remain unchanged.
 - `data/sanctuary.js` — the two hand-authored sanctuary maps
-  (`buildSanctuaryExterior` / `buildSanctuaryInterior`) + `RESIDENT_SPOTS`.
-  Same `{ tiles, cols, rows }` contract as `terrain.js`, but cells may be
-  `null` (holes in the island silhouette) and may carry an `overlay`.
+  (`buildSanctuaryExterior` / `buildSanctuaryInterior`) + `RESIDENT_SPOTS` and
+  stable exterior `INTERACTIONS`. Same `{ tiles, cols, rows }` contract as
+  `terrain.js`, but cells may be `null` (holes in the island silhouette), may
+  carry an `overlay`, and expose explicit `walkable` metadata. The exterior
+  builder additively returns its interaction descriptors.
 - `systems/sanctuaryRender.js` — sanctuary-only view building: camera fit,
-  backdrop, tile/prop placement, residents, ambient prop tweens. Used by
-  BaseScene and VaultScene; **not** by MissionScene, which keeps its own
-  inline placement.
-- `ui/roostPanel.js` — the Roost overlay widget (roster cards, recruit row,
-  travel/launch buttons) shared by the two sanctuary scenes. Pure DOM.
+  projected bounds/world shadow, backdrop, in-place tile/prop reprojection,
+  resident handles and ground affordances, footprint effects, occlusion, and
+  ambient prop tweens. Used by BaseScene and VaultScene; **not** by
+  MissionScene, which keeps its own inline placement.
+- `ui/roostPanel.js` — the Roost overlay widget (selectable roster cards,
+  camera controls, action results, recruit row, travel/launch buttons) used by
+  BaseScene. VaultScene keeps its separate `ui/vaultPanel.js`. Both are pure DOM.
 - `systems/atlasWorld.js` — the atlas's island generator: region blobs →
   per-cell biome/height/prop, plus the southern atoll ring. Returns the same
   `{ tiles, cols, rows }` contract as `terrain.js`. Deliberately **not**
@@ -150,8 +178,8 @@ roster. Don't unify their rendering or scene logic.
   (`raiseBond`), and recruiting (`recruitAnimal`), backing each roster
   card's Train/Feed buttons and the Base sim's recruit row.
 - `config.js` — **single source of truth** for canvas size, iso tile size,
-  terrain seed/size/height tuning, wyvern state names, combat tuning, and
-  wyvern orders.
+  terrain seed/size/height tuning, sanctuary camera/movement/interaction
+  tuning, wyvern state names, combat tuning, and wyvern orders.
 - `ui/ui.css` — overlay styling.
 
 ### Procedural terrain pipeline
@@ -177,18 +205,70 @@ the two design prototypes. To reshape either one, edit those calls.
 - **To add a resident spot:** add a cell to `RESIDENT_SPOTS.outside/inside`.
   The roster fills spots in order and wraps with a small offset if it outgrows
   the list.
+- **To add a grounds interaction:** add a stable descriptor to
+  `INTERACTIONS.outside`, place any matching prop/area in the exterior builder,
+  and map its `action` callback in `BaseScene`. Range and sorting use the ground
+  footprint, not the rendered prop or resident height.
 - **To add an interior prop:** write a drawer + registry entry in
   `decorArt.js` (see the interior-props section), then `setProp` it in the
   interior layout. Keep it inside `DECOR_BOX` or bump the box.
-- **Travel between them is in-world:** BaseScene finds the `barredDoor` prop
-  and VaultScene finds the `glow` prop by type in `placed.decor` and makes it
-  clickable. Moving those props in the layout moves the doors.
+- **Travel between them is in-world:** Base uses the stable `vault-gate`
+  interaction (E/click in range), while VaultScene finds the `glow` prop by
+  type in `placed.decor` and makes it clickable. Both overlays retain explicit
+  travel buttons.
 - **The vault is a showcase, not a second management screen:** its overlay is
   built by `ui/vaultPanel.js`, and `VAULT_PREVIEW_SPOT` in `data/sanctuary.js`
   controls where the selected demo wyvern stands.
 - **One-off tile details** (like the monolith's niche) are `TILE_OVERLAYS`
   entries in `tileArt.js`, named by a cell's `overlay` field. They bake to
   their own texture key, so the shared biome+variant texture stays clean.
+
+#### Rotatable sanctuary view
+
+The canonical implementation brief is
+`docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md`; this section is only the architecture
+summary.
+
+The current sanctuary has zoom, bounded pan, Overview/Follow/Survey,
+camera-relative eight-direction logical movement, a 90° horizontal camera
+range (`-45°..+45°` around the default heading), and lower/default/higher
+elevation presets. Milestones 1–4 of the canonical plan are implemented;
+directional wyvern atlas art remains the final blocking milestone.
+
+- Do not implement yaw with `Phaser.Camera.rotation`. That rotates a completed
+  flat picture but cannot reveal new terrain/prop sides or preserve correct
+  pointer inversion, depth, and occlusion.
+- Keep stable grid/world coordinates as the source of truth. A low-level
+  projection maps them into the active view and can invert pointer positions.
+- Treat `screenInput`, `worldDirection`, and `viewDirection` as different
+  concepts. Input becomes camera-relative; collision/range stay in world
+  space; animation facing is derived after projecting the motion vector.
+- Reproject tiles, sidewalls, props, resident footprints, markers, effects,
+  shadows, and camera bounds. Keep DOM panels fixed and world text upright.
+- The implemented 2D rig eases among three yaw headings and three elevation
+  steps. Free 360°/3D orbit remains deferred.
+- Preserve zoom, Follow, survey pan, panel bias, selected resident, yaw, and
+  elevation through recruit rebuilds and in-memory Base scene travel.
+
+#### Sanctuary-ready wyvern art
+
+Directional keys already exist for `n, ne, e, se, s, sw, w, nw`, and the
+sanctuary controller already selects them. Missing sequences currently fall
+back to east-facing baseline art. For the rotatable-camera milestone:
+
+- Idle and Fly require complete eight-view turntables for the first art slice.
+- Attack, Guard, and Special require all eight views before final milestone
+  acceptance because the spring, training, and feed interactions play them.
+- Hurt and Death may retain east baseline art until those states exist in the
+  sanctuary, but remain required global atlas states for Mission/Vault.
+- Direction names describe the sprite's view-space silhouette, not a fixed
+  world compass. Runtime derives them from world motion plus camera heading.
+- Keep one ground pivot, scale, light direction, anatomy, cadence, and phase
+  across every view. Do not rotate painted sprites to fake missing art.
+- The current loader accepts one atlas page per profile. Extend loader,
+  catalog, validator, and fallback behavior before exporting a directional set
+  that needs multiple pages. Full details live in
+  `assets/sprites/wyverns/README.md`.
 
 ### The world atlas
 
@@ -235,10 +315,15 @@ camera) → `ui/atlasPanel.js` (the overlay).
 ## Conventions (follow these)
 
 - **Isometric is manual.** Phaser's world is screen-space. Never assume built-in
-  iso support. Place things with `gridToScreen(col, row)` and rely on
-  `sortByDepth()` for overlap. Anything that moves must set depth from its
-  ground footprint, not its visually elevated sprite Y, and the scene must
-  re-sort each frame.
+  iso support. Mission/Atlas/Vault use `gridToScreen(col, row)`; the Base
+  sanctuary uses `sanctuaryProjection.js`. Rely on `sortByDepth()` for overlap.
+  Anything that moves must set depth from its ground footprint, not its
+  visually elevated sprite Y, and the scene must re-sort each frame. Preserve
+  logical grid coordinates; do not mutate world data or rotate the flat camera
+  output to simulate yaw.
+- **Direction is view-dependent.** The eight direction labels are screen/view-
+  space animation facings. Keep a separate world movement vector and derive the
+  view-facing key from the active sanctuary projection.
 - **Wyvern states are string-keyed and centralized.** Add new actions to
   `WYVERN_STATES` in `config.js`, register the animation in
   `PreloadScene.createWyvernAnimations()`, and trigger via `wyvern.setState(...)`.
@@ -290,6 +375,8 @@ needs behavior beyond the four existing effect fields.
   the compact required-state atlas configured in `data/wyverns.js`; profiles without an
   atlas still receive a colored emoji placeholder. Add later atlas paths and
   frame-name arrays to the profile data—VaultScene and Wyvern need no changes.
+  Sanctuary camera rotation now makes eight-direction Idle/Fly the next art
+  priority, followed by Attack/Guard/Special.
 - **Hand-authored iso maps:** author in Tiled (isometric, 64x32), load with
   `this.load.tilemapTiledJSON`, and have `buildTerrain()` in
   `systems/terrain.js` read biomes/heights from the loaded map instead of
@@ -310,3 +397,7 @@ needs behavior beyond the four existing effect fields.
 - Don't pin a different Phaser major version; APIs used here target Phaser 3.
 - Keep the prototype runnable with zero art at every step (placeholders first,
   then swap in real assets).
+- Do not describe the directional-wyvern milestone or complete rotatable-camera
+  plan as accepted until the required Idle/Fly and visible action turntables
+  land and pass the browser matrix in
+  `docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md`.

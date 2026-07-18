@@ -1,0 +1,502 @@
+import { describe, expect, it, vi } from 'vitest';
+import { ISO, TERRAIN } from '../src/config.js';
+import { gridToScreen } from '../src/systems/iso.js';
+import {
+  canOccupy,
+  createSanctuaryMovement,
+  createSanctuaryWanderers,
+  createWalkableMask,
+} from '../src/systems/sanctuaryMovement.js';
+import {
+  projectFootprint,
+  projectVector,
+  viewDirectionForWorldVector,
+} from '../src/systems/sanctuaryProjection.js';
+
+function cell(height = 1, extra = {}) {
+  return { height, blocked: false, ...extra };
+}
+
+function display(x, y) {
+  const data = new Map();
+  return {
+    x,
+    y,
+    active: true,
+    alpha: 1,
+    scaleX: 1,
+    scaleY: 1,
+    setPosition(nextX, nextY) { this.x = nextX; this.y = nextY; return this; },
+    setData(key, value) { data.set(key, value); return this; },
+    getData(key) { return data.get(key); },
+    setScale(xScale, yScale = xScale) {
+      this.scaleX = xScale;
+      this.scaleY = yScale;
+      return this;
+    },
+    setAlpha(nextAlpha) { this.alpha = nextAlpha; return this; },
+    play: vi.fn(),
+  };
+}
+
+function footprint(col, row) {
+  const point = gridToScreen(col, row);
+  return { col, row, x: point.x, y: point.y + ISO.tileHeight / 2 };
+}
+
+function residentAt(col, row, id = 'wyv-test') {
+  const base = footprint(col, row);
+  return {
+    animal: { id, assetKey: `wyvern-${id}` },
+    footprint: { ...base, homeX: base.x, homeY: base.y },
+    sprite: display(base.x, base.y),
+    label: display(base.x, base.y - 60),
+    shadow: display(base.x, base.y + 2),
+    aura: display(base.x, base.y + 1),
+    selectionRing: display(base.x, base.y + 2),
+  };
+}
+
+function sceneWith(keys = {}) {
+  return {
+    anims: { exists: () => true },
+    input: { keyboard: { addKeys: () => keys } },
+    tweens: { killTweensOf: vi.fn() },
+  };
+}
+
+function openTiles(size = 5) {
+  return Array.from({ length: size }, () => Array.from({ length: size }, () => cell()));
+}
+
+describe('sanctuary movement', () => {
+  it('builds a walkable mask from authored holes and blocked/no-go cells', () => {
+    const mask = createWalkableMask([[
+      cell(),
+      null,
+      cell(3, { blocked: true }),
+      cell(1, { noGo: true }),
+    ]]);
+
+    expect(mask).toEqual([[true, false, false, false]]);
+    expect(canOccupy(mask, 0.49, 0)).toBe(true);
+    expect(canOccupy(mask, 1, 0)).toBe(false);
+    expect(canOccupy(mask, { col: Number.NaN, row: 0 })).toBe(false);
+  });
+
+  it('normalizes diagonal input and publishes one continuous footprint', () => {
+    const keys = { D: { isDown: true }, DOWN: { isDown: true } };
+    const actor = residentAt(2, 2);
+    const start = { ...actor.footprint };
+    const controller = createSanctuaryMovement({
+      scene: sceneWith(keys),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      resident: actor,
+      tuning: { speed: 100, maxDeltaMs: 100, collisionRadius: 0 },
+    });
+
+    expect(controller.update(0, 100)).toBe(true);
+    expect(Math.hypot(
+      controller.footprint.x - start.x,
+      controller.footprint.y - start.y,
+    )).toBeCloseTo(10);
+    expect(actor.footprint).toBe(controller.footprint);
+    expect(controller.getFootprint()).toMatchObject({
+      x: controller.footprint.x,
+      y: controller.footprint.y,
+      surfaceLift: 0,
+    });
+    expect(controller.state).toBe('fly');
+  });
+
+  it('keeps movement logical and maps input relative to the active camera view', () => {
+    const keys = { RIGHT: { isDown: true } };
+    const actor = residentAt(2, 2);
+    const controller = createSanctuaryMovement({
+      scene: sceneWith(keys),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      resident: actor,
+      tuning: { speed: 100, maxDeltaMs: 100, collisionRadius: 0 },
+    });
+    const view = { yawDeg: 45, elevationStep: 0 };
+    controller.setView(view);
+    const start = controller.getLogicalFootprint();
+
+    expect(controller.update(0, 100)).toBe(true);
+
+    const logical = controller.getLogicalFootprint();
+    const worldDelta = {
+      col: logical.col - start.col,
+      row: logical.row - start.row,
+    };
+    const defaultMetric = projectVector(worldDelta.col, worldDelta.row);
+    const activeProjection = projectVector(worldDelta.col, worldDelta.row, view);
+    const expected = projectFootprint(logical.col, logical.row, TERRAIN.baseHeight, view);
+
+    expect(Math.hypot(defaultMetric.x, defaultMetric.y)).toBeCloseTo(10);
+    expect(activeProjection.x).toBeGreaterThan(0);
+    expect(activeProjection.y).toBeCloseTo(0);
+    expect(controller.footprint).toMatchObject({
+      col: logical.col,
+      row: logical.row,
+    });
+    expect(controller.footprint.x).toBeCloseTo(expected.x);
+    expect(controller.footprint.y).toBeCloseTo(expected.y);
+    expect(actor.logicalFootprint).toEqual(logical);
+  });
+
+  it('reprojects an idle actor and recomputes view-facing without moving it', () => {
+    const keys = { RIGHT: { isDown: true } };
+    const actor = residentAt(2, 2);
+    const controller = createSanctuaryMovement({
+      scene: sceneWith(keys),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      resident: actor,
+      tuning: { speed: 100, maxDeltaMs: 100, collisionRadius: 0 },
+    });
+    const start = controller.getLogicalFootprint();
+    controller.update(0, 100);
+    const moved = controller.getLogicalFootprint();
+    const lastWorldVector = {
+      col: moved.col - start.col,
+      row: moved.row - start.row,
+    };
+    keys.RIGHT.isDown = false;
+    controller.update(100, 16);
+    expect(controller.state).toBe('idle');
+
+    const view = { yawDeg: 45, elevationStep: 1 };
+    expect(controller.setView(view)).toBe(true);
+
+    const expectedDirection = viewDirectionForWorldVector(
+      lastWorldVector.col,
+      lastWorldVector.row,
+      view,
+    );
+    const expectedProjection = projectFootprint(
+      moved.col,
+      moved.row,
+      TERRAIN.baseHeight,
+      view,
+    );
+    expect(controller.getLogicalFootprint()).toEqual(moved);
+    expect(controller.footprint.x).toBeCloseTo(expectedProjection.x);
+    expect(controller.footprint.y).toBeCloseTo(expectedProjection.y);
+    expect(controller.direction).toBe(expectedDirection);
+    expect(actor.sprite.play.mock.lastCall[0]).toContain(`-idle-${expectedDirection}`);
+    expect(controller.setView(view)).toBe(false);
+  });
+
+  it('keeps a never-moved idle actor on a stable world heading across yaw', () => {
+    const actor = residentAt(2, 2);
+    const controller = createSanctuaryMovement({
+      scene: sceneWith(),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      resident: actor,
+    });
+    const start = controller.getLogicalFootprint();
+    const view = { yawDeg: 45, elevationStep: 0 };
+    const expectedDirection = viewDirectionForWorldVector(1, -1, view);
+
+    expect(controller.direction).toBe('e');
+    expect(controller.setView(view)).toBe(true);
+    expect(controller.getLogicalFootprint()).toEqual(start);
+    expect(controller.direction).toBe(expectedDirection);
+    expect(actor.sprite.play.mock.lastCall[0]).toContain(`-idle-${expectedDirection}`);
+  });
+
+  it('honors transition gating and refreshes a camera view accessor before input', () => {
+    const keys = { RIGHT: { isDown: true } };
+    const actor = residentAt(2, 2);
+    let blocked = true;
+    let activeView = { yawDeg: 0, elevationStep: 0 };
+    const controller = createSanctuaryMovement({
+      scene: sceneWith(keys),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      resident: actor,
+      getView: () => activeView,
+      inputBlocked: () => blocked,
+      tuning: { speed: 100, maxDeltaMs: 100, collisionRadius: 0 },
+    });
+    const start = controller.getLogicalFootprint();
+
+    expect(controller.update(0, 100)).toBe(false);
+    expect(controller.getLogicalFootprint()).toEqual(start);
+
+    activeView = { yawDeg: -45, elevationStep: -1 };
+    blocked = false;
+    expect(controller.update(100, 100)).toBe(true);
+
+    const logical = controller.getLogicalFootprint();
+    const activeDelta = projectVector(
+      logical.col - start.col,
+      logical.row - start.row,
+      activeView,
+    );
+    expect(controller.view).toEqual(activeView);
+    expect(activeDelta.x).toBeGreaterThan(0);
+    expect(activeDelta.y).toBeCloseTo(0);
+  });
+
+  it('sweeps long movement instead of tunnelling across blocked cells', () => {
+    const tiles = Array.from({ length: 5 }, () => Array(5).fill(null));
+    tiles[2][2] = cell();
+    tiles[0][4] = cell(); // reachable only by crossing the no-go gap at (3, 1)
+    const actor = residentAt(2, 2);
+    const keys = { RIGHT: { isDown: true } };
+    const controller = createSanctuaryMovement({
+      scene: sceneWith(keys),
+      layer: { sort: vi.fn() },
+      tiles,
+      resident: actor,
+      tuning: {
+        speed: 1280, maxDeltaMs: 100, collisionRadius: 0, collisionStep: 4,
+      },
+    });
+
+    controller.update(0, 100);
+
+    expect(Math.round(controller.footprint.col)).toBe(2);
+    expect(Math.round(controller.footprint.row)).toBe(2);
+    expect(canOccupy(controller.mask, controller.footprint)).toBe(true);
+  });
+
+  it('renders walkable raised cells at surface lift while depth stays grounded', () => {
+    const tiles = openTiles(3);
+    tiles[1][1] = cell(2);
+    const actor = residentAt(1, 1);
+    const controller = createSanctuaryMovement({
+      scene: sceneWith(),
+      layer: { sort: vi.fn() },
+      tiles,
+      resident: actor,
+    });
+
+    controller.update(0, 16);
+
+    const expectedLift = (2 - TERRAIN.baseHeight) * ISO.elevation;
+    expect(controller.footprint.surfaceLift).toBe(expectedLift);
+    expect(actor.sprite.y).toBeCloseTo(controller.footprint.y - expectedLift);
+    expect(actor.shadow.y).toBeCloseTo(controller.footprint.y - expectedLift + 2);
+    expect(actor.sprite.getData('depth')).toBeCloseTo(controller.footprint.y + 0.2);
+    expect(actor.label.y).toBeCloseTo(controller.footprint.y - expectedLift - 60);
+  });
+
+  it('sorts an actor after its floor tile in the upper half of the owning cell', () => {
+    const tiles = openTiles(5);
+    const actor = residentAt(2, 2);
+    const upperHalf = footprint(1.75, 2);
+    actor.footprint = { ...upperHalf };
+    actor.sprite.setPosition(upperHalf.x, upperHalf.y);
+    actor.label.setPosition(upperHalf.x, upperHalf.y - 60);
+    actor.shadow.setPosition(upperHalf.x, upperHalf.y + 2);
+    actor.aura.setPosition(upperHalf.x, upperHalf.y + 1);
+    actor.selectionRing.setPosition(upperHalf.x, upperHalf.y + 2);
+
+    const controller = createSanctuaryMovement({
+      scene: sceneWith(),
+      layer: { sort: vi.fn() },
+      tiles,
+      resident: actor,
+    });
+    controller.update(0, 16);
+
+    // sanctuaryRender's owning floor tile uses this exact center-ground depth.
+    const owningFloorDepth = footprint(2, 2).y;
+    const depths = [
+      actor.aura.getData('depth'),
+      actor.selectionRing.getData('depth'),
+      actor.shadow.getData('depth'),
+      actor.sprite.getData('depth'),
+      actor.label.getData('depth'),
+    ];
+    expect(controller.footprint.y).toBeLessThan(owningFloorDepth);
+    expect(depths).toEqual([
+      owningFloorDepth + 0.05,
+      owningFloorDepth + 0.1,
+      owningFloorDepth + 0.15,
+      owningFloorDepth + 0.2,
+      owningFloorDepth + 0.25,
+    ]);
+    expect(depths.every((depth) => depth > owningFloorDepth)).toBe(true);
+    expect(depths.at(-1)).toBeLessThan(owningFloorDepth + 1);
+  });
+
+  it('lands and restores the previous actor when a controller changes residents', () => {
+    const keys = { RIGHT: { isDown: true } };
+    const first = residentAt(2, 2, 'first');
+    const second = residentAt(1, 1, 'second');
+    const controller = createSanctuaryMovement({
+      scene: sceneWith(keys),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      resident: first,
+      tuning: { speed: 100, maxDeltaMs: 100, collisionRadius: 0 },
+    });
+
+    controller.update(0, 100);
+    expect(first.sprite.y).toBeLessThan(first.footprint.y);
+    expect(first.shadow.scaleX).toBeLessThan(1);
+
+    const handedOffFootprint = { ...first.footprint };
+    controller.setResident(second);
+
+    expect(first.footprint).toMatchObject(handedOffFootprint);
+    expect(first.sprite.y).toBeCloseTo(handedOffFootprint.y);
+    expect(first.label.y).toBeCloseTo(handedOffFootprint.y - 60);
+    expect(first.shadow.scaleX).toBeCloseTo(1);
+    expect(first.shadow.alpha).toBeCloseTo(1);
+    expect(first.sprite.play.mock.lastCall[0]).toContain('-idle-');
+    expect(controller.resident).toBe(second);
+  });
+
+  it('moves only non-excluded wanderers and stays bounded around home', () => {
+    const selected = residentAt(1, 1, 'selected');
+    const neighbour = residentAt(2, 2, 'neighbour');
+    const selectedStart = { ...selected.footprint };
+    const neighbourStart = { ...neighbour.footprint };
+    const wanderers = createSanctuaryWanderers({
+      scene: sceneWith(),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      residents: [selected, neighbour],
+      excludeId: 'selected',
+      tuning: {
+        radius: 20,
+        speed: 20,
+        pauseMinMs: 0,
+        pauseMaxMs: 0,
+        maxDeltaMs: 1000,
+        collisionRadius: 0,
+        random: () => 0.25,
+      },
+    });
+
+    expect(wanderers.update(0, 1000)).toBe(true);
+    expect(selected.footprint).toMatchObject({ x: selectedStart.x, y: selectedStart.y });
+    expect(Math.hypot(
+      neighbour.footprint.x - neighbourStart.homeX,
+      neighbour.footprint.y - neighbourStart.homeY,
+    )).toBeLessThanOrEqual(20);
+    expect(neighbour.footprint.y).not.toBe(neighbourStart.y);
+
+    wanderers.destroy();
+    expect(() => wanderers.destroy()).not.toThrow();
+    expect(wanderers.update(1000, 16)).toBe(false);
+  });
+
+  it('keeps wander homes in logical space across views and transition gates', () => {
+    const resident = residentAt(2, 2, 'wanderer');
+    let blocked = true;
+    const wanderers = createSanctuaryWanderers({
+      scene: sceneWith(),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      residents: [resident],
+      inputBlocked: () => blocked,
+      tuning: {
+        radius: 20,
+        speed: 20,
+        pauseMinMs: 0,
+        pauseMaxMs: 0,
+        maxDeltaMs: 1000,
+        collisionRadius: 0,
+        random: () => 0.25,
+      },
+    });
+    const record = wanderers.records[0];
+    const start = wanderers.getLogicalFootprint('wanderer');
+
+    expect(wanderers.update(0, 1000)).toBe(false);
+    expect(wanderers.getLogicalFootprint('wanderer')).toEqual(start);
+
+    blocked = false;
+    expect(wanderers.update(1000, 1000)).toBe(true);
+    const moved = wanderers.getLogicalFootprint('wanderer');
+    const homeOffset = projectVector(
+      moved.col - record.home.col,
+      moved.row - record.home.row,
+    );
+    expect(Math.hypot(homeOffset.x, homeOffset.y)).toBeLessThanOrEqual(20);
+
+    const view = { yawDeg: -45, elevationStep: 1 };
+    expect(wanderers.setView(view)).toBe(true);
+    const expected = projectFootprint(moved.col, moved.row, TERRAIN.baseHeight, view);
+    const expectedDirection = viewDirectionForWorldVector(
+      record.lastWorldVector.col,
+      record.lastWorldVector.row,
+      view,
+    );
+    expect(wanderers.getLogicalFootprint('wanderer')).toEqual(moved);
+    expect(record.footprint.x).toBeCloseTo(expected.x);
+    expect(record.footprint.y).toBeCloseTo(expected.y);
+    expect(record.direction).toBe(expectedDirection);
+    expect(resident.logicalFootprint).toEqual(moved);
+  });
+
+  it('adopts the live controlled footprint when a wandered resident is unexcluded', () => {
+    const first = residentAt(2, 2, 'first');
+    const second = residentAt(3, 3, 'second');
+    const wanderers = createSanctuaryWanderers({
+      scene: sceneWith(),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(7),
+      residents: [first, second],
+      excludeId: 'second',
+      tuning: {
+        radius: 20,
+        speed: 20,
+        pauseMinMs: 0,
+        pauseMaxMs: 0,
+        maxDeltaMs: 1000,
+        collisionRadius: 0,
+        random: () => 0.25,
+      },
+    });
+
+    // `first` gets a presentation record, then direct control takes ownership
+    // and publishes a different footprint object while that record is paused.
+    wanderers.update(0, 1000);
+    wanderers.setExcludedId('first');
+    const liveLogical = {
+      col: first.footprint.col + 0.125,
+      row: first.footprint.row - 0.125,
+    };
+    const liveProjection = projectFootprint(
+      liveLogical.col,
+      liveLogical.row,
+      TERRAIN.baseHeight,
+    );
+    const liveControlled = {
+      ...first.footprint,
+      ...liveLogical,
+      ...liveProjection,
+    };
+    first.footprint = liveControlled;
+
+    wanderers.setExcludedId('second');
+
+    const resumed = wanderers.records.find((record) => record.resident === first);
+    expect(resumed.footprint).toMatchObject({
+      x: liveProjection.x,
+      y: liveProjection.y,
+      col: liveLogical.col,
+      row: liveLogical.row,
+    });
+    expect(resumed.logical).toEqual(liveLogical);
+    expect(first.footprint).toBe(resumed.footprint);
+    expect(first.sprite.x).toBeCloseTo(liveProjection.x);
+    const owningDepth = footprint(
+      Math.round(resumed.footprint.col),
+      Math.round(resumed.footprint.row),
+    ).y;
+    expect(first.sprite.getData('depth')).toBeCloseTo(
+      Math.max(liveProjection.y, owningDepth) + 0.2,
+    );
+  });
+});
