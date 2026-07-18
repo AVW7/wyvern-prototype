@@ -156,6 +156,95 @@ Initial interactions:
 7. Profile depth sorting only after the playable slice exists; the sanctuary
    population is currently small enough for a per-frame sort while moving.
 
+## Multi-model review workspace
+
+This section is the shared place for Claude, Gemini, Codex, other models, and
+humans to critique the plan before implementation. Reviews are append-only:
+add a new review instead of rewriting another contributor's conclusions.
+
+### Questions for reviewers
+
+Reviewers should address the areas where independent input is most valuable:
+
+1. **Player fantasy:** Does direct control of a selected sanctuary wyvern
+   deliver the intended free-roaming experience, or should mounting/riding be
+   part of the first playable slice?
+2. **Camera UX:** Are Overview, Follow, and Inspect the right modes? Identify
+   any control conflicts among movement, pointer interaction, drag-pan, and
+   cursor-anchored zoom.
+3. **Movement representation:** Should the controller store logical grid
+   coordinates or a continuous screen-space ground footprint? Explain the
+   collision, elevation, and animation tradeoffs for this codebase.
+4. **Isometric readability:** Which depth, occlusion, label, shadow, or
+   foreground-layer problems are most likely to hide action?
+5. **Interaction slice:** Are gate, spring, resident, training, and nest/feed
+   the best first five targets? Recommend replacements only when they prove the
+   base-management fantasy more clearly.
+6. **Architecture:** Challenge the proposed system boundaries while preserving
+   the established separation of Base, Vault, Atlas, and Mission scenes.
+7. **Milestone order:** Identify dependencies, oversized milestones, or a
+   smaller vertical slice that would produce useful player feedback sooner.
+8. **Verification and accessibility:** Find missing keyboard, pointer, camera,
+   performance, or readability acceptance checks.
+
+### Copyable review prompt
+
+Give the following prompt to another model from the repository root:
+
+```text
+Review docs/SANCTUARY_FREE_ROAM_PLAN.md as a senior Phaser 3 / isometric game
+developer. First read AI_CONTEXT.md and the sanctuary architecture in
+CLAUDE.md, then inspect the relevant current source files. Do not implement the
+feature. Give concrete feedback on player fantasy, camera controls, logical
+movement, depth/occlusion, interaction priorities, architecture seams,
+milestone sizing, and verification. Distinguish must-fix issues from optional
+ideas. Append your response as the next review in the plan's Multi-model review
+workspace, preserve prior reviews, update the decision log only for decisions
+the human owner has accepted, and record your work in AI_CONTRIBUTIONS.md.
+```
+
+### How to append a review
+
+1. Read `AI_CONTEXT.md`, `CLAUDE.md`, this entire plan, and the relevant source.
+2. Register the exact model in `AI_CONTRIBUTIONS.md` if it is not registered.
+3. Copy the template below and use the next `R-###` identifier.
+4. Cite file/function names for technical claims. Do not claim to have tested
+   behavior that was only read from source.
+5. Leave decisions as proposals. The human project owner accepts, rejects, or
+   defers them in the decision log.
+
+```md
+### Review R-### — Model/product
+
+- **Date:** YYYY-MM-DD
+- **Model ID:** AI-###
+- **Focus:** Camera / movement / interaction / rendering / full plan
+- **Files inspected:** `path`, `path`
+- **Summary:** One short paragraph.
+- **Must fix before implementation:** Concrete issues, or `None`.
+- **Recommended changes:** Ordered recommendations with reasons.
+- **Keep as designed:** Decisions that should not be churned.
+- **Risks and edge cases:** Failure modes and how to test them.
+- **Suggested first vertical slice:** Smallest playable implementation.
+- **Confidence / unknowns:** What the reviewer could not verify.
+```
+
+### Recorded reviews
+
+No external sanctuary-plan reviews have been recorded yet. Replace this line
+with the first `R-001` review; later reviewers append below it.
+
+### Decision log
+
+Reviews can disagree. Preserve that disagreement in their review entries; only
+the human project owner changes a decision status here.
+
+| ID | Decision | Status | Source / reason |
+| --- | --- | --- | --- |
+| D-001 | First slice directly controls a roster wyvern; mounted riding remains deferred. | Provisional | Working interpretation of “free roaming on the dragons”; invite reviewer challenge. |
+| D-002 | Base, Vault, Atlas, and Mission retain separate scene logic. | Accepted | Existing architecture guardrail in `CLAUDE.md`; low-level math may still be shared. |
+| D-003 | Camera opens in Overview and supports Follow plus Inspect-scale zoom. | Proposed | Core plan; validate control conflicts and motion comfort through reviews and Milestone 1. |
+
 ## Delivery plan
 
 ### Milestone 1 — Camera foundation

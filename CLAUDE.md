@@ -11,6 +11,11 @@ and `AI_CONTRIBUTIONS.md` before recording material work. After contributing,
 append a truthful contribution row; do not infer an exact model version that
 was not recorded.
 
+When asked to review the sanctuary design, use the questions and append-only
+template under **Multi-model review workspace** in
+`docs/SANCTUARY_FREE_ROAM_PLAN.md`. Preserve earlier reviews and leave final
+decision statuses to the human project owner.
+
 ## What this is
 
 A **Phaser 3** prototype for a two-layer game:
