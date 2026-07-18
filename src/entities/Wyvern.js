@@ -5,22 +5,24 @@ import {
   WYVERN_STATES, WYVERN_ORDERS, ORDER_EFFECTS, WYVERN_ART,
 } from '../config.js';
 import { DEMO_WYVERNS, wyvernAnimationKey } from '../data/wyverns.js';
+import { resolveWyvernVisual, scaleWyvernVisual } from '../systems/wyvernPresentation.js';
 
 const SPEED = 0.12; // px per ms
 
 export default class Wyvern extends Phaser.GameObjects.Sprite {
   constructor(scene, x, y, profile = DEMO_WYVERNS[0]) {
-    const texture = scene.textures.get(profile.assetKey);
-    const initialFrame = texture?.has(profile.atlas?.initialFrame)
-      ? profile.atlas.initialFrame
-      : undefined;
-    super(scene, x, y, profile.assetKey, initialFrame);
+    const visual = resolveWyvernVisual(scene.textures, profile);
+    super(scene, x, y, profile.assetKey, visual.frameName);
     scene.add.existing(this);
-    this.setOrigin(0.5, 0.85); // feet-ish anchor so it sits on the tile
+    this.setOrigin(visual.origin.x, visual.origin.y);
 
     this.profileId = profile.id;
     this.profile = profile;
     this.assetKey = profile.assetKey;
+    this.visual = visual;
+    this.atlasScale = visual.usesAtlas
+      ? scaleWyvernVisual(visual, WYVERN_ART.missionHeight)
+      : null;
     this.hp = profile.hp ?? 100;
     this.stateName = null;
     this.locked = false; // true during one-shot states (attack/hurt/death)
@@ -31,8 +33,18 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
 
     // A ground-locked shadow keeps the entity's footprint readable while its
     // sprite lifts into the air. MissionScene adds it to the sortable layer.
-    this.shadow = scene.add.ellipse(x, y + 2, 46, 13, 0x05070a, 0.32);
+    this.shadow = scene.add.ellipse(
+      x,
+      y + 2,
+      WYVERN_ART.missionShadow.width,
+      WYVERN_ART.missionShadow.height,
+      0x05070a,
+      WYVERN_ART.missionShadow.alpha,
+    );
     this.shadow.setData('depth', y - 0.25);
+    this.once(Phaser.GameObjects.Events.DESTROY, () => {
+      if (this.shadow?.active) this.shadow.destroy();
+    });
 
     // Input: arrows + WASD + space. Rebind here when you add a settings screen.
     this.keys = scene.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE');
@@ -53,12 +65,8 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
     if (this.stateName === next) return this;
     this.stateName = next;
     const animationKey = wyvernAnimationKey(this.assetKey, next);
-    const animation = this.scene.anims.get(animationKey);
-    const firstFrame = animation?.frames[0]?.frame;
-    const frameHeight = firstFrame?.realHeight || firstFrame?.height || 1;
-    const usesAtlasFrame = firstFrame?.name && firstFrame.name !== '__BASE';
-    const scale = usesAtlasFrame
-      ? WYVERN_ART.missionHeight / frameHeight
+    const scale = this.visual.usesAtlas && this.atlasScale
+      ? this.atlasScale
       : WYVERN_ART.placeholderMissionScale;
     this.setScale(scale);
     this.play(animationKey, true);
@@ -130,7 +138,7 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
       this.flightLift / WYVERN_ART.missionFlightLift, 0, 1,
     );
     this.shadow.setScale(1 - flightRatio * 0.22);
-    this.shadow.setAlpha(0.32 - flightRatio * 0.14);
+    this.shadow.setAlpha(WYVERN_ART.missionShadow.alpha * (1 - flightRatio * 0.44));
   }
 
   // Applies damage, plays hurt or death, and returns true if this killed it.

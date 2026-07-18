@@ -5,8 +5,14 @@
 // vice versa). Conventions mirror the mission ones: heights draw relative to
 // TERRAIN.baseHeight, tiles anchor at origin (0.5, 0), and everything sorts
 // by its ground-plane footprint.
-import { GAME, ISO, TERRAIN, SANCTUARY } from '../config.js';
+import {
+  GAME, ISO, TERRAIN, SANCTUARY, WYVERN_ART,
+} from '../config.js';
 import { gridToScreen } from './iso.js';
+import { wyvernAnimationKey } from '../data/wyverns.js';
+import {
+  resolveWyvernVisual, scaleWyvernVisual, wyvernAccentColor,
+} from './wyvernPresentation.js';
 import {
   ensureTileTexture, ensureDecorTexture, ensureSanctuaryBackdropTexture,
 } from './textureBake.js';
@@ -153,12 +159,56 @@ export function spawnSanctuaryResidents(scene, layer, view, zoom) {
     const px = x + wrap * 14 * (i % 2 ? 1 : -1);
     const py = y + ISO.tileHeight / 2 + wrap * 6;
 
-    const sprite = scene.add.image(px, py, `species-${animal.species}`);
-    sprite.setOrigin(0.5, 0.85); // feet-ish anchor, same as mission entities
+    const visual = resolveWyvernVisual(scene.textures, animal);
+    const usesProfileTexture = Boolean(
+      animal.assetKey && scene.textures.exists(animal.assetKey),
+    );
+    const sprite = usesProfileTexture
+      ? scene.add.sprite(px, py, visual.textureKey, visual.frameName)
+      : scene.add.image(px, py, `species-${animal.species}`);
+
+    if (usesProfileTexture) {
+      const accent = wyvernAccentColor(animal);
+      const aura = scene.add.ellipse(
+        px,
+        py + 1,
+        WYVERN_ART.sanctuaryAura.width,
+        WYVERN_ART.sanctuaryAura.height,
+        accent,
+        WYVERN_ART.sanctuaryAura.alpha,
+      );
+      aura.setStrokeStyle(1, accent, 0.38);
+      aura.setData('depth', py - 0.2);
+      layer.add(aura);
+
+      const shadow = scene.add.ellipse(
+        px,
+        py + 2,
+        WYVERN_ART.sanctuaryShadow.width,
+        WYVERN_ART.sanctuaryShadow.height,
+        0x05070a,
+        WYVERN_ART.sanctuaryShadow.alpha,
+      );
+      shadow.setData('depth', py - 0.1);
+      layer.add(shadow);
+
+      sprite.setOrigin(visual.origin.x, visual.origin.y);
+      sprite.setScale(visual.usesAtlas
+        ? scaleWyvernVisual(visual, WYVERN_ART.sanctuaryHeight)
+        : WYVERN_ART.sanctuaryHeight / Math.max(visual.referenceHeight, 1));
+
+      const idleKey = wyvernAnimationKey(animal, 'idle');
+      if (scene.anims.exists(idleKey)) sprite.play(idleKey);
+    } else {
+      sprite.setOrigin(0.5, 0.85); // feet-ish anchor for generated residents
+    }
     sprite.setData('depth', py);
     layer.add(sprite);
 
-    const label = scene.add.text(px, py - 40, animal.name, {
+    const labelLift = usesProfileTexture
+      ? WYVERN_ART.sanctuaryHeight * visual.origin.y + 8
+      : 40;
+    const label = scene.add.text(px, py - labelLift, animal.name, {
       font: `${Math.round(11 / zoom)}px monospace`,
       color: '#d8e6ff',
     });

@@ -202,7 +202,9 @@ export function buildSanctuaryInterior() {
 // are flat, prop-free ground in their map.
 export const RESIDENT_SPOTS = {
   outside: [
-    { col: 13, row: 14 }, { col: 15, row: 15 }, { col: 5, row: 15 },
+    // Keep the three showcase wyverns separated and on height-1 meadow tiles.
+    // In roster order: Embertooth, Cinderlash, Galeclaw.
+    { col: 13, row: 14 }, { col: 18, row: 17 }, { col: 5, row: 15 },
     { col: 9, row: 21 }, { col: 17, row: 20 }, { col: 12, row: 15 },
   ],
   inside: [

@@ -5,27 +5,38 @@ with **sprite wyverns**, plus a **base/roster management sim** between missions.
 Runs with zero art files — placeholder textures are generated at load so the shell
 is playable immediately. Swap in real art and features as you go.
 
+## Requirements
+
+- Node.js `^20.19.0` or `>=22.12.0`
+- A current desktop browser with WebGL
+
 ## Run it
 
-ES modules need to be served over HTTP (opening `index.html` via `file://` will
-fail with a CORS error). From this folder:
+Install the pinned dependencies once, then start the Vite preview:
 
 ```bash
-python3 devserver.py 8000
-# then open http://localhost:8000
+npm ci
+npm run dev
 ```
 
-`devserver.py` is stdlib-only `http.server` plus a `Cache-Control: no-store`
-header, so edits under `src/` show up on a normal reload. Any static server
-works (`npx serve`, VS Code Live Server, etc.), but with plain
-`python3 -m http.server` browsers cache the ES modules and keep running stale
-code until you hard-reload.
+Open the local URL Vite prints. Opening `index.html` with `file://` is not
+supported because the game uses ES modules and loaded assets.
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Local preview with fast refresh |
+| `npm run validate:atlas` | Check every configured dragon atlas and PNG |
+| `npm test` | Run the pure atlas-contract tests |
+| `npm run build` | Create the static production build, including runtime assets, in `dist/` |
+| `npm run check` | Syntax, atlas validation, tests, and production build |
 
 ## What you'll see
 
 1. **Roost** (base sim) — manage the roster and enter the Emberkeep Dragon Vault.
-2. **Dragon Vault** — select one of three demo wyverns, inspect its mission
-   profile, and preview idle/fly/guard/attack/hurt/death placeholders.
+2. **Dragon Vault** — select one of three demo wyverns, preview the six currently
+   exposed animation states, inspect live frame/texture diagnostics, and tune display
+   height, flight lift, shadow opacity, and playback rate. Embertooth uses its
+   real atlas; the other profiles demonstrate the fallback pipeline.
 3. Click World Atlas and choose a destination — the **isometric mission** loads: a diamond-grid map with raised
    tiles, and a wyvern sprite you control.
    - Move: Arrow keys / WASD
@@ -36,8 +47,10 @@ code until you hard-reload.
 
 ```
 wyvern-prototype/
-├── index.html              Entry point; loads Phaser (CDN) + game module
+├── index.html              Vite entry point
+├── package.json            Pinned Phaser and development commands
 ├── src/
+│   ├── bootstrap.js        Exposes pinned npm Phaser to existing modules
 │   ├── main.js             Phaser config, registers scenes
 │   ├── config.js           Constants: canvas, iso tile size, demo map, state names
 │   ├── scenes/
@@ -50,9 +63,12 @@ wyvern-prototype/
 │   │   └── Wyvern.js        Sprite + animation state machine + controls
 │   ├── systems/
 │   │   ├── iso.js           grid<->screen math + depth sort
-│   │   └── roster.js        Base/roster data model
+│   │   ├── roster.js        Base/roster data model
+│   │   └── wyvernAtlas.js   Pure atlas contract + validation
 │   └── ui/
 │       └── ui.css           Management-sim overlay styling
+├── scripts/                Syntax and atlas checks
+├── tests/                  Atlas-contract tests
 └── assets/
     ├── sprites/wyverns/     Wyvern art (see folder README)
     ├── tilemaps/            Tiled iso maps (see folder README)
@@ -62,7 +78,8 @@ wyvern-prototype/
 
 ## Where to add things next
 
-- **Real wyvern art** → `assets/sprites/wyverns/` (README there has the exact steps).
+- **Real wyvern art** → `assets/sprites/wyverns/` (README there contains the
+  asset contract, exporter requirements, memory limits, and troubleshooting).
 - **Real iso maps** → author in Tiled, load in `PreloadScene`, build layers in
   `MissionScene` in place of the `DEMO_MAP` loop.
 - **More actions** → add a state to `WYVERN_STATES` in `config.js`, register its
@@ -73,7 +90,8 @@ wyvern-prototype/
 
 ## Design choices baked in
 
-- `pixelArt: true` + `roundPixels: true` keep sprite pixels crisp.
+- `pixelArt: true` + `roundPixels: true` keep terrain crisp. High-resolution
+  painted dragons opt into linear filtering when loaded.
 - Iso rendering is manual (Phaser is screen-space): tiles placed via `gridToScreen`,
   overlap fixed by `sortByDepth` each frame. This is the standard Phaser iso pattern.
 - Management UI is an HTML/CSS overlay, not canvas-drawn — far faster to build

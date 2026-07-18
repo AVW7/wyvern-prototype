@@ -12,37 +12,36 @@ A **Phaser 3** prototype for a two-layer game:
 
 Current stage: **small prototype** — three demo wyverns, a few missions, proving the
 concept. Scope decisions should favor "prove it fast" over "build it to scale."
-It runs today with **zero art files**: placeholder textures are generated at load.
+It runs when art is absent because placeholder textures are generated at load.
+Embertooth currently has a real atlas; Cinderlash and Galeclaw use fallbacks.
 
 ## Tech stack
 
-- **Engine:** Phaser 3.80.1, loaded from CDN in `index.html`. No build step.
-- **Code:** vanilla JS as **ES modules** (`<script type="module">`). No bundler,
-  no framework, no npm dependencies.
-- **Planned art pipeline:** Aseprite (wyvern sprite sheets + JSON atlas) and
-  Tiled (isometric maps, 64x32 tiles). Not yet wired — placeholders stand in.
+- **Engine:** Phaser 3.80.1, pinned through npm. `src/bootstrap.js` exposes it
+  globally for the existing scene modules.
+- **Code:** vanilla JS as **ES modules**, served and built with Vite. Vitest
+  covers pure technical contracts; there is no application UI framework.
+- **Art pipeline:** Phaser hash atlases with required `meta.animations` state
+  lists; see `assets/sprites/wyverns/README.md`. Tiled is still planned for
+  isometric maps (64x32 tiles).
 
 ## Run / test
 
-ES modules require an HTTP server (opening `file://` throws CORS errors):
+Use the pinned Node workflow (`file://` is unsupported):
 
 ```bash
-python3 devserver.py 8000   # then open http://localhost:8000
+npm ci
+npm run dev
 ```
 
-`devserver.py` is `http.server` with `Cache-Control: no-store` added (stdlib
-only — no tooling). Use it rather than `python3 -m http.server`: that sends no
-cache headers, so browsers heuristically cache `src/*.js` and keep serving the
-old module after an edit.
-
-There is no test suite. To sanity-check syntax after edits:
+Run the full local gate after edits:
 
 ```bash
-for f in $(find src -name '*.js'); do node --check "$f"; done
+npm run check
 ```
 
-Verification for gameplay changes is manual: run the server, load the page, open
-the browser devtools console, and confirm no errors + expected behavior.
+This checks JavaScript syntax, configured wyvern atlases, Vitest contracts, and
+the production build. Canvas behavior still needs a browser smoke test.
 
 ## Architecture & flow
 
@@ -56,7 +55,7 @@ They share only low-level systems (draw/tileArt/decorArt/textureBake) and the
 roster. Don't unify their rendering or scene logic.
 
 - `scenes/BootScene.js` — one-time setup, hands off to Preload.
-- `scenes/PreloadScene.js` — loads assets and generates the wyvern/enemy
+- `scenes/PreloadScene.js` — loads assets, validates wyvern atlases, and generates the wyvern/enemy
   placeholder textures + animations, plus one `species-<id>` emoji texture per
   sanctuary species (residents). Real `this.load.*` calls go here (examples are
   commented in place). Terrain textures are NOT baked here — they bake lazily
@@ -69,7 +68,8 @@ roster. Don't unify their rendering or scene logic.
 - `scenes/VaultScene.js` — the sanctuary **interior**: the Emberkeep Dragon
   Vault showcase. One selected demo wyvern stands on the central dais while
   the HTML/CSS vault panel shows its profile and previews its six animation
-  states. The daylight glow over the entry bridge (or the overlay button)
+  states. The sprite contract also registers a seventh `special` state, but no
+  Vault button or gameplay trigger is wired yet. The daylight glow over the entry bridge (or the overlay button)
   returns to the grounds; management controls stay on BaseScene.
 - `scenes/AtlasScene.js` — the **world atlas**: the Shattered Cradle overworld
   and the game's mission select. Pans/zooms its own camera, places the island
@@ -128,6 +128,9 @@ roster. Don't unify their rendering or scene logic.
   hpBase, hpPerLevel). Pure data, same pattern as `data/biomes.js`.
 - `data/wyverns.js` — the three immutable demo profiles, their one-to-five
   mission ratings/tags, and their profile-specific asset/animation key helper.
+- `systems/wyvernAtlas.js` — pure atlas contract and validation used by the
+  runtime, command-line validator, and tests. Atlas JSON `meta.animations` is
+  the single source of frame sequences.
 - `systems/roster.js` — shared base/roster data model for every recruited
   animal (any species, not just wyverns) + xp/leveling (`gainXp`), bonding
   (`raiseBond`), and recruiting (`recruitAnimal`), backing each roster
@@ -219,21 +222,23 @@ camera) → `ui/atlasPanel.js` (the overlay).
 
 - **Isometric is manual.** Phaser's world is screen-space. Never assume built-in
   iso support. Place things with `gridToScreen(col, row)` and rely on
-  `sortByDepth()` for overlap. Anything that moves must set
-  `this.setData('depth', this.y)` and the scene must re-sort each frame.
+  `sortByDepth()` for overlap. Anything that moves must set depth from its
+  ground footprint, not its visually elevated sprite Y, and the scene must
+  re-sort each frame.
 - **Wyvern states are string-keyed and centralized.** Add new actions to
   `WYVERN_STATES` in `config.js`, register the animation in
   `PreloadScene.createWyvernAnimations()`, and trigger via `wyvern.setState(...)`.
   Animation keys follow the profile-specific pattern `<assetKey>-<state>`
   (for example `wyvern-embertooth-guard`).
-- **One-shot states lock the entity.** Attack/hurt/death set `this.locked = true`;
-  the `animationcomplete` handler unlocks and returns to idle. Don't add movement
-  code that ignores `locked`.
+- **One-shot states lock the entity.** Attack/hurt unlock and return to Idle on
+  completion. Mission death remains locked; the Vault deliberately returns its
+  Death preview to Idle. Don't add movement code that ignores `locked`.
 - **Management-sim UI = HTML/CSS overlay**, not canvas drawing. Build menus,
   rosters, tooltips in the `#ui-overlay` div and style them in `ui.css`. Clear
   the overlay (`innerHTML = ''`) on scene transitions.
 - **Pixel art settings are intentional:** `pixelArt: true` + `roundPixels: true`
-  in `main.js`. Keep them; sprites must stay crisp.
+  in `main.js` keep terrain crisp. Real high-resolution wyvern atlases opt into
+  linear filtering in `PreloadScene` so downscaled painted art stays stable.
 - **Tune from `config.js`.** Prefer adding constants there over hardcoding.
 - **Keep comments explaining the "replace this placeholder" seams** — art and
   maps get swapped in incrementally.
@@ -244,7 +249,7 @@ The mission HUD has an on-screen command bar — **Guard / Scout / Attack /
 Recon / Protect** — that sets the wyvern's standing order. Orders are
 deliberately a separate concept from `WYVERN_STATES`:
 
-- `WYVERN_STATES` (idle/fly/guard/attack/hurt/death) are **animation frames**,
+- `WYVERN_STATES` (idle/fly/guard/attack/special/hurt/death) are **animation frames**,
   driven every tick by input and combat.
 - `WYVERN_ORDERS` (`config.js`) are the **standing behavior mode** that gates
   or steers that input — set via `wyvern.setOrder(order)`, read every frame
@@ -268,7 +273,7 @@ needs behavior beyond the four existing effect fields.
 ## Replacing placeholders (the common next steps)
 
 - **Real wyvern art:** see `assets/sprites/wyverns/README.md`. Embertooth uses
-  the Ultimate Atlas configured in `data/wyverns.js`; profiles without an
+  the compact required-state atlas configured in `data/wyverns.js`; profiles without an
   atlas still receive a colored emoji placeholder. Add later atlas paths and
   frame-name arrays to the profile data—VaultScene and Wyvern need no changes.
 - **Hand-authored iso maps:** author in Tiled (isometric, 64x32), load with

@@ -114,6 +114,7 @@ export const WYVERN_STATES = {
   FLY: 'fly',
   GUARD: 'guard',
   ATTACK: 'attack',
+  SPECIAL: 'special',
   HURT: 'hurt',
   DEATH: 'death',
 };
@@ -122,19 +123,33 @@ export const WYVERN_STATES = {
 // placeholders are already close to their on-screen size. Scenes normalize
 // them independently so swapping art does not change gameplay proportions.
 export const WYVERN_ART = {
-  vaultPreviewHeight: 150,
+  vaultPreviewHeight: 180,
+  sanctuaryHeight: 64,
   missionHeight: 72,
   placeholderPreviewScale: 1.9,
   placeholderMissionScale: 1,
+  origin: { x: 0.5, y: 0.88 },
   vaultFlightLift: 38,
   missionFlightLift: 18,
   flightBobAmplitude: 2.5,
   flightLiftResponseMs: 140,
+  vaultShadow: { width: 86, height: 21, alpha: 0.34 },
+  vaultAura: { width: 122, height: 34, alpha: 0.14 },
+  sanctuaryShadow: { width: 44, height: 11, alpha: 0.3 },
+  sanctuaryAura: { width: 54, height: 16, alpha: 0.12 },
+  missionShadow: { width: 46, height: 13, alpha: 0.32 },
+  previewTuning: {
+    height: { min: 80, max: 240, step: 2 },
+    flightLift: { min: 0, max: 100, step: 1 },
+    shadowAlpha: { min: 0.05, max: 0.6, step: 0.01 },
+    playbackRate: { min: 0.5, max: 2, step: 0.05 },
+  },
   frameRates: {
     idle: 7,
     fly: 11,
     guard: 8,
     attack: 12,
+    special: 12,
     hurt: 12,
     death: 8,
   },

@@ -8,12 +8,16 @@ import { SPECIES } from '../data/species.js';
 import {
   DEMO_WYVERNS, wyvernAnimationKey, wyvernAtlasDataKey,
 } from '../data/wyverns.js';
+import {
+  framesForWyvernDirection,
+  framesForWyvernState,
+  LOOPING_WYVERN_STATES,
+  placeholderWyvernReport,
+  validateWyvernAtlas,
+  WYVERN_DIRECTIONS,
+} from '../systems/wyvernAtlas.js';
 
-const LOOPING_WYVERN_STATES = new Set([
-  WYVERN_STATES.IDLE,
-  WYVERN_STATES.FLY,
-  WYVERN_STATES.GUARD,
-]);
+const LOOPING_STATES = new Set(LOOPING_WYVERN_STATES);
 
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -25,18 +29,27 @@ export default class PreloadScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const bar = this.add.rectangle(width / 2, height / 2, 0, 8, 0x8a5cf6);
     this.load.on('progress', (p) => { bar.width = 240 * p; });
+    this.load.on('loaderror', (file) => {
+      const profile = DEMO_WYVERNS.find((wyvern) => (
+        wyvern.atlas?.image === file.url || wyvern.atlas?.data === file.url
+      ));
+      if (profile) {
+        console.warn(`[Wyvern assets] ${profile.name}: failed to load ${file.url}; using its placeholder.`);
+      }
+    });
 
     // Each profile may provide its own Phaser atlas. Profiles without one keep
     // using the generated placeholder made in createPlaceholderWyverns().
-    DEMO_WYVERNS.forEach((wyvern) => {
-      if (wyvern.atlas) {
+    [...DEMO_WYVERNS]
+      .filter((wyvern) => wyvern.atlas)
+      .sort((a, b) => (a.atlas.loadPriority ?? 0) - (b.atlas.loadPriority ?? 0))
+      .forEach((wyvern) => {
         this.load.atlas(wyvern.assetKey, wyvern.atlas.image, wyvern.atlas.data);
         // The atlas loader consumes the JSON to build frames. Cache a small
         // second copy so animation lists come directly from meta.animations
         // instead of being duplicated in source code.
         this.load.json(wyvernAtlasDataKey(wyvern), wyvern.atlas.data);
-      }
-    });
+      });
 
     // ---- OTHER REAL ASSET LOADS GO HERE ----
     // Terrain tiles are procedural (see systems/textureBake.js, baked lazily by
@@ -50,6 +63,7 @@ export default class PreloadScene extends Phaser.Scene {
     this.createPlaceholderEnemy();
     this.createSpeciesTextures();
     this.configureWyvernTextureFilters();
+    this.validateWyvernAssets();
     this.createWyvernAnimations();
     this.createEnemyAnimations();
 
@@ -67,6 +81,44 @@ export default class PreloadScene extends Phaser.Scene {
       const texture = this.textures.get(wyvern.assetKey);
       if (texture?.has(wyvern.atlas.initialFrame)) {
         texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      }
+    });
+  }
+
+  validateWyvernAssets() {
+    const gl = this.game.renderer?.gl;
+    const maxTextureSize = gl ? gl.getParameter(gl.MAX_TEXTURE_SIZE) : null;
+
+    DEMO_WYVERNS.forEach((wyvern) => {
+      let report;
+      if (!wyvern.atlas) {
+        report = placeholderWyvernReport(wyvern);
+      } else {
+        const atlasData = this.cache.json.get(wyvernAtlasDataKey(wyvern));
+        const texture = this.textures.get(wyvern.assetKey);
+        const atlasTextureLoaded = Boolean(texture?.has(wyvern.atlas.initialFrame));
+        const source = atlasTextureLoaded ? texture?.source?.[0] : null;
+        report = validateWyvernAtlas(wyvern, atlasData, {
+          imageSize: source?.width && source?.height
+            ? { w: source.width, h: source.height }
+            : undefined,
+          maxTextureSize,
+        });
+
+        if (!atlasTextureLoaded) {
+          report.mode = 'fallback';
+          report.valid = false;
+          report.errors.push('Phaser did not create the atlas texture; the placeholder is active.');
+        }
+      }
+
+      this.registry.set(`wyvernAsset:${wyvern.id}`, report);
+      if (report.errors.length || report.warnings.length) {
+        const logger = report.errors.length ? console.warn : console.info;
+        logger(`[Wyvern assets] ${wyvern.name}`, {
+          errors: report.errors,
+          warnings: report.warnings,
+        });
       }
     });
   }
@@ -89,7 +141,11 @@ export default class PreloadScene extends Phaser.Scene {
   // preload(), its key already exists and the generated fallback is skipped.
   createPlaceholderWyverns() {
     DEMO_WYVERNS.forEach((wyvern) => {
-      if (this.textures.exists(wyvern.assetKey)) return;
+      if (this.textures.exists(wyvern.assetKey)) {
+        const existing = this.textures.get(wyvern.assetKey);
+        if (!wyvern.atlas || existing?.has(wyvern.atlas.initialFrame)) return;
+        this.textures.remove(wyvern.assetKey);
+      }
       const width = 58;
       const height = 54;
       const tex = this.textures.createCanvas(wyvern.assetKey, width, height);
@@ -131,27 +187,49 @@ export default class PreloadScene extends Phaser.Scene {
   // tag frames; the scene/entity animation keys do not need to change.
   createWyvernAnimations() {
     DEMO_WYVERNS.forEach((wyvern) => {
+      const texture = this.textures.get(wyvern.assetKey);
+      const atlasData = wyvern.atlas
+        ? this.cache.json.get(wyvernAtlasDataKey(wyvern))
+        : null;
+      const fallbackFrame = texture?.has(wyvern.atlas?.initialFrame)
+        ? wyvern.atlas.initialFrame
+        : undefined;
+
       Object.values(WYVERN_STATES).forEach((state) => {
         const animationKey = wyvernAnimationKey(wyvern, state);
-        if (this.anims.exists(animationKey)) return;
-        const texture = this.textures.get(wyvern.assetKey);
-        const atlasData = wyvern.atlas
-          ? this.cache.json.get(wyvernAtlasDataKey(wyvern))
-          : null;
-        const configuredFrames = atlasData?.meta?.animations?.[state] || [];
+        const configuredFrames = framesForWyvernState(atlasData, state);
         const realFrames = configuredFrames.filter((frame) => texture?.has(frame));
-        const fallbackFrame = texture?.has(wyvern.atlas?.initialFrame)
-          ? wyvern.atlas.initialFrame
-          : undefined;
-        this.anims.create({
-          key: animationKey,
-          frames: realFrames.length
-            ? realFrames.map((frame) => ({ key: wyvern.assetKey, frame }))
-            : [{ key: wyvern.assetKey, frame: fallbackFrame }],
-          frameRate: WYVERN_ART.frameRates[state] ?? 10,
-          repeat: LOOPING_WYVERN_STATES.has(state) ? -1 : 0,
+        const baselineFrames = realFrames.length ? realFrames : [fallbackFrame];
+
+        if (!this.anims.exists(animationKey)) {
+          this.createWyvernAnimation(animationKey, wyvern.assetKey, state, baselineFrames);
+        }
+
+        // Directional keys always exist. Authored sequences replace the east
+        // baseline one direction at a time; missing artwork remains a clean,
+        // non-rotated fallback until the caller opts into directional playback.
+        WYVERN_DIRECTIONS.forEach((direction) => {
+          const directionalKey = wyvernAnimationKey(wyvern, state, direction);
+          if (this.anims.exists(directionalKey)) return;
+          const directionalFrames = framesForWyvernDirection(atlasData, state, direction)
+            .filter((frame) => texture?.has(frame));
+          this.createWyvernAnimation(
+            directionalKey,
+            wyvern.assetKey,
+            state,
+            directionalFrames.length ? directionalFrames : baselineFrames,
+          );
         });
       });
+    });
+  }
+
+  createWyvernAnimation(key, textureKey, state, frameNames) {
+    this.anims.create({
+      key,
+      frames: frameNames.map((frame) => ({ key: textureKey, frame })),
+      frameRate: WYVERN_ART.frameRates[state] ?? 10,
+      repeat: LOOPING_STATES.has(state) ? -1 : 0,
     });
   }
 

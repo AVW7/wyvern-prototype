@@ -1070,6 +1070,13 @@
         "death_3",
         "death_4"
       ],
+      "special": [
+        "fire_breath_0",
+        "fire_breath_1",
+        "fire_breath_2",
+        "fire_breath_3",
+        "fire_breath_4"
+      ],
       "fire_breath": [
         "fire_breath_0",
         "fire_breath_1",

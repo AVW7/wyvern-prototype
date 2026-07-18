@@ -15,6 +15,13 @@ const config = {
   backgroundColor: GAME.backgroundColor,
   pixelArt: true,     // crisp pixels, no smoothing — matches sprite art
   roundPixels: true,  // avoid sub-pixel jitter when sprites move
+  // Painted wyvern atlases decode to roughly 60–70 MiB each. Loading them in
+  // parallel causes intermittent browser image/decode failures, most visibly
+  // dropping Cinderlash from the outside sanctuary. Serial loading keeps peak
+  // decode pressure bounded without changing any public asset keys.
+  loader: {
+    maxParallelDownloads: 1,
+  },
   scale: {
     mode: Phaser.Scale.FIT,          // letterbox into whatever window we get
     autoCenter: Phaser.Scale.CENTER_BOTH,
