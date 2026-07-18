@@ -37,7 +37,6 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
-globalThis.__game = game; // TEMP debug handle for hill-climb verification
 
 game.events.once('ready', () => {
   const updateStageRect = () => {

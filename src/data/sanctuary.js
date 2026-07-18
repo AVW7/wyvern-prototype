@@ -55,10 +55,11 @@ function makeBuilder(seed, size, defaultBiome) {
       height,
       variant: Math.floor(hash2(col, row, 1300) * TERRAIN.variants),
       blocked: height >= TERRAIN.blockedAt,
-      // Raised shelves are visual cliffs in the first free-roam slice. Keep
-      // them explicitly out of the walkable mask until authored ramp metadata
-      // and matching transition art make an elevation change intentional.
-      walkable: height === TERRAIN.baseHeight,
+      // Raised shelves are walkable: the actor climbs onto them (riding the
+      // surface lift) as long as the rise is within SANCTUARY.movement.climbStep.
+      // A taller rise still reads as a cliff because the climb-step gate in
+      // sanctuaryMovement refuses it — no per-cell no-go flag needed.
+      walkable: true,
       decor: null,
     };
   };
