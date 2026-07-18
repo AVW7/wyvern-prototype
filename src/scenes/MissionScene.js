@@ -4,7 +4,7 @@
 import {
   ISO, TERRAIN, COMBAT, DEMO_ENEMY_SPAWNS, WYVERN_ORDERS, ORDER_EFFECTS,
 } from '../config.js';
-import { gridToScreen, sortByDepth } from '../systems/iso.js';
+import { gridToScreen, screenToGrid, sortByDepth } from '../systems/iso.js';
 import { buildTerrain } from '../systems/terrain.js';
 import {
   ensureTileTexture, ensureDecorTexture, ensureBackdropTexture,
@@ -60,10 +60,13 @@ export default class MissionScene extends Phaser.Scene {
   // Every tile texture puts its top face's top vertex at local y=0, so a tile
   // of any height anchors with origin (0.5, 0).
   buildIsoBackground() {
-    const { tiles } = buildTerrain({
+    // Kept on the scene so the wyvern can query per-cell height at runtime for
+    // terrain-aware movement (see cellAt / terrainLiftAt / canTraverse).
+    this.terrain = buildTerrain({
       seed: this.seed,
       exclude: [WYVERN_START, ...DEMO_ENEMY_SPAWNS],
     });
+    const { tiles } = this.terrain;
 
     for (let row = 0; row < tiles.length; row++) {
       for (let col = 0; col < tiles[row].length; col++) {
@@ -83,6 +86,38 @@ export default class MissionScene extends Phaser.Scene {
         if (cell.decor) this.addDecor(cell, x, y - lift);
       }
     }
+  }
+
+  // --- Terrain queries for wyvern movement -------------------------------
+  // The wyvern moves on the flat footprint plane, so screenToGrid maps its
+  // (x, groundY) straight to the cell it stands over.
+
+  // The cell under a footprint position, or null when off the grid.
+  cellAt(x, y) {
+    const { col, row } = screenToGrid(x, y);
+    const tiles = this.terrain.tiles;
+    if (row < 0 || row >= tiles.length) return null;
+    if (col < 0 || col >= tiles[row].length) return null;
+    return tiles[row][col];
+  }
+
+  // Pixels the top face of the cell under (x, y) rises above the gameplay
+  // plane — the same lift the tile art uses. 0 (flat) when off the grid.
+  terrainLiftAt(x, y) {
+    const cell = this.cellAt(x, y);
+    if (!cell) return 0;
+    return (cell.height - TERRAIN.baseHeight) * ISO.elevation;
+  }
+
+  // Ride + block rule: the wyvern can step onto the destination cell if it
+  // exists (blocks flying off the island) and the rise is within climbableStep.
+  // Descending any distance is always allowed since it flies down.
+  canTraverse(fromX, fromY, toX, toY) {
+    const to = this.cellAt(toX, toY);
+    if (!to) return false;
+    const from = this.cellAt(fromX, fromY);
+    const fromHeight = from ? from.height : TERRAIN.baseHeight;
+    return to.height - fromHeight <= TERRAIN.climbableStep;
   }
 
   // Props are their own depth-sorted sprites rather than being baked into the
@@ -255,7 +290,10 @@ export default class MissionScene extends Phaser.Scene {
   update(time, delta) {
     if (this.missionOver) return;
 
-    this.wyvern.update(delta);
+    this.wyvern.update(delta, {
+      liftAt: (x, y) => this.terrainLiftAt(x, y),
+      passable: (fx, fy, tx, ty) => this.canTraverse(fx, fy, tx, ty),
+    });
     this.enemies.forEach((e) => e.update());
     this.handleContactDamage(time);
     this.handleAutoAttack(time);

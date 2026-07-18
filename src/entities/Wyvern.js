@@ -29,6 +29,7 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
     this.order = WYVERN_ORDERS.ATTACK; // standing behavior mode; see config.js ORDER_EFFECTS
     this.groundY = y;
     this.flightLift = 0;
+    this.terrainLift = 0; // eased lift so the sprite rides raised terrain tiles
     this.flightPhase = 0;
 
     // A ground-locked shadow keeps the entity's footprint readable while its
@@ -78,14 +79,20 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
     this.order = order;
   }
 
-  update(delta) {
+  // `terrain` (from MissionScene) is an optional { liftAt, passable } query
+  // interface. When absent the wyvern still runs as flat free flight.
+  update(delta, terrain = null) {
     // Depth and combat stay on the ground footprint; only the rendered sprite
-    // rises. This avoids flight changing attack/contact distances.
+    // rises. This avoids flight/terrain lift changing attack/contact distances.
     this.setData('depth', this.groundY);
     this.shadow.setData('depth', this.groundY - 0.25);
 
+    // Height of the tile top face the wyvern is currently over, read after any
+    // movement below so it reflects the cell just stepped onto.
+    const terrainTarget = () => (terrain ? terrain.liftAt(this.x, this.groundY) : 0);
+
     if (this.locked) {
-      this.updateFlightPose(delta, false);
+      this.updateFlightPose(delta, false, terrainTarget());
       return; // mid attack/hurt/death — no movement or restate
     }
 
@@ -114,26 +121,40 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
 
     if (dx !== 0 || dy !== 0) {
       const len = Math.hypot(dx, dy);
-      this.x += (dx / len) * SPEED * effects.speedMultiplier * delta;
-      this.groundY += (dy / len) * SPEED * effects.speedMultiplier * delta;
+      const step = SPEED * effects.speedMultiplier * delta;
+      const nx = this.x + (dx / len) * step;
+      const ny = this.groundY + (dy / len) * step;
+      // Resolve against terrain: take the full step when passable, else slide
+      // along whichever axis is clear so the wyvern skirts a cliff face.
+      if (!terrain) {
+        this.x = nx;
+        this.groundY = ny;
+      } else if (terrain.passable(this.x, this.groundY, nx, ny)) {
+        this.x = nx;
+        this.groundY = ny;
+      } else {
+        if (terrain.passable(this.x, this.groundY, nx, this.groundY)) this.x = nx;
+        if (terrain.passable(this.x, this.groundY, this.x, ny)) this.groundY = ny;
+      }
       if (dx !== 0) this.setFlipX(dx < 0); // face travel direction
       this.setState(WYVERN_STATES.FLY);
-      this.updateFlightPose(delta, true);
+      this.updateFlightPose(delta, true, terrainTarget());
     } else {
       this.setState(WYVERN_STATES.IDLE);
-      this.updateFlightPose(delta, false);
+      this.updateFlightPose(delta, false, terrainTarget());
     }
   }
 
-  updateFlightPose(delta, flying) {
+  updateFlightPose(delta, flying, targetTerrainLift = 0) {
     const response = 1 - Math.exp(-delta / WYVERN_ART.flightLiftResponseMs);
     const targetLift = flying ? WYVERN_ART.missionFlightLift : 0;
     this.flightLift += (targetLift - this.flightLift) * response;
+    this.terrainLift += (targetTerrainLift - this.terrainLift) * response;
     this.flightPhase += delta * 0.008;
     const bob = flying ? Math.sin(this.flightPhase) * WYVERN_ART.flightBobAmplitude : 0;
-    this.y = this.groundY - this.flightLift - bob;
+    this.y = this.groundY - this.terrainLift - this.flightLift - bob;
 
-    this.shadow.setPosition(this.x, this.groundY + 2);
+    this.shadow.setPosition(this.x, this.groundY - this.terrainLift + 2);
     const flightRatio = Phaser.Math.Clamp(
       this.flightLift / WYVERN_ART.missionFlightLift, 0, 1,
     );

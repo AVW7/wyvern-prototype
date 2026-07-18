@@ -38,6 +38,9 @@ export const TERRAIN = {
   // Cells at or above this height count as blocked (impassable terrain data
   // for future pathing; movement is currently free flight).
   blockedAt: 3,
+  // Max elevation levels the wyvern can climb in one step; a taller rise reads
+  // as a cliff it must go around (see Wyvern terrain-aware movement).
+  climbableStep: 1,
 };
 
 // The mission map is now fully procedural — see TERRAIN below and
