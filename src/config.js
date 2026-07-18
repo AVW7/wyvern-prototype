@@ -54,6 +54,57 @@ export const SANCTUARY = {
   cameraMargin: 30,
   // Screen px the camera shifts the map right so it clears the roster panel.
   panelBias: 120,
+  // The fitted overview is the zoom-out floor. Follow and survey may zoom in
+  // to this ceiling, with wheel steps matching the Atlas camera's feel.
+  zoom: { max: 2.2, step: 1.12 },
+  // Follow uses a gentle per-frame lerp. Camera bounds include this much
+  // world-space slack, and pointer travel past dragClickSlop suppresses clicks.
+  followLerp: 0.1,
+  panMargin: 150,
+  dragClickSlop: 6,
+  // The sanctuary is still rendered as authored 2D views. Yaw and elevation
+  // therefore move through a small, cacheable rig instead of pretending this
+  // is a free 3D orbit. Pitch values describe the camera angle above the
+  // ground plane; 30° reproduces the existing 2:1 projection exactly.
+  cameraRig: {
+    yaw: { min: -45, max: 45, step: 45, default: 0 },
+    elevation: {
+      minStep: -1,
+      maxStep: 1,
+      defaultStep: 0,
+      pitchDeg: { '-1': 22.5, 0: 30, 1: 37.5 },
+    },
+    transitionMs: 280,
+  },
+  // Speed uses the default-view ground metric so it stays perceptually stable
+  // after camera-relative input is inverted into logical grid space. Flight
+  // lift remains a presentation-only offset applied to the sprite and label.
+  movement: {
+    speed: 145,
+    flightLift: 15,
+    flightResponseMs: 140,
+    bobAmplitude: 2.5,
+    maxDeltaMs: 50,
+  },
+  // Non-controlled residents make short trips around their authored home
+  // spots. They never leave the same walkable mask as the controlled wyvern.
+  wander: {
+    radius: 54,
+    speed: 18,
+    pauseMinMs: 1700,
+    pauseMaxMs: 4200,
+  },
+  interaction: {
+    defaultRange: 62,
+    cooldownMs: 450,
+    markerScale: 1,
+    promptOffset: 46,
+    labelMinScale: 0.38,
+    labelMaxScale: 1.15,
+  },
+  selectionRing: { width: 52, height: 17, alpha: 0.85 },
+  // Tall props fade only while their projected foreground overlaps the actor.
+  occlusion: { alpha: 0.28, radiusX: 38, radiusY: 74, response: 0.16 },
   // Residents' idle bob: pixels of travel and base duration (staggered per
   // resident so the roost doesn't bounce in lockstep).
   residentBob: { amplitude: 3, durationMs: 1150 },

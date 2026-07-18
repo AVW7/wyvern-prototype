@@ -114,6 +114,13 @@ html, body {
   transition: background 0.15s, border-color 0.15s;
 }
 .roster li:hover { background: rgba(255, 255, 255, 0.07); border-color: #3a2d52; }
+.roster-card { cursor: pointer; outline: none; }
+.roster-card.is-selected {
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(255, 255, 255, 0.045));
+  box-shadow: inset 3px 0 #a78bfa;
+}
+.roster-card:focus-visible { border-color: #c4b5fd; box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.35); }
 
 .avatar {
   flex-shrink: 0;
@@ -179,6 +186,145 @@ html, body {
 .recruit-label { margin: 6px 0 4px; }
 .recruit-row { display: flex; gap: 8px; }
 .recruit-btn { flex: 1; padding: 8px 10px; font-size: 12px; }
+
+/* Sanctuary free-roam status and camera controls. They stay HTML because they
+   are fixed HUD; selection rings and interaction prompts remain in-world. */
+.sanctuary-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 8px;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 9px;
+  background: rgba(124, 58, 237, 0.08);
+}
+.controlled-animal { min-width: 0; display: flex; flex-direction: column; }
+.controlled-animal span {
+  color: #8a7aa8;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+.controlled-animal strong {
+  max-width: 100px;
+  overflow: hidden;
+  color: #e9ddff;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.camera-modes { display: flex; gap: 3px; }
+.camera-mode {
+  min-width: 34px;
+  padding: 4px 5px;
+  flex-direction: column;
+  gap: 0;
+  color: #9b8bbd;
+  font-size: 11px;
+}
+.camera-mode span { font-size: 7px; text-transform: capitalize; }
+.camera-mode.is-active {
+  color: #f2edff;
+  border-color: #8b5cf6;
+  background: rgba(124, 58, 237, 0.3);
+}
+.camera-rig {
+  display: grid;
+  grid-template-columns: minmax(68px, 1fr) repeat(5, 30px);
+  align-items: center;
+  gap: 4px;
+  margin: -2px 0 10px;
+  padding: 6px;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 9px;
+  background: rgba(13, 35, 52, 0.45);
+}
+.camera-rig.is-collapsed {
+  position: absolute;
+  top: 72px;
+  left: 24px;
+  width: 258px;
+  margin: 0;
+  background: rgba(15, 18, 35, 0.9);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(6px);
+}
+.camera-rig-readout {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding-left: 3px;
+  line-height: 1.05;
+}
+.camera-rig-readout strong { color: #dff4ff; font-size: 10px; }
+.camera-rig-readout small {
+  overflow: hidden;
+  color: #8eb7ca;
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.camera-rig-btn {
+  width: 30px;
+  min-width: 30px;
+  height: 26px;
+  padding: 0;
+  color: #bfe9ff;
+  font-size: 14px;
+  border-color: rgba(125, 211, 252, 0.25);
+  background: rgba(56, 189, 248, 0.08);
+}
+.camera-rig-btn:hover { border-color: #7dd3fc; background: rgba(56, 189, 248, 0.18); }
+.camera-rig-btn:disabled { cursor: default; opacity: 0.32; transform: none; }
+
+#ui-overlay.is-camera-transitioning button:disabled {
+  cursor: progress;
+  opacity: 0.48;
+}
+.camera-rig-reset { color: #e9ddff; border-color: rgba(167, 139, 250, 0.3); }
+.sanctuary-result {
+  min-height: 28px;
+  margin: 0 0 10px;
+  padding: 6px 8px;
+  color: #d9ccf2;
+  font-size: 10px;
+  line-height: 1.4;
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  border-radius: 8px;
+  background: rgba(13, 35, 52, 0.58);
+}
+.sanctuary-result.is-muted { color: #8a7aa8; border-color: transparent; background: transparent; }
+#ui-overlay > .sanctuary-result {
+  position: absolute;
+  bottom: 45px;
+  left: 50%;
+  min-height: 0;
+  margin: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.sanctuary-controls-hint {
+  position: absolute;
+  right: 170px;
+  bottom: 14px;
+  left: 170px;
+  color: rgba(196, 181, 253, 0.72);
+  font-size: 10px;
+  text-align: center;
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none !important;
+}
+.sanctuary-controls-hint kbd {
+  padding: 1px 4px;
+  color: #e9ddff;
+  font: 9px ui-monospace, SFMono-Regular, Menlo, monospace;
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  border-radius: 3px;
+  background: rgba(20, 14, 30, 0.75);
+}
 
 button {
   display: flex;

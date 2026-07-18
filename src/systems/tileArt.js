@@ -68,6 +68,381 @@ export function drawIsoTile(ctx, {
   }
 }
 
+const PROJECTED_EPSILON = 1e-7;
+
+function lerpPoint(a, b, t) {
+  return {
+    x: lerp(a.x, b.x, t),
+    y: lerp(a.y, b.y, t),
+  };
+}
+
+function clipPolygon(ctx, points) {
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+  ctx.closePath();
+  ctx.clip();
+}
+
+function clipTopFace(ctx, d) {
+  if (d.points) clipPolygon(ctx, d.points);
+  else clipDiamond(ctx, d);
+}
+
+function randomPointOnTop(rand, d, tileWidth, tileHeight, salt, inset) {
+  if (!d.points) {
+    return randomPointInDiamond(rand, d, tileWidth, tileHeight, salt, inset);
+  }
+  // Bilinear sampling respects endpoint rectangles as well as the default
+  // diamond/parallelogram. `inset` retains the old meaning: maximum distance
+  // from the face centre as a share of the full face extent.
+  const requestedInset = Number.isFinite(inset) ? inset : 0.43;
+  const extent = Math.min(0.49, Math.max(0, requestedInset));
+  const u = 0.5 + (rand(salt) * 2 - 1) * extent;
+  const v = 0.5 + (rand(salt + 1) * 2 - 1) * extent;
+  const [top, right, bottom, left] = d.points;
+  const upper = lerpPoint(top, right, u);
+  const lower = lerpPoint(left, bottom, u);
+  return lerpPoint(upper, lower, v);
+}
+
+function finiteProjectedPoint(point, label) {
+  if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+    throw new TypeError(`${label} must be a finite projected point.`);
+  }
+  return { x: point.x, y: point.y };
+}
+
+function projectedQuadPoints(quad) {
+  const source = Array.isArray(quad) ? quad : quad?.points;
+  if (!Array.isArray(source) || source.length !== 4) {
+    throw new TypeError('A projected tile quad requires exactly four points.');
+  }
+  return source.map((point, index) => finiteProjectedPoint(point, `quad[${index}]`));
+}
+
+function signedDoubleArea(points) {
+  return points.reduce((area, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return area + point.x * next.y - point.y * next.x;
+  }, 0);
+}
+
+function projectedShapeKey(points, wallOffset) {
+  const origin = points[0];
+  const values = points.flatMap((point) => [
+    Math.round((point.x - origin.x) * 1000),
+    Math.round((point.y - origin.y) * 1000),
+  ]).concat([
+    Math.round(wallOffset.x * 1000),
+    Math.round(wallOffset.y * 1000),
+  ]);
+  // FNV-1a keeps translation-equivalent projected cells on one short cache
+  // key without depending on browser-specific floating-point string output.
+  let hash = 0x811c9dc5;
+  for (const char of values.join(',')) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+/**
+ * Resolve the canvas and visible-side geometry for an arbitrary projected cell
+ * quad. Points must follow projectCellQuad's stable corner order. The return
+ * offsets place the canvas relative to the quad's first/reference corner.
+ *
+ * A side is visible only when its outward normal faces the downward block
+ * extrusion. This naturally produces two walls for the default diamond and
+ * one wall at either +/-45 degree endpoint; edge-on faces are omitted.
+ */
+export function projectedTileGeometry(quad, wallOffset = { x: 0, y: 0 }) {
+  const points = projectedQuadPoints(quad);
+  const wall = finiteProjectedPoint(wallOffset, 'wallOffset');
+  const area = signedDoubleArea(points);
+  if (Math.abs(area) <= PROJECTED_EPSILON) {
+    throw new RangeError('A projected tile quad must have non-zero area.');
+  }
+
+  const winding = Math.sign(area);
+  const visibleWalls = [];
+  points.forEach((a, index) => {
+    const b = points[(index + 1) % points.length];
+    const edge = { x: b.x - a.x, y: b.y - a.y };
+    const outward = winding > 0
+      ? { x: edge.y, y: -edge.x }
+      : { x: -edge.y, y: edge.x };
+    const facing = outward.x * wall.x + outward.y * wall.y;
+    if (facing <= PROJECTED_EPSILON) return;
+
+    const lowerA = { x: a.x + wall.x, y: a.y + wall.y };
+    const lowerB = { x: b.x + wall.x, y: b.y + wall.y };
+    // The same cross product measures the screen area of the extruded face.
+    const faceArea = Math.abs(edge.x * wall.y - edge.y * wall.x);
+    if (faceArea <= PROJECTED_EPSILON) return;
+    visibleWalls.push({
+      index, a, b, lowerA, lowerB, outward, faceArea,
+    });
+  });
+
+  const boundsPoints = points.concat(visibleWalls.flatMap(({ lowerA, lowerB }) => (
+    [lowerA, lowerB]
+  )));
+  const reference = points[0];
+  const relative = (point) => ({
+    x: point.x - reference.x,
+    y: point.y - reference.y,
+  });
+  const relativeBounds = boundsPoints.map(relative);
+  const minX = Math.floor(Math.min(...relativeBounds.map((point) => point.x)));
+  const maxX = Math.ceil(Math.max(...relativeBounds.map((point) => point.x)));
+  const minY = Math.floor(Math.min(...relativeBounds.map((point) => point.y)));
+  const maxY = Math.ceil(Math.max(...relativeBounds.map((point) => point.y)));
+  const localize = (point) => {
+    const relativePoint = relative(point);
+    return { x: relativePoint.x - minX, y: relativePoint.y - minY };
+  };
+  const localPoints = points.map(localize);
+
+  return {
+    width: Math.max(1, maxX - minX),
+    height: Math.max(1, maxY - minY),
+    offsetX: minX,
+    offsetY: minY,
+    originX: 0,
+    originY: 0,
+    shapeKey: projectedShapeKey(points, wall),
+    wallOffset: { ...wall },
+    quad: {
+      top: localPoints[0],
+      right: localPoints[1],
+      bottom: localPoints[2],
+      left: localPoints[3],
+      points: localPoints,
+    },
+    visibleWalls: visibleWalls.map((face) => ({
+      ...face,
+      a: localize(face.a),
+      b: localize(face.b),
+      lowerA: localize(face.lowerA),
+      lowerB: localize(face.lowerB),
+    })),
+  };
+}
+
+function projectedFaceDescriptor(quad) {
+  const points = quad.points;
+  return {
+    t: quad.top,
+    r: quad.right,
+    b: quad.bottom,
+    l: quad.left,
+    c: {
+      x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
+      y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
+    },
+    points,
+  };
+}
+
+function drawProjectedSidewall(ctx, face, colors, s, rand) {
+  const isLeft = face.outward.x < -PROJECTED_EPSILON;
+  const side = isLeft ? colors.left : colors.right;
+  const endTone = isLeft ? '#07090d' : '#05070a';
+  const gradient = ctx.createLinearGradient(
+    face.a.x, face.a.y, face.lowerA.x, face.lowerA.y,
+  );
+  gradient.addColorStop(0, mixColor(side, colors.soil, isLeft ? 0.25 : 0.16));
+  gradient.addColorStop(0.18, side);
+  gradient.addColorStop(1, mixColor(side, endTone, isLeft ? 0.46 : 0.52));
+  polygon(ctx, [face.a, face.b, face.lowerB, face.lowerA], gradient,
+    colors.outline, Math.max(1, s));
+
+  const depth = Math.hypot(
+    face.lowerA.x - face.a.x,
+    face.lowerA.y - face.a.y,
+  );
+  if (depth < 8 * s) return;
+
+  const bandT = Math.min(0.23, (8 * s) / depth);
+  const bandA = lerpPoint(face.a, face.lowerA, bandT);
+  const bandB = lerpPoint(face.b, face.lowerB, bandT);
+  polygon(ctx, [face.a, face.b, bandB, bandA], alphaColor(
+    isLeft ? colors.soil : mixColor(colors.soil, colors.right, 0.45),
+    isLeft ? 0.72 : 0.68,
+  ));
+
+  const seamCount = clamp(Math.floor(depth / (10 * s)), 1, 7);
+  ctx.lineWidth = Math.max(1, s);
+  for (let i = 1; i <= seamCount; i++) {
+    const t = i / (seamCount + 1);
+    const wobble = (rand(4000 + face.index * 97 + i) - 0.5) * 0.04;
+    const a = lerpPoint(face.a, face.lowerA, clamp(t + wobble, 0, 1));
+    const b = lerpPoint(face.b, face.lowerB, clamp(t + wobble, 0, 1));
+    ctx.strokeStyle = i % 2 ? 'rgba(255,255,255,.075)' : 'rgba(0,0,0,.19)';
+    ctx.beginPath();
+    ctx.moveTo(Math.round(a.x), Math.round(a.y));
+    ctx.lineTo(Math.round(b.x), Math.round(b.y));
+    ctx.stroke();
+  }
+
+  const p = pixelSize(s, 2);
+  const blockCount = 6 + Math.floor(rand(4100 + face.index * 101) * 7);
+  for (let i = 0; i < blockCount; i++) {
+    const edgeT = 0.08 + rand(4200 + face.index * 113 + i) * 0.83;
+    const depthT = 0.18 + rand(4300 + face.index * 127 + i) * 0.76;
+    const upper = lerpPoint(face.a, face.b, edgeT);
+    const lower = lerpPoint(face.lowerA, face.lowerB, edgeT);
+    const point = lerpPoint(upper, lower, depthT);
+    const tones = [colors.rock, 'rgba(255,255,255,.10)', 'rgba(0,0,0,.24)'];
+    rect(ctx, point.x, point.y, p * (1 + (i % 2)), p, tones[i % tones.length]);
+  }
+
+  if (colors.decor.includes('tree') || biomeHasRoots(colors)) {
+    ctx.strokeStyle = alphaColor(colors.dark, 0.8);
+    const roots = 2 + Math.floor(rand(4900 + face.index * 131) * 3);
+    for (let i = 0; i < roots; i++) {
+      const edgeT = 0.15 + rand(4910 + face.index * 139 + i) * 0.7;
+      const start = lerpPoint(face.a, face.b, edgeT);
+      const finish = lerpPoint(start, lerpPoint(face.lowerA, face.lowerB, edgeT), 0.36);
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      ctx.lineTo(finish.x + (rand(4920 + face.index * 149 + i) - 0.5) * 4 * s, finish.y);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawProjectedTopRim(ctx, {
+  d, colors, scale: s, rand, visibleWallIndexes,
+}) {
+  ctx.save();
+  ctx.lineCap = 'square';
+  ctx.lineWidth = Math.max(1, s);
+  d.points.forEach((point, index) => {
+    const next = d.points[(index + 1) % d.points.length];
+    const foreground = visibleWallIndexes.has(index);
+    ctx.strokeStyle = foreground
+      ? 'rgba(0,0,0,.24)'
+      : alphaColor(colors.light, 0.45);
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+    ctx.lineTo(next.x, next.y);
+    ctx.stroke();
+
+    if (!foreground || !(biomeHasRoots(colors) || colors.decor.includes('tree'))) return;
+    const edgeLength = Math.hypot(next.x - point.x, next.y - point.y);
+    const fringe = Math.max(2, Math.min(10, Math.floor(edgeLength / (7 * s))));
+    for (let i = 0; i < fringe; i++) {
+      const t = (i + 0.5) / fringe;
+      const base = lerpPoint(point, next, t);
+      const len = (2 + rand(5920 + index * 31 + i) * 4) * s;
+      ctx.strokeStyle = colors.dark;
+      ctx.beginPath();
+      ctx.moveTo(base.x, base.y);
+      ctx.lineTo(base.x, base.y + len);
+      ctx.stroke();
+    }
+  });
+  ctx.restore();
+}
+
+function drawProjectedMonolithNiche(ctx, geometry, s) {
+  if (geometry.visibleWalls.length === 0) return;
+  // Prefer the familiar front-right face at the default view. Endpoint views
+  // have one valid wall, so the niche follows that wall instead of spilling
+  // onto an edge-on or hidden face.
+  const face = geometry.visibleWalls.reduce((best, candidate) => (
+    !best || candidate.outward.x > best.outward.x ? candidate : best
+  ), null);
+  const wallDepth = Math.hypot(
+    face.lowerA.x - face.a.x,
+    face.lowerA.y - face.a.y,
+  );
+  if (wallDepth <= PROJECTED_EPSILON) return;
+
+  const topT = Math.min(0.72, (16 * s) / wallDepth);
+  const bottomT = Math.min(0.94, topT + (17 * s) / wallDepth);
+  const topA = lerpPoint(lerpPoint(face.a, face.b, 0.18), lerpPoint(face.lowerA, face.lowerB, 0.18), topT);
+  const topB = lerpPoint(lerpPoint(face.a, face.b, 0.78), lerpPoint(face.lowerA, face.lowerB, 0.78), topT);
+  const bottomA = lerpPoint(lerpPoint(face.a, face.b, 0.18), lerpPoint(face.lowerA, face.lowerB, 0.18), bottomT);
+  const bottomB = lerpPoint(lerpPoint(face.a, face.b, 0.78), lerpPoint(face.lowerA, face.lowerB, 0.78), bottomT);
+
+  ctx.save();
+  clipPolygon(ctx, [face.a, face.b, face.lowerB, face.lowerA]);
+  polygon(ctx, [topA, topB, bottomB, bottomA], '#050518', '#191a58', Math.max(1, s));
+  ctx.strokeStyle = '#49b528';
+  ctx.lineWidth = Math.max(1, s);
+  ctx.beginPath();
+  ctx.moveTo(topA.x, topA.y);
+  ctx.lineTo(topB.x, topB.y);
+  ctx.stroke();
+  const rune = lerpPoint(topA, bottomA, 0.22);
+  rect(ctx, rune.x + 2 * s, rune.y, 3 * s, 3 * s, '#2a17bd');
+  ctx.restore();
+}
+
+/** Draw a complete view-projected sanctuary tile into its resolved canvas. */
+export function drawProjectedIsoTile(ctx, {
+  biome,
+  variant = 0,
+  height = 0,
+  quad,
+  wallOffset = { x: 0, y: 0 },
+  scale = 1,
+  rand,
+  overlay = null,
+  geometry = null,
+}) {
+  const colors = BIOMES[biome];
+  if (!colors) throw new Error(`drawProjectedIsoTile: unknown biome "${biome}"`);
+  if (typeof rand !== 'function') {
+    throw new TypeError('drawProjectedIsoTile requires a deterministic rand(salt) function.');
+  }
+
+  const resolved = geometry ?? projectedTileGeometry(quad, wallOffset);
+  const d = projectedFaceDescriptor(resolved.quad);
+  const width = Math.max(1, Math.max(...d.points.map((point) => point.x))
+    - Math.min(...d.points.map((point) => point.x)));
+  const faceHeight = Math.max(1, Math.max(...d.points.map((point) => point.y))
+    - Math.min(...d.points.map((point) => point.y)));
+
+  resolved.visibleWalls.forEach((face) => {
+    drawProjectedSidewall(ctx, face, colors, scale, rand);
+  });
+
+  const topGradient = ctx.createLinearGradient(d.l.x, d.t.y, d.r.x, d.b.y);
+  topGradient.addColorStop(0, mixColor(colors.top, colors.light, 0.26));
+  topGradient.addColorStop(0.5, variant % 2
+    ? colors.top
+    : mixColor(colors.top, colors.light, 0.08));
+  topGradient.addColorStop(1, mixColor(colors.top, colors.dark, 0.18));
+  polygon(ctx, d.points, topGradient, colors.outline, Math.max(1, scale));
+  drawTopTexture(ctx, {
+    biome, d, colors, tw: width, th: faceHeight, scale, rand,
+  });
+  drawProjectedTopRim(ctx, {
+    biome,
+    d,
+    colors,
+    scale,
+    rand,
+    visibleWallIndexes: new Set(resolved.visibleWalls.map((face) => face.index)),
+  });
+
+  if (overlay) {
+    if (!TILE_OVERLAYS[overlay]) {
+      throw new Error(`drawProjectedIsoTile: unknown overlay "${overlay}"`);
+    }
+    if (overlay === 'monolithNiche') {
+      drawProjectedMonolithNiche(ctx, resolved, scale);
+    }
+  }
+}
+
 // Position-specific one-off details baked onto a single tile. Shared tile
 // textures can't hold these (one texture serves every tile of that biome +
 // variant), so a cell that names an overlay gets its own unique baked key —
@@ -206,9 +581,9 @@ function drawTopTexture(ctx, {
   biome, d, colors, tw, th, scale: s, rand,
 }) {
   ctx.save();
-  clipDiamond(ctx, d);
+  clipTopFace(ctx, d);
   const px = pixelSize(s, 1.6);
-  const point = (salt, inset) => randomPointInDiamond(rand, d, tw, th, salt, inset);
+  const point = (salt, inset) => randomPointOnTop(rand, d, tw, th, salt, inset);
 
   scatter(ctx, [colors.light, colors.mid, colors.dark], 28, 5000, 1.35, 0.24,
     { d, tw, th, s, rand });
@@ -225,7 +600,7 @@ function drawTopTexture(ctx, {
 function scatter(ctx, colors, count, salt, size, alpha, { d, tw, th, s, rand }) {
   const p = pixelSize(s, size);
   for (let i = 0; i < count; i++) {
-    const point = randomPointInDiamond(rand, d, tw, th, salt + i * 5, 0.44);
+    const point = randomPointOnTop(rand, d, tw, th, salt + i * 5, 0.44);
     const fill = colors[i % colors.length];
     ctx.globalAlpha = alpha * (0.65 + rand(salt + i * 5 + 2) * 0.55);
     rect(ctx, point.x, point.y, p * (i % 5 === 0 ? 2 : 1), p, fill);

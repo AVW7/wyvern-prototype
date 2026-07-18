@@ -1,9 +1,9 @@
 # Wyvern sprite contract
 
-The Dragon Vault loads one profile-specific Phaser atlas and registers one
-animation namespace per wyvern. A missing or invalid atlas falls back to a
-colored generated dragon, so unfinished art must never prevent the vault from
-opening.
+The Dragon Vault, sanctuary, and missions share one profile-specific Phaser
+atlas and one animation namespace per wyvern. A missing or invalid atlas falls
+back to a colored generated dragon, so unfinished art must never prevent a
+scene from opening.
 
 Run this before opening the game after any sprite export:
 
@@ -51,7 +51,7 @@ The public keys are fixed:
 
 - Texture key: `wyvern-<profile-slug>`
 - Animation key: `wyvern-<profile-slug>-<state>`
-- Optional directional key: `wyvern-<profile-slug>-<state>-<direction>`
+- Directional key: `wyvern-<profile-slug>-<state>-<direction>` (always registered)
 - Example: `wyvern-embertooth-guard`
 - Directional example: `wyvern-embertooth-fly-nw`
 
@@ -155,7 +155,11 @@ outside the sprite contract.
 - Real painted atlases use linear texture filtering. Generated placeholders
   and terrain retain the prototype's pixel-art presentation.
 
-## Optional eight-direction scaffold
+## Eight-direction sanctuary contract
+
+The canonical implementation sequence and camera acceptance matrix live in
+[`docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md`](../../../docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md).
+This file remains the export and runtime asset contract.
 
 The technical pipeline recognizes these screen-space directions in clockwise
 order:
@@ -164,11 +168,28 @@ order:
 n, ne, e, se, s, sw, w, nw
 ```
 
-East (`e`) is always the required baseline from `meta.animations`. Add direction
-art under `meta.directionalAnimations` state by state. Partial coverage is
-valid: missing directions retain the east baseline and produce a validator
-warning. This makes it practical to prove `idle` and `fly` first before paying
-the art and memory cost of every combat action.
+East (`e`) remains the required baseline from `meta.animations`, keeping an
+atlas globally compatible before its turntable is complete. The current
+sanctuary movement controller already resolves motion into all eight sectors
+and plays these directional keys; missing sequences retain the east baseline
+and produce a validator warning.
+
+The sanctuary camera now implements `-45°..+45°` yaw and
+lower/default/higher elevation. A dragon is ready for final camera-milestone
+acceptance only when the following view-space coverage exists:
+
+| State | Required direction coverage | Reason |
+|---|---|---|
+| `idle` | All 8 | Standing and resident pauses must turn with the view |
+| `fly` | All 8 | Controlled movement and wandering use Fly |
+| `attack` | All 8 before final acceptance | Training plays Attack |
+| `guard` | All 8 before final acceptance | Feeding plays Guard |
+| `special` | All 8 before final acceptance | The spring plays Special |
+| `hurt`, `death` | East baseline until used in sanctuary | Still required by the global Mission/Vault contract |
+
+Complete Idle/Fly first as the art vertical slice. Partial action coverage is
+acceptable during development, but the final rotatable-camera milestone cannot
+ship with visible interactions snapping back to east.
 
 ```json
 {
@@ -193,10 +214,13 @@ the art and memory cost of every combat action.
 ```
 
 The object order is **state → direction → frame names**. Directional frames
-live in the same Phaser atlas and use the same texture key. The loader currently
-registers the keys but does not change mission controls or automatically choose
-a direction; a future rendering controller can call
-`wyvernAnimationKey(profile, state, direction)` without changing the atlas.
+live in the same Phaser atlas and use the same texture key. Preload registers
+every key. `sanctuaryMovement.js` keeps world motion separate from the
+projected `viewDirection` and recomputes the visible key after either movement
+or camera yaw. Missing atlas sequences still resolve through the east baseline
+fallback.
+Mission controls may continue using their existing behavior until that scene
+explicitly adopts the directional contract.
 
 For high-quality painted dragons:
 
@@ -211,15 +235,20 @@ For high-quality painted dragons:
   upward in Fly frames.
 - Maintain matching cadence and phase across directions. For example, frame 1
   of every Fly direction should represent the same wing-cycle phase.
+- Treat the direction names as **view-space silhouettes**, not fixed world
+  compass headings. The same world movement may choose a different view-facing
+  after the sanctuary camera yaws.
 - Keep action readability: anticipation, impact, and recovery must remain clear
-  at the vault's 150 px display height, not only at source resolution.
+  at the current 64 px sanctuary height and 180 px Vault preview height, not
+  only at source resolution.
 
 A complete eight-direction set for seven states can contain hundreds of frames.
 The current loader supports one atlas PNG per dragon, so do not export a giant
 full set beyond the GPU limit. Start with directional Idle/Fly, validate memory,
-and keep the required east-facing action set. Multi-page directional atlases
-would require a deliberate loader/validator extension before export; they are
-not silently supported by this scaffold.
+and keep the required east-facing action set while the action turntables are in
+progress. Multi-page directional atlases require a deliberate profile-catalog,
+loader, validator, runtime fallback, and cleanup extension before export; they
+are not silently supported by this contract.
 
 ## Texture size and memory
 
@@ -244,7 +273,8 @@ single PNG page per profile; do not silently switch to a multi-page export.
 
 ## Visual quality acceptance checks
 
-Review at both 100% source scale and the 150 px Vault height:
+Review at 100% source scale, the 180 px Vault preview height, and the 64 px
+sanctuary height at both overview and maximum zoom:
 
 1. Solo every frame against black, white, and saturated magenta backgrounds.
    There must be no matte fringe, stray pixels, or pieces of another pose.
@@ -259,7 +289,8 @@ Review at both 100% source scale and the 150 px Vault height:
 6. Inspect every packed frame rectangle. No visible pixel may touch the packed
    rectangle edge after extrusion, and no neighbouring pose may be visible.
 7. For directions, compare all views as a turntable and verify consistent size,
-   anatomy, markings, light direction, pivot, and animation phase.
+   anatomy, markings, light direction, pivot, and animation phase. In the
+   sanctuary, move all eight directions at centre, left, and right camera yaw.
 8. Run `npm run validate:atlas`, preview every state in the Vault, then run
    `npm run check` before accepting the export.
 
@@ -273,11 +304,14 @@ Review at both 100% source scale and the 150 px Vault height:
    **Atlas loaded**.
 6. Preview every state. Confirm the pivot does not jump, Fly separates from its
    shadow, and Attack/Hurt/Death return to Idle.
-7. Use Technical Preview to find presentation values, then copy accepted
+7. Enter the sanctuary and move all eight directions. For a camera-milestone
+   profile, verify directional Idle/Fly and the Spring/Train/Feed action states
+   at every supported yaw/elevation.
+8. Use Technical Preview to find presentation values, then copy accepted
    shared defaults to `WYVERN_ART`; slider values are intentionally temporary.
    Reference Height is based on the initial Idle canvas, not each pose's
    trimmed visible bounds.
-8. Run `npm run check` before handoff.
+9. Run `npm run check` before handoff.
 
 No changes should be needed in `VaultScene`, `Wyvern`, `PreloadScene`, or the
 overlay when the profile and atlas obey this contract.
@@ -300,8 +334,9 @@ overlay when the profile and atlas obey this contract.
   frames; frame timing, Phaser filtering, JSON bounds, and atlas padding cannot
   reconstruct clipped anatomy.
 - **A directional key shows the east pose:** That direction has no authored
-  sequence. Check `meta.directionalAnimations.<state>.<direction>` and the
-  validator's partial-coverage warning.
+  sequence, or the yaw-aware controller derived the wrong view-facing. Check
+  `meta.directionalAnimations.<state>.<direction>`, the validator's
+  partial-coverage warning, and the world-to-view direction transform.
 - **Works locally but fails after deployment:** Check filename capitalization
   and remember that `file://` is unsupported; use Vite or a built static host.
 - **Large atlas fails during repeated refreshes:** Restart the dev server and
