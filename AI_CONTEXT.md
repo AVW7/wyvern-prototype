@@ -42,14 +42,16 @@ or sanctuary camera behavior.
 Run the prototype with:
 
 ```bash
-python3 devserver.py 8000
+npm ci
+npm run dev
 ```
 
-Check JavaScript syntax with:
+Run the full local validation gate with:
 
 ```bash
-for f in $(find src -name '*.js'); do node --check "$f"; done
+npm run check
 ```
 
-Gameplay changes require a browser pass through Base, Vault, Atlas, Mission,
-and back to Base, with no console errors.
+This checks JavaScript syntax, configured wyvern atlases, Vitest contracts, and
+the production build. Gameplay changes also require a browser pass through
+Base, Vault, Atlas, Mission, and back to Base, with no console errors.
