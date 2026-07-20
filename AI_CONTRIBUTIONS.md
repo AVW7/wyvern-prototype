@@ -5,9 +5,9 @@ visible without treating any model as the sole author.
 
 ## Count
 
-- **Distinct contributing model entries:** 8
+- **Distinct contributing model entries:** 10
 - **Providers represented:** 3
-- **Contribution records:** 37
+- **Contribution records:** 39
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -26,6 +26,8 @@ AI-008, Review R-005) and is counted above.
 | AI-006 | Claude Sonnet 5 (`claude-sonnet-5`) | Anthropic | 2026-07-18 | Generalized the Base roster from wyvern-only to a multi-species companion system with a bond/interaction stat. Model ID reported by the session environment as `claude-sonnet-5`. |
 | AI-007 | Gemini 3.1 Pro (High) | Google | 2026-07-18 | Reviewed the Sanctuary Rotatable Camera plan (Review R-004), focusing on texture caching, input safety, and occlusion. |
 | AI-008 | Gemini 3.1 Pro (Low) | Google | 2026-07-18 | Reviewed the Sanctuary Rotatable Camera plan (Review R-005), advocating for scope reduction through sprite mirroring and pre-baked tiles. |
+| AI-009 | Gemini 3.5 Flash (Low) | Google | 2026-07-20 | Set up graphify tool, processed the code structure, analyzed camera/session architecture, and updated agent entry documentation. |
+| AI-010 | Gemini 3.5 Flash (Medium) | Google | 2026-07-20 | Added threejs-loaders skill to workspace customizations directory. |
 
 ## Contribution log
 
@@ -70,6 +72,8 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-035 | 2026-07-20 | AI-003 | Added threejs-geometry skill to workspace customizations directory. | `.skills/threejs-geometry/SKILL.md` | not run |
 | C-036 | 2026-07-20 | AI-003 | Added threejs-materials skill to workspace customizations directory. | `.skills/threejs-materials/SKILL.md` | not run |
 | C-037 | 2026-07-20 | AI-007 | Optimized the sanctuary 3D diorama: cached the WebGLRenderer at module level to prevent context exhaustion on rebuilds/travel, cached GLTF model data with SkeletonUtils.clone to eliminate redundant network loads and CPU parsing, cached CanvasTexture/BoxGeometry/MeshStandardMaterial instances by key to reduce GPU uploads and allocations, set NearestFilter on pixel-art billboard textures, and rewrote destroy() to clear the scene graph without disposing shared caches. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 12 test files / 152 tests, build succeeds) |
+| C-038 | 2026-07-20 | AI-009 | Set up graphifyy, ran /graphify on the src directory, analyzed the SanctuaryCameraController bridge, and updated agent documentation (AGENTS.md/GEMINI.md) to integrate graphify. | `AGENTS.md`, `GEMINI.md`, `graphify-out/` | `npm run check` full gate pass (all 12 test files / 152 tests, build succeeds) |
+| C-039 | 2026-07-20 | AI-010 | Added threejs-loaders skill to workspace customizations directory. | `.skills/threejs-loaders/SKILL.md` | not run |
 
 ## How another model adds itself
 

@@ -641,3 +641,91 @@ describe('sanctuary movement', () => {
     });
   });
 });
+
+describe('sanctuary flight altitude', () => {
+  // High settleHz + large maxDeltaMs make altitude snap to its target in one
+  // update, so assertions read clearly. climbSpeed/max are set per-test.
+  const flightTuning = (overrides = {}) => ({
+    speed: 0,
+    maxDeltaMs: 1000,
+    flight: {
+      minAltitude: 0,
+      maxAltitude: 100,
+      takeoffAltitude: 40,
+      climbSpeed: 60,
+      settleHz: 1000,
+      ...overrides,
+    },
+  });
+
+  function flyer(keys) {
+    return createSanctuaryMovement({
+      scene: sceneWith(keys),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      resident: residentAt(2, 2),
+      tuning: flightTuning(),
+    });
+  }
+
+  it('starts grounded at zero altitude', () => {
+    const controller = flyer({ R: { isDown: false }, Q: { isDown: false } });
+    expect(controller.getAltitude()).toBe(0);
+  });
+
+  it('lifts off when flight is toggled, then climbs while ascending is held', () => {
+    const keys = { R: { isDown: false }, Q: { isDown: false } };
+    const controller = flyer(keys);
+
+    controller.setFlying(true);
+    controller.update(0, 1000);
+    // Seeded take-off makes it leave the ground with no key pressed.
+    expect(controller.getAltitude()).toBeCloseTo(40);
+
+    keys.R.isDown = true;
+    controller.update(1000, 1000);
+    // Rises above take-off and clamps at the configured ceiling.
+    expect(controller.getAltitude()).toBeGreaterThan(40);
+    expect(controller.getAltitude()).toBeLessThanOrEqual(100);
+
+    controller.update(2000, 1000);
+    expect(controller.getAltitude()).toBeCloseTo(100);
+  });
+
+  it('descends while the descend key is held, clamped at the floor', () => {
+    const keys = { R: { isDown: false }, Q: { isDown: false } };
+    const controller = flyer(keys);
+    controller.setFlying(true);
+    keys.R.isDown = true;
+    controller.update(0, 1000);
+    controller.update(1000, 1000); // up at the ceiling
+
+    keys.R.isDown = false;
+    keys.Q.isDown = true;
+    controller.update(2000, 1000);
+    expect(controller.getAltitude()).toBeLessThan(100);
+    controller.update(3000, 1000);
+    controller.update(4000, 1000);
+    expect(controller.getAltitude()).toBeCloseTo(0);
+  });
+
+  it('ignores altitude keys while grounded', () => {
+    const keys = { R: { isDown: true }, Q: { isDown: false } };
+    const controller = flyer(keys);
+    controller.update(0, 1000);
+    expect(controller.getAltitude()).toBe(0);
+  });
+
+  it('eases back to the ground when flight is toggled off', () => {
+    const keys = { R: { isDown: true }, Q: { isDown: false } };
+    const controller = flyer(keys);
+    controller.setFlying(true);
+    controller.update(0, 1000);
+    expect(controller.getAltitude()).toBeGreaterThan(0);
+
+    keys.R.isDown = false;
+    controller.setFlying(false);
+    controller.update(1000, 1000);
+    expect(controller.getAltitude()).toBeCloseTo(0);
+  });
+});

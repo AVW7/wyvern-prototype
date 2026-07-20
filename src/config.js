@@ -92,6 +92,18 @@ export const SANCTUARY = {
     // terraces (rise <= this) are walkable and ridden up; a taller rise reads
     // as a cliff/wall it's stopped by and must go around.
     climbStep: 1,
+    // Real, player-controlled flight altitude — Three.js world units above the
+    // tile surface (matches grid3d.js HEIGHT_SCALE = 12, so 140 ≈ 11.6 levels).
+    // While flying, E ascends and Q descends; the footprint stays flat so
+    // pathing/collision/interaction are unaffected. Lift only the model, not the
+    // ground shadow. See systems/sanctuaryMovement.js and systems/sanctuary3D.js.
+    flight: {
+      minAltitude: 0,       // rests on the terrain surface
+      maxAltitude: 140,     // ceiling above the tile top
+      takeoffAltitude: 42,  // seeded lift on toggling flight so takeoff reads
+      climbSpeed: 90,       // world units/sec while holding ascend/descend
+      settleHz: 2.5,        // how fast altitude eases to target (and lands)
+    },
   },
   // Non-controlled residents make short trips around their authored home
   // spots. They never leave the same walkable mask as the controlled wyvern.
@@ -130,10 +142,8 @@ export const SANCTUARY = {
       attack: 'DaenerysDragon_Battle_Up',
     },
     crossfadeMs: 250,
-    // How far the dragon rises off its tile while flying, and how quickly it
-    // eases there. The logical footprint is unchanged — this is purely visual.
-    flightLiftPx: 70,
-    flightLiftLerpHz: 3,
+    // Flight height is now real, player-controlled altitude — see
+    // SANCTUARY.movement.flight (the old cosmetic flightLiftPx lift is retired).
     labelLift: 90,
     interactiveProps: {
       dummyWobbleAngle: 12,

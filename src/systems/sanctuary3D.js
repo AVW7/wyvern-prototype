@@ -3,9 +3,11 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { GAME, SANCTUARY, TERRAIN } from '../config.js';
 import { BIOMES } from '../data/biomes.js';
+import { TILE_SIZE, HEIGHT_SCALE, gridToWorld3D, tileCenterY } from './grid3d.js';
 
-const TILE_SIZE = 24;
-const HEIGHT_SCALE = 12;
+// Resting height (world units) of a resident's name label above its group
+// origin. Flight altitude is added on top so the label rides up with the model.
+const LABEL_BASE_Y = 32;
 
 // ── Module-level caches ────────────────────────────────────────────────
 // These survive across createSanctuary3D calls (recruit rebuilds, scene
@@ -155,7 +157,6 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   const actions = {};
   let currentMotion = null;
   let pendingMotion = 'idle';
-  let flightLift = 0;
 
   // Camera State
   let camTarget = new THREE.Vector3(0, 0, 0);
@@ -169,9 +170,22 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   const shadowGeo = new THREE.RingGeometry(0, 8, 32);
   const ringGeo = new THREE.RingGeometry(7.2, 8, 32);
 
-  // Build Voxel Terrain
-  const cols = tiles[0]?.length || 40;
+  // Build Voxel Terrain. Derive the grid size once (widest row wins so a ragged
+  // edge doesn't mis-centre the map) and reuse it for every grid→world call.
   const rows = tiles.length || 40;
+  const cols = tiles.reduce((max, row) => Math.max(max, row?.length || 0), 0) || 40;
+
+  // Sample terrain height at a footprint. Footprints carry CONTINUOUS col/row
+  // while walking (see publishFootprint in sanctuaryMovement.js), and array
+  // indices must be integers — indexing with a fractional value returns
+  // undefined and drops the model to ground level mid-stride, so it appears to
+  // sink through raised terrain. Round to the owning cell, mirroring the
+  // collision system's heightAt() so the model rides exactly the tile the
+  // movement gate stands it on.
+  function terrainHeightAt(footprint) {
+    const cell = tiles[Math.round(footprint.row)]?.[Math.round(footprint.col)];
+    return cell?.height || TERRAIN.baseHeight;
+  }
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -183,11 +197,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       const materials = getTileMaterials(cell.biome);
       const mesh = new THREE.Mesh(geo, materials);
 
-      const tx = (c - cols / 2) * TILE_SIZE;
-      const tz = (r - rows / 2) * TILE_SIZE;
-      const ty = (h * HEIGHT_SCALE) / 2;
-
-      mesh.position.set(tx, ty, tz);
+      const surface = gridToWorld3D(c, r, h, cols, rows);
+      mesh.position.set(surface.x, tileCenterY(h), surface.z);
       mesh.userData = { col: c, row: r, height: h };
       threeScene.add(mesh);
       tileMeshes.push(mesh);
@@ -219,11 +230,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
     const sprite = new THREE.Sprite(mat);
 
-    const tx = (col - cols / 2) * TILE_SIZE;
-    const tz = (row - rows / 2) * TILE_SIZE;
-    const ty = cell.height * HEIGHT_SCALE;
-
-    sprite.position.set(tx, ty + 12, tz);
+    const surface = gridToWorld3D(col, row, cell.height, cols, rows);
+    sprite.position.set(surface.x, surface.y + 12, surface.z);
 
     // Prop sizes
     let scaleX = 24;
@@ -329,11 +337,15 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     const accentColor = new THREE.Color(r.accent || '#ffbf3f');
 
     const residentGroup = new THREE.Group();
-    const tx = (r.footprint.col - cols / 2) * TILE_SIZE;
-    const tz = (r.footprint.row - rows / 2) * TILE_SIZE;
-    const ty = (tiles[r.footprint.row]?.[r.footprint.col]?.height || 1) * HEIGHT_SCALE;
-    residentGroup.position.set(tx, ty, tz);
+    const spawnHeight = terrainHeightAt(r.footprint);
+    const spawn = gridToWorld3D(r.footprint.col, r.footprint.row, spawnHeight, cols, rows);
+    residentGroup.position.set(spawn.x, spawn.y, spawn.z);
     threeScene.add(residentGroup);
+
+    // Flight pivot holds the model/billboard so altitude lifts it while the
+    // shadow and selection ring below stay pinned to the terrain surface.
+    const flightPivot = new THREE.Group();
+    residentGroup.add(flightPivot);
 
     // Flat Shadow
     const shadowMat = new THREE.MeshBasicMaterial({
@@ -376,7 +388,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     const labelTex = new THREE.CanvasTexture(labelCanvas);
     const labelMat = new THREE.SpriteMaterial({ map: labelTex, transparent: true });
     const labelSprite = new THREE.Sprite(labelMat);
-    labelSprite.position.set(0, 32, 0);
+    labelSprite.position.set(0, LABEL_BASE_Y, 0);
     labelSprite.scale.set(32, 8, 1);
     residentGroup.add(labelSprite);
 
@@ -384,7 +396,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
 
     if (isControlled && r.animal.species === 'wyvern') {
       const config = SANCTUARY.dragon3D;
-      loadOrCloneDragon(config, residentGroup, (cloned, localMixer, localActions) => {
+      loadOrCloneDragon(config, flightPivot, (cloned, localMixer, localActions) => {
         visual3D = cloned;
         mixer = localMixer;
         Object.assign(actions, localActions);
@@ -404,13 +416,14 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         const sprite = new THREE.Sprite(spriteMat);
         sprite.position.set(0, 12, 0);
         sprite.scale.set(22, 22, 1);
-        residentGroup.add(sprite);
+        flightPivot.add(sprite);
         visual3D = sprite;
       }
     }
 
     residentVisuals[r.animal.id] = {
       group: residentGroup,
+      pivot: flightPivot,
       ring: ringMesh,
       label: labelSprite,
       visual: visual3D,
@@ -607,22 +620,18 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         const visual = residentVisuals[r.animal.id];
         if (!visual) return;
 
-        const tx = (r.footprint.col - cols / 2) * TILE_SIZE;
-        const tz = (r.footprint.row - rows / 2) * TILE_SIZE;
-        const currentHeight = tiles[r.footprint.row]?.[r.footprint.col]?.height || 1;
-        const baseTy = currentHeight * HEIGHT_SCALE;
+        const currentHeight = terrainHeightAt(r.footprint);
+        const surface = gridToWorld3D(r.footprint.col, r.footprint.row, currentHeight, cols, rows);
 
-        // Apply visual height lift for flying
-        const targetLift = (r.animal.id === selectedWyvernId && currentMotion === 'fly')
-          ? SANCTUARY.dragon3D.flightLiftPx
+        // The group (with the grounded shadow + selection ring) always rides the
+        // terrain surface. Real, player-controlled flight altitude comes from the
+        // movement controller and lifts only the flight pivot + name label.
+        visual.group.position.set(surface.x, surface.y, surface.z);
+        const altitude = r.animal.id === selectedWyvernId
+          ? (scene.movement?.getAltitude?.() ?? 0)
           : 0;
-
-        if (r.animal.id === selectedWyvernId) {
-          flightLift += (targetLift - flightLift) * Math.min(1, deltaSec * SANCTUARY.dragon3D.flightLiftLerpHz);
-          visual.group.position.set(tx, baseTy + flightLift, tz);
-        } else {
-          visual.group.position.set(tx, baseTy, tz);
-        }
+        if (visual.pivot) visual.pivot.position.y = altitude;
+        if (visual.label) visual.label.position.y = LABEL_BASE_Y + altitude;
 
         // Handle rotations (yaw facing)
         if (r.animal.id === selectedWyvernId && controlledDragon) {
@@ -650,12 +659,23 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         // Sync target coordinates to followed resident
         const targetResident = residents.find((r) => r.animal.id === followId);
         if (targetResident) {
-          const rx = (targetResident.footprint.col - cols / 2) * TILE_SIZE;
-          const rz = (targetResident.footprint.row - rows / 2) * TILE_SIZE;
-          const ry = (tiles[targetResident.footprint.row]?.[targetResident.footprint.col]?.height || 1) * HEIGHT_SCALE;
+          const followHeight = terrainHeightAt(targetResident.footprint);
+          // Track the followed wyvern's flight altitude so it stays framed as it
+          // climbs, instead of drifting to the top of the view.
+          const followAltitude = targetResident.animal.id === selectedWyvernId
+            ? (scene.movement?.getAltitude?.() ?? 0)
+            : 0;
+          const focus = gridToWorld3D(
+            targetResident.footprint.col,
+            targetResident.footprint.row,
+            followHeight,
+            cols,
+            rows,
+            followAltitude,
+          );
 
           // Smoothly lerp camera focus target
-          camTarget.lerp(new THREE.Vector3(rx, ry, rz), 0.12);
+          camTarget.lerp(new THREE.Vector3(focus.x, focus.y, focus.z), 0.12);
         }
 
         // Handle zoom based on Phaser camera zoom

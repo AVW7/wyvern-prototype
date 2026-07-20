@@ -26,6 +26,15 @@ const DEFAULT_MOVEMENT = Object.freeze({
   climbStep: 1, // height levels the actor climbs onto in one step (cliffs above this block)
   maxDeltaMs: 100,
   actionDurationMs: 650,
+  // Real (not cosmetic) flight altitude, in Three.js world units above the tile
+  // surface. Overridden by SANCTUARY.movement.flight; see config.js.
+  flight: {
+    minAltitude: 0,
+    maxAltitude: 140,
+    takeoffAltitude: 42,
+    climbSpeed: 90, // world units/sec while holding ascend/descend
+    settleHz: 2.5, // how fast altitude eases toward its target (and lands)
+  },
 });
 
 const DIRECTION_SECTORS = Object.freeze([
@@ -643,7 +652,7 @@ export function createSanctuaryMovement({
   const heights = createHeightGrid(tiles);
   const config = movementTuning(tuning);
   const keys = suppliedKeys || scene?.input?.keyboard?.addKeys?.(
-    'W,A,S,D,UP,DOWN,LEFT,RIGHT',
+    'W,A,S,D,UP,DOWN,LEFT,RIGHT,Q,R',
   ) || {};
   const initialView = viewFrom(getView ?? view);
 
@@ -674,6 +683,11 @@ export function createSanctuaryMovement({
     actionState: null,
     actionRemainingMs: 0,
     flight: { lift: 0, bob: 0, phase: 0 },
+    // Real flight altitude (Three.js world units above the tile surface). The
+    // 3D layer reads getAltitude(); the 2D footprint stays flat, so pathing,
+    // collision, depth-sort, and interaction range are unaffected by height.
+    altitude: 0,
+    targetAltitude: 0,
     path: null,
     get climbStep() {
       return this.isFlying ? Infinity : config.climbStep;
@@ -681,6 +695,10 @@ export function createSanctuaryMovement({
 
     getFootprint() {
       return this.footprint ? { ...this.footprint } : null;
+    },
+
+    getAltitude() {
+      return this.altitude;
     },
 
     getLogicalFootprint() {
@@ -693,7 +711,21 @@ export function createSanctuaryMovement({
     },
 
     setFlying(flying) {
-      this.isFlying = Boolean(flying);
+      const next = Boolean(flying);
+      const flightCfg = config.flight || DEFAULT_MOVEMENT.flight;
+      if (next && !this.isFlying) {
+        // Seed a visible lift-off so takeoff reads immediately; the player then
+        // trims altitude with the ascend/descend keys.
+        this.targetAltitude = clamp(
+          Math.max(this.targetAltitude, finite(flightCfg.takeoffAltitude, 42)),
+          finite(flightCfg.minAltitude, 0),
+          finite(flightCfg.maxAltitude, 140),
+        );
+      } else if (!next) {
+        // Landing: ease back down to the surface.
+        this.targetAltitude = finite(flightCfg.minAltitude, 0);
+      }
+      this.isFlying = next;
       return this;
     },
 
@@ -762,6 +794,8 @@ export function createSanctuaryMovement({
       this.isMoving = false;
       this.moved = false;
       this.isFlying = false;
+      this.altitude = 0;
+      this.targetAltitude = 0;
       this.path = null;
       this.actionState = null;
       this.actionRemainingMs = 0;
@@ -922,6 +956,29 @@ export function createSanctuaryMovement({
           this.scene, this.resident, nextState, this.direction, this.animationKey,
         );
       }
+      // Real flight altitude. R ascends / Q descends while flying (E is taken by
+      // Interact); the value is clamped to the configured ceiling/floor and
+      // always eases toward its target, so toggling flight off lands smoothly.
+      const flightCfg = config.flight || DEFAULT_MOVEMENT.flight;
+      const canControlAltitude = !this.actionState && !externallyLocked
+        && !blockedBy(this.inputBlocked, this);
+      if (this.isFlying && canControlAltitude) {
+        const ascend = (keys?.R?.isDown ? 1 : 0) - (keys?.Q?.isDown ? 1 : 0);
+        if (ascend !== 0) {
+          this.targetAltitude = clamp(
+            this.targetAltitude + ascend * finite(flightCfg.climbSpeed, 90) * poseDelta / 1000,
+            finite(flightCfg.minAltitude, 0),
+            finite(flightCfg.maxAltitude, 140),
+          );
+        }
+      } else if (!this.isFlying) {
+        this.targetAltitude = finite(flightCfg.minAltitude, 0);
+      }
+      const altitudeEase = 1 - Math.exp(
+        -(poseDelta / 1000) * Math.max(0.001, finite(flightCfg.settleHz, 2.5)),
+      );
+      this.altitude += (this.targetAltitude - this.altitude) * altitudeEase;
+
       updateFlight(this.flight, poseDelta, moved || this.isFlying, config);
       syncPresentation(
         this.resident,

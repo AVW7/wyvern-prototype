@@ -91,6 +91,7 @@ export function buildRoostOverlay({
   const controlsHint = `
     <div class="sanctuary-controls-hint" aria-hidden="true">
       Move <kbd>WASD</kbd>/<kbd>Arrows</kbd> · Interact <kbd>E</kbd> ·
+      Fly <kbd>G</kbd> · Altitude <kbd>R</kbd>/<kbd>Q</kbd> ·
       Orbit <kbd>[</kbd>/<kbd>]</kbd> · Elevate <kbd>PgUp</kbd>/<kbd>PgDn</kbd> ·
       Follow <kbd>F</kbd> · Reset <kbd>Home</kbd> · Pan <kbd>Space</kbd>/right-drag · Wheel zoom
     </div>`;

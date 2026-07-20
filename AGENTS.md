@@ -1,7 +1,7 @@
 # Codex and Agent Entry Point
 
 This is a multi-AI project. Before material work, read `AI_CONTEXT.md`, then the
-repository architecture in `CLAUDE.md` and the relevant plan under `docs/`.
+repository architecture in `CLAUDE.md` and the relevant plan under `docs/`. For codebase queries, architecture understanding, or path tracing, use the graphify tool on the codebase or run queries on the existing graph in `graphify-out/`.
 
 `docs/SANCTUARY_FREE_ROAM_PLAN.md` is the implemented, closed baseline.
 `docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md` is the active sanctuary plan.

@@ -1,7 +1,7 @@
 # Gemini Entry Point
 
 This is a multi-AI project. Before material work, read `AI_CONTEXT.md`, then the
-repository architecture in `CLAUDE.md` and the relevant plan under `docs/`.
+repository architecture in `CLAUDE.md` and the relevant plan under `docs/`. For codebase queries, architecture understanding, or path tracing, use the graphify tool on the codebase or run queries on the existing graph in `graphify-out/`.
 `CLAUDE.md` is retained as the established architecture filename; its technical
 guidance is model-neutral.
 

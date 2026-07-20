@@ -381,7 +381,11 @@ export default class BaseScene extends Phaser.Scene {
       if (!pointer || !this.cameras.main?.getWorldPoint) return null;
       const projected = { x: pointer.worldX, y: pointer.worldY };
       const corner = unprojectGround(projected.x, projected.y, this.projectionView);
-      return { col: corner.col - 0.5, row: corner.row - 0.5 };
+      // Resolve to an integer cell index, matching the 3D raycast picker
+      // (sanctuary3D.unprojectClick) so a click lands on the same tile in both
+      // paths. unprojectGround returns a grid *corner*; the -0.5 shifts to the
+      // cell centre before rounding to the owning cell.
+      return { col: Math.round(corner.col - 0.5), row: Math.round(corner.row - 0.5) };
     };
   }
 
