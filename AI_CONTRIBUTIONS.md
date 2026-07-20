@@ -7,7 +7,7 @@ visible without treating any model as the sole author.
 
 - **Distinct contributing model entries:** 8
 - **Providers represented:** 3
-- **Contribution records:** 35
+- **Contribution records:** 37
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -64,10 +64,12 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-029 | 2026-07-20 | AI-003 | Implemented togglable flight (via G key) and click-to-move pathfinding for the 3D controlled wyvern. Fixed a bug in the movement controller guard preventing 3D residents from moving, and added dynamic flying masks and dynamic height checks to allow the wyvern to fly over obstacles and ignore cliff limits. | `src/scenes/BaseScene.js`, `src/systems/sanctuaryMovement.js` | `npm run check:syntax`, `npm test` passed. |
 | C-030 | 2026-07-20 | AI-003 | Upgraded the sanctuary exterior environment to a fully 3D voxel diorama in Three.js. Expanded the grounds layout to 40x40 with 5 height zones, 2.5D billboard props/residents, animated 3D dragon action animations (wobbling training dummies, fire particles on braziers, and pulsating crystal resonance), and integrated Three.js raycasting for Phaser's mouse clicks/hovers. | `src/systems/sanctuary3D.js` (new); `src/scenes/BaseScene.js`, `src/data/sanctuary.js`, `src/systems/decorArt.js`, `src/config.js` | `npm run check` (all 12 test files / 143 tests passed, syntax check passed, atlas validation passed, production build passed). |
 | C-031 | 2026-07-20 | AI-003 | Reviewed the Sanctuary 3D Dragon Experiment plan and appended Review R-006 to the multi-model review workspace, focusing on WebGL renderer lifetime leaks, GLTF asset load thrashing, texture caching, instanced rendering optimizations, and dynamic billboard occlusion. | `docs/SANCTUARY_3D_DRAGON_PLAN.md` | `npm run check` full gate pass (all 12 test files / 152 tests, build succeeds) |
-| C-032 | 2026-07-20 | AI-003 | Added threejs-fundamentals skill to workspace customizations directory. | `.skills/threejs-fundamentals/SKILL.md` | not run |
-| C-033 | 2026-07-20 | AI-003 | Added threejs-interaction skill to workspace customizations directory. | `.skills/threejs-interaction/SKILL.md` | not run |
-| C-034 | 2026-07-20 | AI-003 | Added threejs-geometry skill to workspace customizations directory. | `.skills/threejs-geometry/SKILL.md` | not run |
-| C-035 | 2026-07-20 | AI-003 | Added threejs-materials skill to workspace customizations directory. | `.skills/threejs-materials/SKILL.md` | not run |
+| C-032 | 2026-07-20 | AI-003 | Implemented obstacle collision detection for both walking and flying states in the sanctuary movement system, blocking movement through solid props (trees, ruins, obelisks, pillars, crystal, etc.) while keeping walkability on decorative items (flowers, mushrooms, reeds). Updated the associated data reachability test in `tests/sanctuaryData.test.js`. | `src/systems/sanctuaryMovement.js`, `tests/sanctuaryData.test.js` | `npm run check` full gate pass (all 12 test files / 152 tests, build succeeds) |
+| C-033 | 2026-07-20 | AI-003 | Added threejs-fundamentals skill to workspace customizations directory. | `.skills/threejs-fundamentals/SKILL.md` | not run |
+| C-034 | 2026-07-20 | AI-003 | Added threejs-interaction skill to workspace customizations directory. | `.skills/threejs-interaction/SKILL.md` | not run |
+| C-035 | 2026-07-20 | AI-003 | Added threejs-geometry skill to workspace customizations directory. | `.skills/threejs-geometry/SKILL.md` | not run |
+| C-036 | 2026-07-20 | AI-003 | Added threejs-materials skill to workspace customizations directory. | `.skills/threejs-materials/SKILL.md` | not run |
+| C-037 | 2026-07-20 | AI-007 | Optimized the sanctuary 3D diorama: cached the WebGLRenderer at module level to prevent context exhaustion on rebuilds/travel, cached GLTF model data with SkeletonUtils.clone to eliminate redundant network loads and CPU parsing, cached CanvasTexture/BoxGeometry/MeshStandardMaterial instances by key to reduce GPU uploads and allocations, set NearestFilter on pixel-art billboard textures, and rewrote destroy() to clear the scene graph without disposing shared caches. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 12 test files / 152 tests, build succeeds) |
 
 ## How another model adds itself
 

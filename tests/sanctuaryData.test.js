@@ -59,7 +59,9 @@ describe('sanctuary free-roam data', () => {
       expect(visited.has(`${spot.col},${spot.row}`), `resident spot ${index}`).toBe(true);
     });
     world.interactions.forEach((target) => {
-      expect(visited.has(`${target.col},${target.row}`), target.id).toBe(true);
+      const reachable = visited.has(`${target.col},${target.row}`) ||
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dc, dr]) => visited.has(`${target.col + dc},${target.row + dr}`));
+      expect(reachable, target.id).toBe(true);
     });
   });
 

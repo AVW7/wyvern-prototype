@@ -65,6 +65,12 @@ function movementTuning(overrides = {}) {
   };
 }
 
+export function isBlockingDecor(decor) {
+  if (!decor) return false;
+  const nonBlocking = ['flowers', 'reeds', 'mushroom', 'bones', 'glow', 'torch', 'hoard'];
+  return !nonBlocking.includes(decor.type);
+}
+
 /**
  * Builds a pure row/column mask. Truthy entries are authored cells that may
  * be occupied; null holes and explicit no-go cells stay false. Raised cells
@@ -74,7 +80,10 @@ function movementTuning(overrides = {}) {
  */
 export function createWalkableMask(tiles = []) {
   return tiles.map((row) => (row || []).map((cell) => Boolean(
-    cell && cell.noGo !== true && cell.walkable !== false,
+    cell &&
+    cell.noGo !== true &&
+    cell.walkable !== false &&
+    (!cell.decor || !isBlockingDecor(cell.decor)),
   )));
 }
 
@@ -628,7 +637,9 @@ export function createSanctuaryMovement({
   inputBlocked = false,
 } = {}) {
   const mask = createWalkableMask(tiles);
-  const flyingMask = tiles.map((row) => (row || []).map((cell) => Boolean(cell)));
+  const flyingMask = tiles.map((row) => (row || []).map((cell) => Boolean(
+    cell && (!cell.decor || !isBlockingDecor(cell.decor)),
+  )));
   const heights = createHeightGrid(tiles);
   const config = movementTuning(tuning);
   const keys = suppliedKeys || scene?.input?.keyboard?.addKeys?.(

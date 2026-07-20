@@ -1,17 +1,139 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { GAME, SANCTUARY, TERRAIN } from '../config.js';
 import { BIOMES } from '../data/biomes.js';
 
 const TILE_SIZE = 24;
 const HEIGHT_SCALE = 12;
 
-export function createSanctuary3D({ scene, tiles, interactions, residents, selectedWyvernId } = {}) {
+// ── Module-level caches ────────────────────────────────────────────────
+// These survive across createSanctuary3D calls (recruit rebuilds, scene
+// travel) so the browser never exhausts WebGL contexts, re-parses the
+// GLTF model, or re-uploads identical textures to VRAM.
+
+/** @type {THREE.WebGLRenderer | null} */
+let _renderer = null;
+
+/**
+ * Cached GLTF result keyed by URL. Contains the parsed scene graph and
+ * animation clips so successive calls clone from memory instead of hitting
+ * the network and CPU parser again.
+ * @type {Map<string, {scene: THREE.Group, animations: THREE.AnimationClip[]}>}
+ */
+const _gltfCache = new Map();
+
+/**
+ * THREE.CanvasTexture instances keyed by the Phaser texture key they were
+ * built from. Avoids duplicate GPU texture uploads when the same decor or
+ * species sprite appears in multiple tiles/residents.
+ * @type {Map<string, THREE.CanvasTexture>}
+ */
+const _textureCache = new Map();
+
+/**
+ * BoxGeometry keyed by height level. The 40×40 grid has only ~5 distinct
+ * height values, so caching reduces ~1600 geometry allocations to ≤5.
+ * @type {Map<number, THREE.BoxGeometry>}
+ */
+const _geoCache = new Map();
+
+/**
+ * MeshStandardMaterial arrays keyed by `biome` name. Each entry is a
+ * 6-element array matching Three.js BoxGeometry face order.
+ * @type {Map<string, THREE.MeshStandardMaterial[]>}
+ */
+const _matCache = new Map();
+
+// ── Helpers ────────────────────────────────────────────────────────────
+
+/** Lazily create / return the single WebGLRenderer for the #dragon3d canvas. */
+function getRenderer() {
   const target = document.getElementById('dragon3d');
   if (!target) return null;
 
-  const renderer = new THREE.WebGLRenderer({ canvas: target, alpha: true, antialias: true });
-  renderer.setClearColor(0x000000, 0);
+  if (_renderer && _renderer.domElement === target) return _renderer;
+
+  // First call, or canvas was replaced (shouldn't happen in this prototype).
+  if (_renderer) _renderer.dispose();
+  _renderer = new THREE.WebGLRenderer({ canvas: target, alpha: true, antialias: true });
+  _renderer.setClearColor(0x000000, 0);
+  return _renderer;
+}
+
+/**
+ * Get or create a cached BoxGeometry for the given tile height.
+ * @param {number} h - Tile height level (1–5).
+ */
+function getTileGeometry(h) {
+  if (!_geoCache.has(h)) {
+    _geoCache.set(h, new THREE.BoxGeometry(TILE_SIZE, h * HEIGHT_SCALE, TILE_SIZE));
+  }
+  return _geoCache.get(h);
+}
+
+/**
+ * Get or create a cached 6-face material array for the given biome.
+ * @param {string} biome - Biome key from BIOMES.
+ */
+function getTileMaterials(biome) {
+  if (_matCache.has(biome)) return _matCache.get(biome);
+
+  const biomeData = BIOMES[biome] || BIOMES.moss;
+  const topColor = new THREE.Color(biomeData.top);
+  const sideColor = new THREE.Color(biomeData.left || biomeData.dark);
+
+  const sideMat = new THREE.MeshStandardMaterial({ color: sideColor, roughness: 0.82 });
+
+  let topMat;
+  if (biome === 'springwater') {
+    topMat = new THREE.MeshStandardMaterial({
+      color: topColor,
+      roughness: 0.1,
+      transparent: true,
+      opacity: 0.65,
+      roughnessMap: null,
+    });
+  } else if (biome === 'lava') {
+    topMat = new THREE.MeshStandardMaterial({
+      color: topColor,
+      roughness: 0.9,
+      emissive: new THREE.Color('#ff4500'),
+      emissiveIntensity: 1.5,
+    });
+  } else {
+    topMat = new THREE.MeshStandardMaterial({ color: topColor, roughness: 0.92 });
+  }
+
+  const materials = [sideMat, sideMat, topMat, sideMat, sideMat, sideMat];
+  _matCache.set(biome, materials);
+  return materials;
+}
+
+/**
+ * Get or create a cached THREE.CanvasTexture from a Phaser source image.
+ * Uses NearestFilter to keep pixel-art textures crisp.
+ * @param {string} key - Phaser texture key.
+ * @param {HTMLCanvasElement | HTMLImageElement} sourceImage
+ */
+function getCachedTexture(key, sourceImage) {
+  if (_textureCache.has(key)) return _textureCache.get(key);
+
+  const tex = new THREE.CanvasTexture(sourceImage);
+  tex.minFilter = THREE.NearestFilter;
+  tex.magFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false;
+  _textureCache.set(key, tex);
+  return tex;
+}
+
+// ── Main factory ───────────────────────────────────────────────────────
+
+export function createSanctuary3D({ scene, tiles, interactions, residents, selectedWyvernId } = {}) {
+  const renderer = getRenderer();
+  if (!renderer) return null;
+
+  const target = renderer.domElement;
   renderer.setSize(GAME.width, GAME.height, false);
 
   const threeScene = new THREE.Scene();
@@ -43,6 +165,10 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   let targetDistance = 450;
   let followId = selectedWyvernId;
 
+  // Shared resident geometry — only created once per module lifetime.
+  const shadowGeo = new THREE.RingGeometry(0, 8, 32);
+  const ringGeo = new THREE.RingGeometry(7.2, 8, 32);
+
   // Build Voxel Terrain
   const cols = tiles[0]?.length || 40;
   const rows = tiles.length || 40;
@@ -53,35 +179,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       if (!cell) continue;
 
       const h = cell.height;
-      const geo = new THREE.BoxGeometry(TILE_SIZE, h * HEIGHT_SCALE, TILE_SIZE);
-      
-      const biomeData = BIOMES[cell.biome] || BIOMES.moss;
-      const topColor = new THREE.Color(biomeData.top);
-      const sideColor = new THREE.Color(biomeData.left || biomeData.dark);
-
-      const sideMat = new THREE.MeshStandardMaterial({ color: sideColor, roughness: 0.82 });
-      
-      let topMat;
-      if (cell.biome === 'springwater') {
-        topMat = new THREE.MeshStandardMaterial({
-          color: topColor,
-          roughness: 0.1,
-          transparent: true,
-          opacity: 0.65,
-          roughnessMap: null
-        });
-      } else if (cell.biome === 'lava') {
-        topMat = new THREE.MeshStandardMaterial({
-          color: topColor,
-          roughness: 0.9,
-          emissive: new THREE.Color('#ff4500'),
-          emissiveIntensity: 1.5
-        });
-      } else {
-        topMat = new THREE.MeshStandardMaterial({ color: topColor, roughness: 0.92 });
-      }
-
-      const materials = [sideMat, sideMat, topMat, sideMat, sideMat, sideMat];
+      const geo = getTileGeometry(h);
+      const materials = getTileMaterials(cell.biome);
       const mesh = new THREE.Mesh(geo, materials);
 
       const tx = (c - cols / 2) * TILE_SIZE;
@@ -104,7 +203,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   function createDecorSprite(col, row, cell) {
     const { type, variant } = cell.decor;
     const key = `${col}_${row}`;
-    
+
     // Drawers from Phaser cache
     let phaserKey = `iso-decor-${cell.biome}-${type}-${variant}`;
     let sourceImage = scene.textures.get(phaserKey)?.getSourceImage();
@@ -116,7 +215,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
 
     if (!sourceImage) return;
 
-    const texture = new THREE.CanvasTexture(sourceImage);
+    const texture = getCachedTexture(phaserKey, sourceImage);
     const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
     const sprite = new THREE.Sprite(mat);
 
@@ -125,7 +224,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     const ty = cell.height * HEIGHT_SCALE;
 
     sprite.position.set(tx, ty + 12, tz);
-    
+
     // Prop sizes
     let scaleX = 24;
     let scaleY = 28;
@@ -147,12 +246,85 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       cell,
       baseScaleY: scaleY,
       wobbleTime: 0,
-      pulseTime: 0
+      pulseTime: 0,
     };
   }
 
+  // ── GLTF model loading with cache ──────────────────────────────────
+  function loadOrCloneDragon(config, residentGroup, onReady) {
+    const url = config.modelUrl;
+
+    function setupFromCache(cached) {
+      const cloned = SkeletonUtils.clone(cached.scene);
+
+      // Use the measurements computed once from the pristine gltf.scene
+      // (whose bone matrices are correct). SkeletonUtils.clone copies the
+      // hierarchy but its uninitialized bones can produce a degenerate
+      // bounding box, which blows up the scale.
+      const { center, minY, finalScale } = cached.measurements;
+
+      cloned.position.x -= center.x;
+      cloned.position.z -= center.z;
+      cloned.position.y -= minY;
+
+      cloned.traverse((node) => {
+        if (node.isMesh) {
+          node.frustumCulled = false;
+          if (node.material) {
+            node.material = node.material.clone();
+            node.material.roughness = 0.6;
+            node.material.metalness = 0.1;
+          }
+        }
+      });
+
+      cloned.scale.setScalar(finalScale);
+      residentGroup.add(cloned);
+
+      const localMixer = new THREE.AnimationMixer(cloned);
+      const localActions = {};
+      for (const [motion, clipName] of Object.entries(config.clips)) {
+        const clip = THREE.AnimationClip.findByName(cached.animations, clipName);
+        if (clip) {
+          localActions[motion] = localMixer.clipAction(clip);
+        }
+      }
+
+      onReady(cloned, localMixer, localActions);
+    }
+
+    if (_gltfCache.has(url)) {
+      setupFromCache(_gltfCache.get(url));
+      return;
+    }
+
+    new GLTFLoader().load(url, (gltf) => {
+      // Compute bounding box once from the original scene (bone matrices
+      // are correct at this point). These measurements are reused for
+      // every subsequent SkeletonUtils.clone call.
+      gltf.scene.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(gltf.scene);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const modelHeight = size.y || 1;
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+
+      _gltfCache.set(url, {
+        scene: gltf.scene,
+        animations: gltf.animations,
+        measurements: {
+          center: { x: center.x, z: center.z },
+          minY: box.min.y,
+          finalScale: 22 / modelHeight,
+        },
+      });
+      setupFromCache(_gltfCache.get(url));
+    });
+  }
+
   // Spawn residents in 3D
-  residents.forEach((r, i) => {
+  residents.forEach((r) => {
     const isControlled = r.animal.id === selectedWyvernId;
     const accentColor = new THREE.Color(r.accent || '#ffbf3f');
 
@@ -168,9 +340,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       color: 0x000000,
       transparent: true,
       opacity: 0.35,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
-    const shadowGeo = new THREE.RingGeometry(0, 8, 32);
     const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
     shadowMesh.rotation.x = -Math.PI / 2;
     shadowMesh.position.y = 0.05;
@@ -181,9 +352,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       color: accentColor,
       transparent: true,
       opacity: 0.8,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
-    const ringGeo = new THREE.RingGeometry(7.2, 8, 32);
     const ringMesh = new THREE.Mesh(ringGeo, ringMat);
     ringMesh.rotation.x = -Math.PI / 2;
     ringMesh.position.y = 0.06;
@@ -213,51 +383,14 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     let visual3D = null;
 
     if (isControlled && r.animal.species === 'wyvern') {
-      // 3D model loader
       const config = SANCTUARY.dragon3D;
-      new GLTFLoader().load(
-        config.modelUrl,
-        (gltf) => {
-          visual3D = gltf.scene;
-          const box = new THREE.Box3().setFromObject(visual3D);
-          const size = new THREE.Vector3();
-          box.getSize(size);
-          const modelHeight = size.y || 1;
-          const center = new THREE.Vector3();
-          box.getCenter(center);
-          
-          visual3D.position.x -= center.x;
-          visual3D.position.z -= center.z;
-          visual3D.position.y -= box.min.y;
-
-          visual3D.traverse((node) => {
-            if (node.isMesh) {
-              node.frustumCulled = false;
-              // Make materials look nice and shiny
-              if (node.material) {
-                node.material.roughness = 0.6;
-                node.material.metalness = 0.1;
-              }
-            }
-          });
-
-          // Scale to targetHeightPx relative to TILE_SIZE scale
-          const finalScale = 22 / modelHeight;
-          visual3D.scale.setScalar(finalScale);
-
-          residentGroup.add(visual3D);
-
-          mixer = new THREE.AnimationMixer(visual3D);
-          for (const [motion, clipName] of Object.entries(config.clips)) {
-            const clip = THREE.AnimationClip.findByName(gltf.animations, clipName);
-            if (clip) {
-              actions[motion] = mixer.clipAction(clip);
-            }
-          }
-          playMotion(pendingMotion, 0);
-          controlledDragon = visual3D;
-        }
-      );
+      loadOrCloneDragon(config, residentGroup, (cloned, localMixer, localActions) => {
+        visual3D = cloned;
+        mixer = localMixer;
+        Object.assign(actions, localActions);
+        playMotion(pendingMotion, 0);
+        controlledDragon = cloned;
+      });
     } else {
       // 2.5D Sprite Billboard for other residents
       let textureKey = `species-${r.animal.species}`;
@@ -266,7 +399,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       }
       const phaserTexture = scene.textures.get(textureKey)?.getSourceImage();
       if (phaserTexture) {
-        const tex = new THREE.CanvasTexture(phaserTexture);
+        const tex = getCachedTexture(textureKey, phaserTexture);
         const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
         const sprite = new THREE.Sprite(spriteMat);
         sprite.position.set(0, 12, 0);
@@ -281,7 +414,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       ring: ringMesh,
       label: labelSprite,
       visual: visual3D,
-      animal: r.animal
+      animal: r.animal,
     };
   });
 
@@ -310,12 +443,12 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       positions.push(
         position.x + (Math.random() - 0.5) * 4,
         position.y + (Math.random() - 0.5) * 4,
-        position.z + (Math.random() - 0.5) * 4
+        position.z + (Math.random() - 0.5) * 4,
       );
       velocities.push(
         (Math.random() - 0.5) * 15,
         Math.random() * 25 + 15,
-        (Math.random() - 0.5) * 15
+        (Math.random() - 0.5) * 15,
       );
       lifetimes.push(Math.random() * 0.8 + 0.4);
     }
@@ -325,7 +458,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       color: 0xff5500,
       size: 4,
       transparent: true,
-      blending: THREE.AdditiveBlending
+      blending: THREE.AdditiveBlending,
     });
     const points = new THREE.Points(geo, mat);
     threeScene.add(points);
@@ -334,7 +467,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       points,
       velocities,
       lifetimes,
-      maxLifetimes: [...lifetimes]
+      maxLifetimes: [...lifetimes],
     });
   }
 
@@ -358,18 +491,18 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       const decor = decorSprites[key];
       if (decor && (decor.type === 'unlitBrazier' || decor.type === 'brazier')) {
         decor.type = 'litBrazier';
-        
+
         // Swap texture
         const phaserKey = `iso-decor-moss-torch-0`; // Re-use torch flame texture
         const sourceImage = scene.textures.get(phaserKey)?.getSourceImage();
         if (sourceImage) {
-          decor.sprite.material.map = new THREE.CanvasTexture(sourceImage);
+          decor.sprite.material.map = getCachedTexture(phaserKey, sourceImage);
           decor.sprite.material.needsUpdate = true;
         }
 
         // Spawn fire particles
         createFireParticles(decor.sprite.position);
-        
+
         // Add a point light to the fire!
         const fireLight = new THREE.PointLight(0xff7700, 1.8, 120);
         fireLight.position.set(0, 4, 0);
@@ -449,7 +582,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       // Update interactive prop animations (wobbles and pulses)
       for (const key in decorSprites) {
         const decor = decorSprites[key];
-        
+
         // Dummy Wobble
         if (decor.wobbleTime > 0) {
           decor.wobbleTime -= deltaSec;
@@ -520,7 +653,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
           const rx = (targetResident.footprint.col - cols / 2) * TILE_SIZE;
           const rz = (targetResident.footprint.row - rows / 2) * TILE_SIZE;
           const ry = (tiles[targetResident.footprint.row]?.[targetResident.footprint.col]?.height || 1) * HEIGHT_SCALE;
-          
+
           // Smoothly lerp camera focus target
           camTarget.lerp(new THREE.Vector3(rx, ry, rz), 0.12);
         }
@@ -555,19 +688,45 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       camera.updateProjectionMatrix();
     },
 
+    // Clear this instance's scene graph without disposing the shared renderer,
+    // geometry cache, material cache, or texture cache. Those persist across
+    // rebuilds and scene travel so re-entering Base is instant.
     destroy() {
       controlledDragon = null;
-      threeScene.traverse((obj) => {
-        if (obj.geometry) obj.geometry.dispose();
-        if (obj.material) {
-          if (Array.isArray(obj.material)) {
-            obj.material.forEach((m) => m.dispose());
-          } else {
-            obj.material.dispose();
-          }
-        }
+      mixer = null;
+
+      // Dispose per-instance objects that are NOT in the shared caches:
+      // particle geometries/materials and per-resident label textures.
+      activeParticles.forEach((p) => {
+        threeScene.remove(p.points);
+        p.points.geometry.dispose();
+        p.points.material.dispose();
       });
-      renderer.dispose();
-    }
+      activeParticles.length = 0;
+
+      // Walk through residents and dispose their per-instance materials
+      // (shadow, ring, label) but NOT shared cached textures.
+      for (const id in residentVisuals) {
+        const vis = residentVisuals[id];
+        if (vis.group) {
+          vis.group.traverse((obj) => {
+            // Dispose per-instance materials (shadow, ring, label) only.
+            // Cached materials (tile biomes) and cached textures are kept.
+            if (obj.material && !obj.material._sanctuary3DCached) {
+              if (Array.isArray(obj.material)) {
+                obj.material.forEach((m) => m.dispose());
+              } else {
+                obj.material.dispose();
+              }
+            }
+          });
+        }
+      }
+
+      // Remove all children from the Three.js scene without touching the
+      // shared renderer. Clearing lets the GC collect the per-frame scene
+      // graph while the module-level caches stay warm.
+      threeScene.clear();
+    },
   };
 }
