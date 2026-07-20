@@ -5,6 +5,9 @@ import { GAME, SANCTUARY, TERRAIN } from '../config.js';
 import { BIOMES } from '../data/biomes.js';
 import { TILE_SIZE, HEIGHT_SCALE, gridToWorld3D, tileCenterY } from './grid3d.js';
 
+// Enable Three.js global Cache
+THREE.Cache.enabled = true;
+
 // Resting height (world units) of a resident's name label above its group
 // origin. Flight altitude is added on top so the label rides up with the model.
 const LABEL_BASE_Y = 32;
@@ -60,6 +63,7 @@ function getRenderer() {
   if (_renderer) _renderer.dispose();
   _renderer = new THREE.WebGLRenderer({ canvas: target, alpha: true, antialias: true });
   _renderer.setClearColor(0x000000, 0);
+  _renderer.outputColorSpace = THREE.SRGBColorSpace;
   return _renderer;
 }
 
@@ -122,6 +126,7 @@ function getCachedTexture(key, sourceImage) {
   if (_textureCache.has(key)) return _textureCache.get(key);
 
   const tex = new THREE.CanvasTexture(sourceImage);
+  tex.colorSpace = THREE.SRGBColorSpace;
   tex.minFilter = THREE.NearestFilter;
   tex.magFilter = THREE.NearestFilter;
   tex.generateMipmaps = false;
@@ -282,6 +287,14 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
             node.material = node.material.clone();
             node.material.roughness = 0.6;
             node.material.metalness = 0.1;
+            
+            // Calibrate loaded textures to use sRGB Color Space if any exist
+            if (node.material.map) {
+              node.material.map.colorSpace = THREE.SRGBColorSpace;
+            }
+            if (node.material.emissiveMap) {
+              node.material.emissiveMap.colorSpace = THREE.SRGBColorSpace;
+            }
           }
         }
       });
@@ -306,29 +319,151 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       return;
     }
 
-    new GLTFLoader().load(url, (gltf) => {
-      // Compute bounding box once from the original scene (bone matrices
-      // are correct at this point). These measurements are reused for
-      // every subsequent SkeletonUtils.clone call.
-      gltf.scene.updateMatrixWorld(true);
-      const box = new THREE.Box3().setFromObject(gltf.scene);
-      const size = new THREE.Vector3();
-      box.getSize(size);
-      const modelHeight = size.y || 1;
-      const center = new THREE.Vector3();
-      box.getCenter(center);
+    // Dynamic loading UI injection
+    const overlay = document.getElementById('ui-overlay');
+    let loadingEl = document.getElementById('dragon-loading-overlay');
+    if (!loadingEl && overlay) {
+      loadingEl = document.createElement('div');
+      loadingEl.id = 'dragon-loading-overlay';
+      loadingEl.innerHTML = `
+        <div class="dragon-loading-card">
+          <div class="dragon-loading-title">Summoning Dragon Mesh...</div>
+          <div class="dragon-loading-bar-bg">
+            <div class="dragon-loading-bar-fill" id="dragon-loader-fill" style="width: 0%"></div>
+          </div>
+          <div class="dragon-loading-percentage" id="dragon-loader-pct">0%</div>
+        </div>
+      `;
+      overlay.appendChild(loadingEl);
+    }
+
+    const manager = new THREE.LoadingManager();
+    manager.onStart = () => {
+      updateProgress(0);
+    };
+
+    manager.onProgress = (itemUrl, itemsLoaded, itemsTotal) => {
+      const pct = Math.min(99, Math.round((itemsLoaded / itemsTotal) * 100));
+      updateProgress(pct);
+    };
+
+    manager.onLoad = () => {
+      updateProgress(100);
+      setTimeout(() => {
+        if (loadingEl && loadingEl.parentNode) {
+          loadingEl.style.opacity = '0';
+          setTimeout(() => {
+            if (loadingEl && loadingEl.parentNode) {
+              loadingEl.remove();
+            }
+          }, 300);
+        }
+      }, 200);
+    };
+
+    manager.onError = (errUrl) => {
+      console.error(`Failed to load asset: ${errUrl}`);
+      const titleEl = loadingEl?.querySelector('.dragon-loading-title');
+      if (titleEl) {
+        titleEl.textContent = 'Failed to load dragon model.';
+        titleEl.style.color = '#ef4444';
+      }
+    };
+
+    function updateProgress(pct) {
+      const fillEl = document.getElementById('dragon-loader-fill');
+      const pctEl = document.getElementById('dragon-loader-pct');
+      if (fillEl) fillEl.style.width = `${pct}%`;
+      if (pctEl) pctEl.textContent = `${pct}%`;
+    }
+
+    const loader = new GLTFLoader(manager);
+
+    function tryLoad(loadUrl, isFallback = false) {
+      loader.load(
+        loadUrl,
+        (gltf) => {
+          gltf.scene.updateMatrixWorld(true);
+          const box = new THREE.Box3().setFromObject(gltf.scene);
+          const size = new THREE.Vector3();
+          box.getSize(size);
+          const modelHeight = size.y || 1;
+          const center = new THREE.Vector3();
+          box.getCenter(center);
+
+          _gltfCache.set(url, {
+            scene: gltf.scene,
+            animations: gltf.animations,
+            measurements: {
+              center: { x: center.x, z: center.z },
+              minY: box.min.y,
+              finalScale: 22 / modelHeight,
+            },
+          });
+          setupFromCache(_gltfCache.get(url));
+        },
+        undefined,
+        (err) => {
+          console.warn(`Failed to load model from: ${loadUrl}`, err);
+          if (!isFallback) {
+            console.log('Attempting fallback to test wyvern model...');
+            const titleEl = loadingEl?.querySelector('.dragon-loading-title');
+            if (titleEl) titleEl.textContent = 'Retrying with fallback mesh...';
+            tryLoad('assets/models/wyvern3d/wyvern-test.glb', true);
+          } else {
+            console.error('All model loading paths failed. Rendering procedural placeholder.');
+            createProceduralPlaceholder();
+          }
+        }
+      );
+    }
+
+    function createProceduralPlaceholder() {
+      if (loadingEl && loadingEl.parentNode) {
+        loadingEl.remove();
+      }
+
+      const placeholderGroup = new THREE.Group();
+      
+      const bodyGeom = new THREE.BoxGeometry(12, 6, 12);
+      const wireframeMat = new THREE.MeshBasicMaterial({ 
+        color: 0xd4af37, 
+        wireframe: true, 
+        transparent: true,
+        opacity: 0.8
+      });
+      const body = new THREE.Mesh(bodyGeom, wireframeMat);
+      body.position.y = 3;
+      placeholderGroup.add(body);
+      
+      const headGeom = new THREE.BoxGeometry(4, 4, 6);
+      const head = new THREE.Mesh(headGeom, wireframeMat);
+      head.position.set(0, 7, 5);
+      placeholderGroup.add(head);
+      
+      const leftWingGeom = new THREE.BoxGeometry(16, 1, 6);
+      const leftWing = new THREE.Mesh(leftWingGeom, wireframeMat);
+      leftWing.position.set(-10, 5, 0);
+      placeholderGroup.add(leftWing);
+
+      const rightWingGeom = new THREE.BoxGeometry(16, 1, 6);
+      const rightWing = new THREE.Mesh(rightWingGeom, wireframeMat);
+      rightWing.position.set(10, 5, 0);
+      placeholderGroup.add(rightWing);
 
       _gltfCache.set(url, {
-        scene: gltf.scene,
-        animations: gltf.animations,
+        scene: placeholderGroup,
+        animations: [],
         measurements: {
-          center: { x: center.x, z: center.z },
-          minY: box.min.y,
-          finalScale: 22 / modelHeight,
+          center: { x: 0, z: 0 },
+          minY: 0,
+          finalScale: 1.0,
         },
       });
       setupFromCache(_gltfCache.get(url));
-    });
+    }
+
+    tryLoad(url);
   }
 
   // Spawn residents in 3D

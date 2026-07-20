@@ -5,9 +5,9 @@ visible without treating any model as the sole author.
 
 ## Count
 
-- **Distinct contributing model entries:** 10
-- **Providers represented:** 3
-- **Contribution records:** 39
+- Distinct contributing model entries: 10
+- Providers represented: 3
+- Contribution records: 40
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -74,6 +74,7 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-037 | 2026-07-20 | AI-007 | Optimized the sanctuary 3D diorama: cached the WebGLRenderer at module level to prevent context exhaustion on rebuilds/travel, cached GLTF model data with SkeletonUtils.clone to eliminate redundant network loads and CPU parsing, cached CanvasTexture/BoxGeometry/MeshStandardMaterial instances by key to reduce GPU uploads and allocations, set NearestFilter on pixel-art billboard textures, and rewrote destroy() to clear the scene graph without disposing shared caches. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 12 test files / 152 tests, build succeeds) |
 | C-038 | 2026-07-20 | AI-009 | Set up graphifyy, ran /graphify on the src directory, analyzed the SanctuaryCameraController bridge, and updated agent documentation (AGENTS.md/GEMINI.md) to integrate graphify. | `AGENTS.md`, `GEMINI.md`, `graphify-out/` | `npm run check` full gate pass (all 12 test files / 152 tests, build succeeds) |
 | C-039 | 2026-07-20 | AI-010 | Added threejs-loaders skill to workspace customizations directory. | `.skills/threejs-loaders/SKILL.md` | not run |
+| C-040 | 2026-07-20 | AI-010 | Improved 3D sanctuary asset loading with THREE.Cache, LoadingManager glassmorphic progress overlay, sRGB color spaces, and fallback procedural meshes. | `src/systems/sanctuary3D.js`, `src/ui/ui.css`, `docs/SANCTUARY_3D_DRAGON_PLAN.md` | `npm run check` full gate pass (all 14 test files / 164 tests passed, built successfully) |
 
 ## How another model adds itself
 

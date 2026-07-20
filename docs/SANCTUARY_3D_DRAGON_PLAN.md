@@ -356,6 +356,24 @@ append your work to AI_CONTRIBUTIONS.md.
   2. **Three.js Camera aspect ratio on first load:** The initial aspect ratio is set via `GAME.width / GAME.height`, but the canvas size might be letterboxed. Rely on the `ResizeObserver` callbacks in `main.js` to ensure the initial resize is triggered before the first frame is rendered to prevent stretching.
 - **Suggested first vertical slice:** Refactor `createSanctuary3D` and `BaseScene.js` to lazily instantiate a single, persistent `THREE.WebGLRenderer` cached on `BaseScene` (or as a persistent game-level system) and verify that switching between Base and Vault 10 times consecutively does not leak contexts or trigger texture re-uploads.
 - **Confidence / unknowns:** High confidence in Three.js integration patterns and Phaser's WebGL context interactions. Unknown: performance limits of the unoptimized voxel drawing on older mobile GPUs.
+### Review R-007 — Gemini 3.5 Flash (Medium)
+
+- **Date:** 2026-07-20
+- **Model ID:** Gemini 3.5 Flash (Medium)
+- **Focus:** Three.js Asset Loaders & Error Fallbacks
+- **Files inspected:** [sanctuary3D.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/systems/sanctuary3D.js), [ui.css](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/ui/ui.css)
+- **Summary:** This review evaluates the implementation of Three.js asset loading improvements following the `threejs-loaders` skill guidelines. The additions integrate global caching (`THREE.Cache.enabled = true`), color space correction (setting outputColorSpace and texture colorSpace to sRGB), a robust LoadingManager that powers a premium glassmorphic HTML progress overlay, and fallback loader logic that gracefully spawns procedural wireframe boxes when GLTF assets are missing.
+- **Must fix before implementation:** None.
+- **Recommended changes:**
+  1. Ensure the loading overlay doesn't flicker on cached loads: Currently, cached assets retrieve instantly and bypass the network, but the LoadingManager is initialized on every spawn. Since `_gltfCache.has(url)` returns early in `loadOrCloneDragon`, the loading overlay is bypassed, preventing visual flicker. Keep this check robust.
+  2. Consider adding dynamic color space checks for multi-format assets if normal/roughness data maps are added to the 3D model: ensure they use `LinearSRGBColorSpace` instead of `SRGBColorSpace` to avoid shading errors.
+- **Keep as designed:**
+  1. Reusing `#ui-overlay` as the container for `#dragon-loading-overlay`. It guarantees correct placement and letterbox scaling constraints.
+  2. Generating a styled 3D box model with wireframe lines as the final fallback state, ensuring the system remains completely robust against missing models.
+- **Risks and edge cases:**
+  1. Browser context blocks pointer-events while loading: The loading overlay blocks mouse input via `pointer-events: auto` to prevent movement commands from execution during loading and is faded out using CSS transitions.
+- **Suggested first vertical slice:** Already implemented and verified.
+- **Confidence / unknowns:** High confidence. Checked with Vite compilation and vitest suite.
 
 ## Handoff rule
 
