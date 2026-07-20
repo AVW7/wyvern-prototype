@@ -50,6 +50,21 @@ const _geoCache = new Map();
  */
 const _matCache = new Map();
 
+/**
+ * Single shared base geometry for instanced terrain voxels, translated
+ * so its bottom is at Y = 0.
+ * @type {THREE.BoxGeometry | null}
+ */
+let _instancedBaseGeo = null;
+
+function getInstancedBaseGeometry() {
+  if (!_instancedBaseGeo) {
+    _instancedBaseGeo = new THREE.BoxGeometry(TILE_SIZE, 1, TILE_SIZE);
+    _instancedBaseGeo.translate(0, 0.5, 0);
+  }
+  return _instancedBaseGeo;
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────
 
 /** Lazily create / return the single WebGLRenderer for the #dragon3d canvas. */
@@ -134,6 +149,323 @@ function getCachedTexture(key, sourceImage) {
   return tex;
 }
 
+// ── 3D Prop Geometry Builders ──────────────────────────────────────────
+
+function build3DCrystal() {
+  const geo = new THREE.OctahedronGeometry(6, 0);
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0x00ffff,
+    roughness: 0.05,
+    metalness: 0.9,
+    emissive: 0x004444,
+    emissiveIntensity: 0.8,
+    transparent: true,
+    opacity: 0.85
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.scale.set(1, 2.2, 1);
+  mesh.position.y = 10; // Elevate slightly so center is above the tile
+  return mesh;
+}
+
+function build3DObelisk() {
+  const group = new THREE.Group();
+  
+  // Base pedestal
+  const baseGeo = new THREE.BoxGeometry(8, 2, 8);
+  const stoneMat = new THREE.MeshStandardMaterial({
+    color: 0x5a5d64,
+    roughness: 0.85,
+    metalness: 0.1
+  });
+  const base = new THREE.Mesh(baseGeo, stoneMat);
+  base.position.y = 1;
+  group.add(base);
+  
+  // Pillar (4-sided cylinder)
+  const pillarGeo = new THREE.CylinderGeometry(2, 3, 16, 4);
+  const pillar = new THREE.Mesh(pillarGeo, stoneMat);
+  pillar.position.y = 10;
+  group.add(pillar);
+  
+  // Pyramid cap
+  const capGeo = new THREE.ConeGeometry(2 * Math.sqrt(2), 3, 4);
+  capGeo.rotateY(Math.PI / 4);
+  const cap = new THREE.Mesh(capGeo, stoneMat);
+  cap.position.y = 19.5;
+  group.add(cap);
+  
+  // Add a glowing rune core or light
+  const runeGeo = new THREE.BoxGeometry(0.5, 6, 0.5);
+  const runeMat = new THREE.MeshStandardMaterial({
+    color: 0x00ffcc,
+    emissive: 0x00ffcc,
+    emissiveIntensity: 2.0
+  });
+  const rune = new THREE.Mesh(runeGeo, runeMat);
+  rune.position.set(0, 10, 3.01);
+  group.add(rune);
+
+  return group;
+}
+
+function build3DBrazier() {
+  const group = new THREE.Group();
+  
+  const metalMat = new THREE.MeshStandardMaterial({
+    color: 0x2c2d30,
+    roughness: 0.6,
+    metalness: 0.8
+  });
+  
+  // Base ring
+  const baseGeo = new THREE.CylinderGeometry(3.5, 3.5, 1, 16);
+  const base = new THREE.Mesh(baseGeo, metalMat);
+  base.position.y = 0.5;
+  group.add(base);
+  
+  // Post
+  const postGeo = new THREE.CylinderGeometry(0.8, 0.8, 9, 8);
+  const post = new THREE.Mesh(postGeo, metalMat);
+  post.position.y = 5.5;
+  group.add(post);
+  
+  // Bowl (Hemisphere, open at top)
+  const bowlGeo = new THREE.SphereGeometry(3.5, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+  bowlGeo.rotateX(Math.PI);
+  const bowlMat = new THREE.MeshStandardMaterial({
+    color: 0x2c2d30,
+    roughness: 0.6,
+    metalness: 0.8,
+    side: THREE.DoubleSide
+  });
+  const bowl = new THREE.Mesh(bowlGeo, bowlMat);
+  bowl.position.y = 10;
+  group.add(bowl);
+  
+  // Coals inside bowl
+  const coalGeo = new THREE.DodecahedronGeometry(2, 0);
+  const coalMat = new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    roughness: 0.95,
+    metalness: 0.1
+  });
+  const coals = new THREE.Mesh(coalGeo, coalMat);
+  coals.position.y = 9.5;
+  coals.name = "coals";
+  group.add(coals);
+
+  // Unlit flame mesh (invisible until lit)
+  const flameGeo = new THREE.SphereGeometry(1.5, 8, 8);
+  const flameMat = new THREE.MeshStandardMaterial({
+    color: 0xff4500,
+    emissive: 0xff4500,
+    emissiveIntensity: 0,
+    transparent: true,
+    opacity: 0
+  });
+  const flame = new THREE.Mesh(flameGeo, flameMat);
+  flame.position.y = 11;
+  flame.name = "flameCore";
+  group.add(flame);
+  
+  return group;
+}
+
+function build3DDummy() {
+  const group = new THREE.Group();
+  
+  const woodMat = new THREE.MeshStandardMaterial({
+    color: 0x8b5a2b,
+    roughness: 0.9,
+    metalness: 0.1
+  });
+  
+  const strawMat = new THREE.MeshStandardMaterial({
+    color: 0xd2b48c,
+    roughness: 0.95,
+    metalness: 0.05
+  });
+  
+  const metalMat = new THREE.MeshStandardMaterial({
+    color: 0x4a4a4a,
+    roughness: 0.5,
+    metalness: 0.7
+  });
+  
+  // Base stand
+  const baseGeo = new THREE.BoxGeometry(6, 1, 6);
+  const base = new THREE.Mesh(baseGeo, woodMat);
+  base.position.y = 0.5;
+  group.add(base);
+  
+  // Spring / iron coil post
+  const postGeo = new THREE.CylinderGeometry(0.6, 0.6, 6, 8);
+  const post = new THREE.Mesh(postGeo, metalMat);
+  post.position.y = 4;
+  group.add(post);
+  
+  // Torus coil representing the spring
+  const springGeo = new THREE.TorusGeometry(1.2, 0.35, 8, 16);
+  springGeo.rotateX(Math.PI / 2);
+  const spring = new THREE.Mesh(springGeo, metalMat);
+  spring.position.y = 3.5;
+  group.add(spring);
+  
+  // Torso (straw body)
+  const torsoGeo = new THREE.CylinderGeometry(1.8, 1.8, 10, 8);
+  const torso = new THREE.Mesh(torsoGeo, strawMat);
+  torso.position.y = 11;
+  group.add(torso);
+  
+  // Head (round target)
+  const headGeo = new THREE.SphereGeometry(1.4, 12, 12);
+  const head = new THREE.Mesh(headGeo, woodMat);
+  head.position.y = 17;
+  group.add(head);
+  
+  // Horizontal crossarms
+  const armGeo = new THREE.CylinderGeometry(0.35, 0.35, 7, 8);
+  armGeo.rotateZ(Math.PI / 2);
+  const arm1 = new THREE.Mesh(armGeo, woodMat);
+  arm1.position.set(0, 13, 1.5);
+  arm1.rotation.y = Math.PI / 6;
+  group.add(arm1);
+  
+  const arm2 = new THREE.Mesh(armGeo, woodMat);
+  arm2.position.set(0, 11, 1.5);
+  arm2.rotation.y = -Math.PI / 6;
+  group.add(arm2);
+  
+  return group;
+}
+
+function build3DNest() {
+  const group = new THREE.Group();
+  
+  const nestMat = new THREE.MeshStandardMaterial({
+    color: 0xcd853f,
+    roughness: 0.95,
+    metalness: 0.05
+  });
+  
+  // Straw outer ring
+  const torusGeo = new THREE.TorusGeometry(5, 1.6, 8, 24);
+  torusGeo.rotateX(Math.PI / 2);
+  const ring = new THREE.Mesh(torusGeo, nestMat);
+  ring.position.y = 1.6;
+  group.add(ring);
+  
+  // Inside floor
+  const floorGeo = new THREE.CylinderGeometry(4.5, 4.5, 1, 16);
+  const floor = new THREE.Mesh(floorGeo, nestMat);
+  floor.position.y = 0.5;
+  group.add(floor);
+  
+  // Pastel Eggs
+  const eggGeo = new THREE.SphereGeometry(1.2, 16, 16);
+  
+  // Egg 1: Pastel Blue
+  const egg1Mat = new THREE.MeshStandardMaterial({ color: 0xaec6cf, roughness: 0.5 });
+  const egg1 = new THREE.Mesh(eggGeo, egg1Mat);
+  egg1.scale.set(1, 1.4, 1);
+  egg1.position.set(-1.2, 1.5, 0);
+  egg1.rotation.set(0.2, 0, 0.4);
+  group.add(egg1);
+  
+  // Egg 2: Pastel Pink
+  const egg2Mat = new THREE.MeshStandardMaterial({ color: 0xffb7b2, roughness: 0.5 });
+  const egg2 = new THREE.Mesh(eggGeo, egg2Mat);
+  egg2.scale.set(1, 1.4, 1);
+  egg2.position.set(1.2, 1.5, -0.6);
+  egg2.rotation.set(-0.3, 0.4, -0.2);
+  group.add(egg2);
+  
+  // Egg 3: Soft Gold
+  const egg3Mat = new THREE.MeshStandardMaterial({ color: 0xe6c229, roughness: 0.4, metalness: 0.1 });
+  const egg3 = new THREE.Mesh(eggGeo, egg3Mat);
+  egg3.scale.set(1, 1.4, 1);
+  egg3.position.set(0, 1.5, 1.2);
+  egg3.rotation.set(0.4, -0.2, 0.1);
+  group.add(egg3);
+  
+  return group;
+}
+
+function build3DArena() {
+  const group = new THREE.Group();
+  
+  const stoneMat = new THREE.MeshStandardMaterial({
+    color: 0x7c7f85,
+    roughness: 0.85,
+    metalness: 0.15
+  });
+  
+  const borderMat = new THREE.MeshStandardMaterial({
+    color: 0xd4af37,
+    roughness: 0.4,
+    metalness: 0.6
+  });
+  
+  // Dais base
+  const daisGeo = new THREE.CylinderGeometry(18, 18, 1.5, 32);
+  const dais = new THREE.Mesh(daisGeo, stoneMat);
+  dais.position.y = 0.75;
+  group.add(dais);
+  
+  // Gold border ring
+  const ringGeo = new THREE.TorusGeometry(18, 0.5, 8, 32);
+  ringGeo.rotateX(Math.PI / 2);
+  const ring = new THREE.Mesh(ringGeo, borderMat);
+  ring.position.y = 1.5;
+  group.add(ring);
+  
+  return group;
+}
+
+function build3DBarredDoor() {
+  const group = new THREE.Group();
+  
+  const stoneMat = new THREE.MeshStandardMaterial({
+    color: 0x5a5d64,
+    roughness: 0.85,
+    metalness: 0.1
+  });
+  
+  const ironMat = new THREE.MeshStandardMaterial({
+    color: 0x1f2022,
+    roughness: 0.7,
+    metalness: 0.9
+  });
+  
+  // Left pillar
+  const p1Geo = new THREE.BoxGeometry(3, 16, 3);
+  const p1 = new THREE.Mesh(p1Geo, stoneMat);
+  p1.position.set(-6, 8, 0);
+  group.add(p1);
+  
+  // Right pillar
+  const p2 = new THREE.Mesh(p1Geo, stoneMat);
+  p2.position.set(6, 8, 0);
+  group.add(p2);
+  
+  // Top arch beam
+  const beamGeo = new THREE.BoxGeometry(15, 3, 3);
+  const beam = new THREE.Mesh(beamGeo, stoneMat);
+  beam.position.set(0, 17.5, 0);
+  group.add(beam);
+  
+  // Iron bars
+  const barGeo = new THREE.CylinderGeometry(0.25, 0.25, 16, 8);
+  for (let i = -4.5; i <= 4.5; i += 1.5) {
+    const bar = new THREE.Mesh(barGeo, ironMat);
+    bar.position.set(i, 8, 0);
+    group.add(bar);
+  }
+  
+  return group;
+}
+
 // ── Main factory ───────────────────────────────────────────────────────
 
 export function createSanctuary3D({ scene, tiles, interactions, residents, selectedWyvernId } = {}) {
@@ -192,21 +524,17 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     return cell?.height || TERRAIN.baseHeight;
   }
 
+  // Group tiles by biome to construct InstancedMesh per biome.
+  const tilesByBiome = {};
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const cell = tiles[r]?.[c];
       if (!cell) continue;
 
-      const h = cell.height;
-      const geo = getTileGeometry(h);
-      const materials = getTileMaterials(cell.biome);
-      const mesh = new THREE.Mesh(geo, materials);
-
-      const surface = gridToWorld3D(c, r, h, cols, rows);
-      mesh.position.set(surface.x, tileCenterY(h), surface.z);
-      mesh.userData = { col: c, row: r, height: h };
-      threeScene.add(mesh);
-      tileMeshes.push(mesh);
+      if (!tilesByBiome[cell.biome]) {
+        tilesByBiome[cell.biome] = [];
+      }
+      tilesByBiome[cell.biome].push({ col: c, row: r, height: cell.height });
 
       // Create decor if cell has it
       if (cell.decor) {
@@ -215,10 +543,99 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     }
   }
 
+  const baseGeo = getInstancedBaseGeometry();
+  const dummy = new THREE.Object3D();
+
+  for (const biome in tilesByBiome) {
+    const list = tilesByBiome[biome];
+    const count = list.length;
+    const materials = getTileMaterials(biome);
+    const instMesh = new THREE.InstancedMesh(baseGeo, materials, count);
+
+    const tilesData = [];
+    list.forEach((tileInfo, index) => {
+      const { col, row, height } = tileInfo;
+      const surface = gridToWorld3D(col, row, height, cols, rows);
+
+      // Position bottom at Y = 0 (since geometry bottom is at 0)
+      dummy.position.set(surface.x, 0, surface.z);
+      dummy.scale.set(1, height * HEIGHT_SCALE, 1);
+      dummy.updateMatrix();
+      instMesh.setMatrixAt(index, dummy.matrix);
+
+      tilesData.push({ col, row, height });
+    });
+
+    instMesh.instanceMatrix.needsUpdate = true;
+    instMesh.userData = { tilesData };
+    threeScene.add(instMesh);
+    tileMeshes.push(instMesh);
+  }
+
   // Create Decor Sprite
   function createDecorSprite(col, row, cell) {
     const { type, variant } = cell.decor;
     const key = `${col}_${row}`;
+
+    let is3DProp = false;
+    let propObject = null;
+
+    if (type === 'crystal') {
+      propObject = build3DCrystal();
+      is3DProp = true;
+    } else if (type === 'obelisk') {
+      propObject = build3DObelisk();
+      is3DProp = true;
+    } else if (type === 'dummy') {
+      propObject = build3DDummy();
+      is3DProp = true;
+    } else if (type === 'nest') {
+      propObject = build3DNest();
+      is3DProp = true;
+    } else if (type === 'arena') {
+      propObject = build3DArena();
+      is3DProp = true;
+    } else if (type === 'barredDoor') {
+      propObject = build3DBarredDoor();
+      is3DProp = true;
+    } else if (type === 'unlitBrazier' || type === 'brazier' || type === 'litBrazier') {
+      propObject = build3DBrazier();
+      is3DProp = true;
+    }
+
+    if (is3DProp) {
+      const surface = gridToWorld3D(col, row, cell.height, cols, rows);
+      propObject.position.set(surface.x, surface.y, surface.z);
+      threeScene.add(propObject);
+
+      decorSprites[key] = {
+        sprite: propObject, // Alias to sprite
+        type,
+        col,
+        row,
+        cell,
+        is3D: true,
+        wobbleTime: 0,
+        pulseTime: 0,
+      };
+
+      if (type === 'litBrazier') {
+        const coals = propObject.getObjectByName("coals");
+        if (coals && coals.material) {
+          coals.material.color.setHex(0xff5500);
+          coals.material.emissive.setHex(0xff3300);
+          coals.material.emissiveIntensity = 2.0;
+          coals.material.needsUpdate = true;
+        }
+        const flame = propObject.getObjectByName("flameCore");
+        if (flame && flame.material) {
+          flame.material.opacity = 0.9;
+          flame.material.emissiveIntensity = 1.5;
+          flame.material.needsUpdate = true;
+        }
+      }
+      return;
+    }
 
     // Drawers from Phaser cache
     let phaserKey = `iso-decor-${cell.biome}-${type}-${variant}`;
@@ -257,6 +674,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       col,
       row,
       cell,
+      is3D: false,
       baseScaleY: scaleY,
       wobbleTime: 0,
       pulseTime: 0,
@@ -640,20 +1058,40 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       if (decor && (decor.type === 'unlitBrazier' || decor.type === 'brazier')) {
         decor.type = 'litBrazier';
 
-        // Swap texture
-        const phaserKey = `iso-decor-moss-torch-0`; // Re-use torch flame texture
-        const sourceImage = scene.textures.get(phaserKey)?.getSourceImage();
-        if (sourceImage) {
-          decor.sprite.material.map = getCachedTexture(phaserKey, sourceImage);
-          decor.sprite.material.needsUpdate = true;
+        if (decor.is3D) {
+          // Glow coals and activate flame core
+          const coals = decor.sprite.getObjectByName("coals");
+          if (coals && coals.material) {
+            coals.material.color.setHex(0xff5500);
+            coals.material.emissive.setHex(0xff3300);
+            coals.material.emissiveIntensity = 2.0;
+            coals.material.needsUpdate = true;
+          }
+          const flame = decor.sprite.getObjectByName("flameCore");
+          if (flame && flame.material) {
+            flame.material.opacity = 0.9;
+            flame.material.emissiveIntensity = 1.5;
+            flame.material.needsUpdate = true;
+          }
+        } else {
+          // Swap texture
+          const phaserKey = `iso-decor-moss-torch-0`; // Re-use torch flame texture
+          const sourceImage = scene.textures.get(phaserKey)?.getSourceImage();
+          if (sourceImage) {
+            decor.sprite.material.map = getCachedTexture(phaserKey, sourceImage);
+            decor.sprite.material.needsUpdate = true;
+          }
         }
 
         // Spawn fire particles
-        createFireParticles(decor.sprite.position);
+        const particlePos = decor.is3D
+          ? new THREE.Vector3().copy(decor.sprite.position).add(new THREE.Vector3(0, 11, 0))
+          : decor.sprite.position;
+        createFireParticles(particlePos);
 
         // Add a point light to the fire!
         const fireLight = new THREE.PointLight(0xff7700, 1.8, 120);
-        fireLight.position.set(0, 4, 0);
+        fireLight.position.set(0, decor.is3D ? 12 : 4, 0);
         decor.sprite.add(fireLight);
       }
     },
@@ -687,8 +1125,19 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
 
       const intersects = raycaster.intersectObjects(tileMeshes);
       if (intersects.length > 0) {
-        const data = intersects[0].object.userData;
-        return { col: data.col, row: data.row };
+        const hit = intersects[0];
+        if (hit.object instanceof THREE.InstancedMesh) {
+          const instanceId = hit.instanceId;
+          const data = hit.object.userData.tilesData[instanceId];
+          if (data) {
+            return { col: data.col, row: data.row };
+          }
+        } else {
+          const data = hit.object.userData;
+          if (data) {
+            return { col: data.col, row: data.row };
+          }
+        }
       }
       return null;
     },
@@ -743,10 +1192,29 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         if (decor.pulseTime > 0) {
           decor.pulseTime -= deltaSec;
           const scale = 1 + Math.sin(decor.pulseTime * Math.PI * 5) * decor.pulseTime * 0.16;
-          decor.sprite.scale.set(scale * 22, scale * 26, 1);
-          if (decor.pulseTime <= 0) {
-            decor.sprite.scale.set(22, 26, 1);
+          if (decor.is3D) {
+            decor.sprite.scale.set(scale, scale * 2.2, scale);
+            if (decor.sprite.material) {
+              decor.sprite.material.emissiveIntensity = 0.8 + scale * 0.5;
+            }
+          } else {
+            decor.sprite.scale.set(scale * 22, scale * 26, 1);
           }
+          if (decor.pulseTime <= 0) {
+            if (decor.is3D) {
+              decor.sprite.scale.set(1, 2.2, 1);
+              if (decor.sprite.material) {
+                decor.sprite.material.emissiveIntensity = 0.8;
+              }
+            } else {
+              decor.sprite.scale.set(22, 26, 1);
+            }
+          }
+        }
+
+        // Crystal constant auto-rotation
+        if (decor.type === 'crystal' && decor.is3D) {
+          decor.sprite.rotation.y += deltaSec * 0.5;
         }
       }
 
@@ -858,6 +1326,23 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         p.points.material.dispose();
       });
       activeParticles.length = 0;
+
+      // Dispose per-instance 3D prop geometries and materials (not cached)
+      for (const key in decorSprites) {
+        const decor = decorSprites[key];
+        if (decor.is3D && decor.sprite) {
+          decor.sprite.traverse((obj) => {
+            if (obj.geometry) obj.geometry.dispose();
+            if (obj.material) {
+              if (Array.isArray(obj.material)) {
+                obj.material.forEach((m) => m.dispose());
+              } else {
+                obj.material.dispose();
+              }
+            }
+          });
+        }
+      }
 
       // Walk through residents and dispose their per-instance materials
       // (shadow, ring, label) but NOT shared cached textures.
