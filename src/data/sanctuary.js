@@ -17,25 +17,45 @@ import { createNoise } from '../systems/noise.js';
 export const INTERACTIONS = {
   outside: [
     {
-      id: 'vault-gate', type: 'gate', propType: 'barredDoor', col: 10, row: 14,
+      id: 'vault-gate', type: 'gate', propType: 'barredDoor', col: 16, row: 13,
       label: 'Enter the Dragon Vault', action: 'vault', range: 78, once: false,
     },
     {
-      id: 'spring-main', type: 'spring', col: 9, row: 17,
+      id: 'spring-main', type: 'spring', col: 25, row: 27,
       label: 'Drink from the spring', action: 'restore', range: 68, once: false,
     },
     {
-      id: 'training-ring', type: 'training', propType: 'arena', col: 17, row: 15,
+      id: 'training-ring', type: 'training', propType: 'arena', col: 31, row: 18,
       label: 'Train here', action: 'train', range: 70, once: false,
     },
     {
-      id: 'feeding-nest', type: 'nest', propType: 'nest', col: 4, row: 18,
+      id: 'feeding-nest', type: 'nest', propType: 'nest', col: 6, row: 30,
       label: 'Share a meal', action: 'feed', range: 68, once: false,
     },
     {
-      id: 'atlas-waystone', type: 'atlas', propType: 'obelisk', col: 20, row: 14,
+      id: 'atlas-waystone', type: 'atlas', propType: 'obelisk', col: 30, row: 11,
       label: 'Consult the world waystone', action: 'atlas', range: 72,
       once: false, confirm: true,
+    },
+    {
+      id: 'training-dummy', type: 'dummy', propType: 'dummy', col: 8, row: 8,
+      label: 'Strike the training dummy', action: 'strikeDummy', range: 68, once: false,
+    },
+    {
+      id: 'brazier-1', type: 'brazier', propType: 'unlitBrazier', col: 24, row: 6,
+      label: 'Light the brazier', action: 'lightBrazier', range: 68, once: false,
+    },
+    {
+      id: 'brazier-2', type: 'brazier', propType: 'unlitBrazier', col: 31, row: 6,
+      label: 'Light the brazier', action: 'lightBrazier', range: 68, once: false,
+    },
+    {
+      id: 'brazier-3', type: 'brazier', propType: 'unlitBrazier', col: 35, row: 11,
+      label: 'Light the brazier', action: 'lightBrazier', range: 68, once: false,
+    },
+    {
+      id: 'lagoon-crystal', type: 'crystal', propType: 'crystal', col: 24, row: 23,
+      label: 'Resonate with the crystal', action: 'resonateCrystal', range: 68, once: false,
     },
   ],
   inside: [],
@@ -85,93 +105,110 @@ function makeBuilder(seed, size, defaultBiome) {
 // sidewalls make cliffs read as stone while tops stay green, exactly like the
 // source design (which built everything from its "grass" material).
 export function buildSanctuaryExterior() {
-  const size = 24;
+  const size = 40;
   const b = makeBuilder('SANCTUARY-EXTERIOR', size, 'moss');
 
-  // Enlarged, irregular one-tile meadow footprint with cut corners.
-  for (let y = 5; y <= 21; y++) {
-    for (let x = 1; x <= 21; x++) {
-      const cut = (x < 4 && y < 9) || (x > 18 && y < 7)
-        || (x < 2 && y > 16) || (x > 20 && y > 16)
-        || (x === 21 && (y === 11 || y === 14));
-      if (!cut) b.setTile(x, y, 1);
+  // Build the core island shape (irregular circle with radius ~18 from center (20, 20))
+  for (let y = 1; y < 39; y++) {
+    for (let x = 1; x < 39; x++) {
+      const dist = Math.sqrt((x - 20) ** 2 + (y - 20) ** 2);
+      if (dist < 18.5) {
+        b.setTile(x, y, 1);
+      }
     }
   }
-  [
-    [0, 11], [0, 12], [1, 8], [2, 22], [4, 22], [7, 22], [10, 22], [13, 22],
-    [17, 22], [20, 15], [21, 8], [22, 9], [22, 12], [21, 19], [19, 21],
-  ].forEach(([x, y]) => b.setTile(x, y, 1));
 
-  // Broad central massif with staggered terraces.
-  b.fill(3, 8, 7, 13, 4);
-  b.fill(5, 6, 10, 9, 4);
-  b.fill(8, 8, 13, 13, 4);
-  b.setTile(6, 14, 3);
-  b.setTile(7, 14, 3);
-  b.setTile(11, 7, 3);
-  b.setTile(12, 7, 3);
-  b.setTile(13, 10, 5);
+  // Zone 1: Whispering Grove (South-West)
+  b.fill(3, 20, 15, 37, 1);
+  for (let y = 20; y <= 37; y++) {
+    for (let x = 3; x <= 15; x++) {
+      if (b.tiles[y]?.[x]) {
+        if (x + y > 45) b.setTile(x, y, 2);
+      }
+    }
+  }
 
-  // Tall monolith with a broken shoulder and small projecting shelf.
-  b.fill(4, 3, 6, 5, 9);
-  b.setTile(6, 4, 8);
-  b.setTile(6, 5, 7);
-  b.setTile(7, 4, 6);
-  b.setTile(7, 5, 6);
-  b.setTile(7, 3, 5);
-  b.setTile(8, 4, 5);
-  // The signature shadowed niche on the monolith's exposed face.
-  b.tiles[4][6].overlay = 'monolithNiche';
+  // Zone 2: Bluestone Lagoon (South-East)
+  b.fill(21, 23, 29, 31, 1, 'bluestone');
+  b.fill(22, 24, 28, 30, 1, 'springwater');
 
-  // Varied right-side outcrops and a stepped watch block.
-  b.fill(14, 7, 19, 10, 2);
-  b.fill(16, 10, 19, 13, 3);
-  b.fill(17, 11, 18, 12, 4);
-  b.setTile(15, 6, 2);
-  b.setTile(16, 6, 2);
-  b.setTile(20, 9, 2);
-  b.setTile(20, 12, 3);
-  b.setTile(21, 12, 2);
+  // Zone 3: Central Monolith Summit (Center-West)
+  b.fill(8, 8, 22, 22, 2);
+  b.fill(11, 11, 19, 19, 3);
+  b.fill(13, 13, 17, 17, 4);
+  b.fill(14, 14, 16, 16, 5);
 
-  // Left shelf and forward stair blocks for a more varied silhouette.
-  b.fill(1, 12, 4, 16, 2);
-  b.fill(2, 11, 4, 13, 3);
-  b.setTile(1, 15, 3);
-  b.setTile(3, 17, 2);
-  b.setTile(4, 17, 2);
-  b.fill(12, 16, 17, 19, 2);
-  b.fill(14, 17, 16, 18, 3);
-  b.setTile(13, 15, 3);
-  b.setTile(17, 16, 3);
-  b.setTile(18, 18, 2);
+  // High Monolith on the summit
+  b.fill(9, 9, 11, 11, 6);
+  b.setTile(10, 10, 7);
+  b.tiles[10][11].overlay = 'monolithNiche';
 
-  // Recessed square spring in the foreground: stone basin, water heart.
-  b.fill(7, 16, 11, 19, 1, 'bluestone');
-  b.fill(8, 17, 10, 18, 1, 'springwater');
+  // Zone 4: Volcanic Lava Flats (North-East)
+  for (let y = 2; y <= 19; y++) {
+    for (let x = 23; x <= 37; x++) {
+      const dist = Math.sqrt((x - 20) ** 2 + (y - 20) ** 2);
+      if (dist < 18.5) {
+        b.setTile(x, y, 1, 'warmstone');
+      }
+    }
+  }
+  b.fill(26, 4, 30, 8, 1, 'lava');
+  b.fill(32, 12, 36, 16, 1, 'lava');
 
-  // The vault entrance: a barred gate set against the massif's front cliff.
-  // BaseScene finds it by type and makes it clickable — walking through it
-  // (a click) switches to VaultScene.
-  b.setProp(10, 14, 'barredDoor', 0, -4);
+  // Zone 5: Ancient Ruins (North-West)
+  b.fill(3, 3, 12, 12, 1, 'flagstone');
+  for (let y = 3; y <= 12; y++) {
+    for (let x = 3; x <= 12; x++) {
+      if (x + y < 14) {
+        b.setTile(x, y, 2, 'masonry');
+      }
+    }
+  }
 
-  // Hand-placed grounds decor (our addition — the source design left the
-  // meadow bare and relied on painting). Kept clear of RESIDENT_SPOTS.
-  b.setProp(2, 18, 'tree', -4, 2);
-  b.setProp(16, 21, 'tree', 5, -2);
-  b.setProp(20, 17, 'tree', 0, 3);
-  b.setProp(10, 15, 'flowers', 6, -3);
-  b.setProp(13, 20, 'flowers', -5, 2);
-  b.setProp(5, 19, 'flowers', 3, 4);
-  b.setProp(18, 14, 'rock', -3, -2);
-  b.setProp(4, 6, 'crystal', 2, 0);
-  b.setProp(6, 18, 'glow', -4, -2);
+  // Vault gate entrance
+  b.setTile(16, 13, 2);
+  b.setProp(16, 13, 'barredDoor', 0, -4);
 
-  // Playable management landmarks. Their rules live in INTERACTIONS above;
-  // these props are visual anchors only and can be replaced without rewriting
-  // the interaction engine.
-  b.setProp(17, 15, 'arena');
-  b.setProp(4, 18, 'nest');
-  b.setProp(20, 14, 'obelisk');
+  // Landmarks & Props:
+  b.setProp(31, 18, 'arena');
+  b.setProp(30, 11, 'obelisk');
+  b.setProp(6, 30, 'nest');
+  b.setProp(8, 8, 'dummy');
+
+  // Unlit Braziers:
+  b.setProp(24, 6, 'unlitBrazier');
+  b.setProp(31, 6, 'unlitBrazier');
+  b.setProp(35, 11, 'unlitBrazier');
+
+  // Resonant Crystal:
+  b.setProp(24, 23, 'crystal');
+
+  // General decor:
+  b.setProp(3, 22, 'tree', -3, 1);
+  b.setProp(9, 25, 'tree', 2, -2);
+  b.setProp(4, 32, 'tree', -2, 3);
+  b.setProp(11, 35, 'tree', 4, 1);
+  b.setProp(6, 26, 'flowers', 2, 2);
+  b.setProp(12, 30, 'flowers', -3, -1);
+  b.setProp(5, 34, 'mushroom', 1, 1);
+  b.setProp(10, 36, 'mushroom', -2, 2);
+
+  b.setProp(21, 26, 'reeds', 0, 1);
+  b.setProp(29, 28, 'reeds', 1, -1);
+  b.setProp(28, 23, 'crystal', -1, 2);
+  b.setProp(19, 33, 'crystal', 3, 1);
+  b.setProp(20, 28, 'flowers', 0, 0);
+
+  b.setProp(28, 9, 'vent', -2, -2);
+  b.setProp(34, 17, 'vent', 1, 1);
+  b.setProp(25, 12, 'obsidian', 3, -1);
+  b.setProp(37, 7, 'obsidian', -2, 2);
+
+  b.setProp(4, 4, 'pillar');
+  b.setProp(8, 4, 'pillar');
+  b.setProp(4, 8, 'pillar');
+  b.setProp(6, 3, 'ruin');
+  b.setProp(3, 7, 'ruin');
 
   return {
     tiles: b.tiles, cols: size, rows: size, interactions: INTERACTIONS.outside,
@@ -249,10 +286,25 @@ export function buildSanctuaryInterior() {
 // are flat, prop-free ground in their map.
 export const RESIDENT_SPOTS = {
   outside: [
-    // Keep the three showcase wyverns separated and on height-1 meadow tiles.
-    // In roster order: Embertooth, Cinderlash, Galeclaw.
-    { col: 13, row: 14 }, { col: 18, row: 17 }, { col: 5, row: 15 },
-    { col: 9, row: 21 }, { col: 17, row: 20 }, { col: 12, row: 15 },
+    { col: 10, row: 20 },
+    { col: 8, row: 25 },
+    { col: 26, row: 32 },
+    { col: 30, row: 6 },
+    { col: 9, row: 10 },
+    { col: 15, row: 25 },
+    { col: 14, row: 20 },
+    { col: 5, row: 35 },
+    { col: 11, row: 33 },
+    { col: 20, row: 22 },
+    { col: 31, row: 30 },
+    { col: 24, row: 34 },
+    { col: 32, row: 8 },
+    { col: 27, row: 15 },
+    { col: 6, row: 5 },
+    { col: 3, row: 10 },
+    { col: 18, row: 10 },
+    { col: 20, row: 15 },
+    { col: 24, row: 18 },
   ],
   inside: [
     { col: 9, row: 16 }, { col: 12, row: 12 }, { col: 6, row: 17 },

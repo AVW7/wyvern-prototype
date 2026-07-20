@@ -689,10 +689,88 @@ function drawFrosthold(ctx, x, y, s) {
   ctx.restore();
 }
 
+function drawDummy(ctx, x, y, s, variant) {
+  drawObjectShadow(ctx, x, y, s, 10, 0.2);
+  rect(ctx, x - 1 * s, y - 24 * s, 3 * s, 25 * s, '#8a5a36');
+  rect(ctx, x - 7 * s, y - 18 * s, 15 * s, 2 * s, '#70482b');
+  polygon(ctx, [
+    { x: x - 5 * s, y: y - 22 * s },
+    { x: x + 5 * s, y: y - 22 * s },
+    { x: x + 4 * s, y: y - 8 * s },
+    { x: x - 4 * s, y: y - 8 * s },
+  ], '#d8c39d', '#8c7653', Math.max(1, s));
+  ctx.fillStyle = '#cc0000';
+  ctx.beginPath();
+  ctx.arc(x, y - 15 * s, 3 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x, y - 15 * s, 1.5 * s, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawUnlitBrazier(ctx, x, y, s, variant) {
+  drawObjectShadow(ctx, x, y, s, 10, 0.22);
+  polygon(ctx, [
+    { x: x - 4 * s, y: y },
+    { x: x + 4 * s, y: y },
+    { x: x + 3 * s, y: y - 12 * s },
+    { x: x - 3 * s, y: y - 12 * s },
+  ], '#4a4d54', '#2d3035', Math.max(1, s));
+  rect(ctx, x - 4 * s, y - 14 * s, 8 * s, 2 * s, '#646870');
+  polygon(ctx, [
+    { x: x - 7 * s, y: y - 18 * s },
+    { x: x + 7 * s, y: y - 18 * s },
+    { x: x + 3 * s, y: y - 14 * s },
+    { x: x - 3 * s, y: y - 14 * s },
+  ], '#35383f', '#1c1e22', Math.max(1, s));
+  rect(ctx, x - 4 * s, y - 20 * s, 8 * s, 3 * s, '#1a1b1e');
+  rect(ctx, x - 2 * s, y - 21 * s, 4 * s, 2 * s, '#0d0d0f');
+}
+
+function drawLitBrazier(ctx, x, y, s, variant) {
+  drawObjectShadow(ctx, x, y, s, 10, 0.22);
+  polygon(ctx, [
+    { x: x - 4 * s, y: y },
+    { x: x + 4 * s, y: y },
+    { x: x + 3 * s, y: y - 12 * s },
+    { x: x - 3 * s, y: y - 12 * s },
+  ], '#4a4d54', '#2d3035', Math.max(1, s));
+  rect(ctx, x - 4 * s, y - 14 * s, 8 * s, 2 * s, '#646870');
+  polygon(ctx, [
+    { x: x - 7 * s, y: y - 18 * s },
+    { x: x + 7 * s, y: y - 18 * s },
+    { x: x + 3 * s, y: y - 14 * s },
+    { x: x - 3 * s, y: y - 14 * s },
+  ], '#35383f', '#1c1e22', Math.max(1, s));
+  ctx.save();
+  ctx.shadowColor = '#ff6600';
+  ctx.shadowBlur = Math.max(4, 9 * s);
+  polygon(ctx, [
+    { x: x - 5 * s, y: y - 18 * s },
+    { x: x, y: y - 28 * s },
+    { x: x + 5 * s, y: y - 18 * s },
+  ], '#ff5500');
+  polygon(ctx, [
+    { x: x - 3 * s, y: y - 18 * s },
+    { x: x, y: y - 25 * s },
+    { x: x + 3 * s, y: y - 18 * s },
+  ], '#ffaa00');
+  polygon(ctx, [
+    { x: x - 1 * s, y: y - 18 * s },
+    { x: x, y: y - 21 * s },
+    { x: x + 1 * s, y: y - 18 * s },
+  ], '#ffffff');
+  ctx.restore();
+}
+
 // The prop registry. Keys here are what biomes list in their `decor` array.
 // `colors` is the owning biome's palette, so rocks pick up local stone tone.
 export const DECOR_DRAWERS = {
   tree: (ctx, x, y, s, v) => drawTree(ctx, x, y, s, v),
+  dummy: (ctx, x, y, s, v) => drawDummy(ctx, x, y, s, v),
+  unlitBrazier: (ctx, x, y, s, v) => drawUnlitBrazier(ctx, x, y, s, v),
+  litBrazier: (ctx, x, y, s, v) => drawLitBrazier(ctx, x, y, s, v),
   pine: (ctx, x, y, s, v) => drawPine(ctx, x, y, s, v),
   deadTree: (ctx, x, y, s, v) => drawDeadTree(ctx, x, y, s, v),
   cactus: (ctx, x, y, s, v) => drawCactus(ctx, x, y, s, v),

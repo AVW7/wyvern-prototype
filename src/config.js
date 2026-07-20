@@ -126,6 +126,8 @@ export const SANCTUARY = {
       idle: 'DaenerysDragon_Neutural_Watch',
       walk: 'DaenerysDragon_Battle_Walk',
       fly: 'DaenerysDragon_Battle_SkyMoveL',
+      special: 'DaenerysDragon_Battle_Up',
+      attack: 'DaenerysDragon_Battle_Up',
     },
     crossfadeMs: 250,
     // How far the dragon rises off its tile while flying, and how quickly it
@@ -133,6 +135,13 @@ export const SANCTUARY = {
     flightLiftPx: 70,
     flightLiftLerpHz: 3,
     labelLift: 90,
+    interactiveProps: {
+      dummyWobbleAngle: 12,
+      dummyWobbleDurationMs: 100,
+      dummyWobbleRepeats: 4,
+      brazierFlameRadius: 8,
+      crystalPulseMs: 1200,
+    },
   },
   // Tall props fade only while their projected foreground overlaps the actor.
   occlusion: { alpha: 0.28, radiusX: 38, radiusY: 74, response: 0.16 },

@@ -36,7 +36,7 @@ import { buildRoostOverlay } from '../ui/roostPanel.js';
 import {
   gainXp, getAnimal, getRoster, raiseBond, recruitAnimal,
 } from '../systems/roster.js';
-import { createSanctuaryDragon3D } from '../systems/sanctuaryDragon3D.js';
+import { createSanctuary3D } from '../systems/sanctuary3D.js';
 
 // Scene starts destroy display objects, but this small in-memory preference row
 // survives Base -> Vault/Mission -> Base. Durable save/load remains deliberately
@@ -100,11 +100,7 @@ export default class BaseScene extends Phaser.Scene {
       : SANCTUARY_CAMERA_MODES.OVERVIEW;
     this.projectionView = normalizeView(SANCTUARY_SESSION.cameraView);
 
-    // Milestone 1 of docs/SANCTUARY_3D_DRAGON_PLAN.md: lazily create once
-    // (this Scene instance persists across Base re-entries) and reuse across
-    // rebuilds — reloading the GLTF on every recruit/select would be wasteful.
-    if (!this.dragon3D) this.dragon3D = createSanctuaryDragon3D();
-    this.dragon3D.show();
+    this.sanctuary3D = null;
 
     // G toggles flight for the wyvern. Deliberately a plain key rather
     // than a roster/HUD affordance: flight is an experiment-only state with no
@@ -147,25 +143,21 @@ export default class BaseScene extends Phaser.Scene {
     );
     updateSanctuaryOccluders(this.world.placed, footprint);
 
-    // Milestone 1 of docs/SANCTUARY_3D_DRAGON_PLAN.md: step the 3D layer only
-    // while the controlled resident is the one it owns (sprite === null, set
-    // by spawnSanctuaryResidents using the same selectedWyvernId match).
-    // applyCameraProjection() deliberately does not re-orient this layer on
-    // yaw/elevation changes — see the plan's Non-goals.
-    if (this.selectedResident?.sprite === null && footprint) {
-      this.dragon3D?.syncToFootprint(
-        footprint.col, footprint.row, this.projectionView, this.cameras.main,
-        footprint.surfaceLift ?? 0,
-      );
-      // Flight is a visual state only — the dragon still walks the same
-      // walkable mask underneath, so it cannot fly over blocked tiles.
+    if (this.sanctuary3D) {
       let motion = 'idle';
-      if (this.wyvernFlying) motion = 'fly';
-      else if (moved) motion = 'walk';
-      this.dragon3D?.setMotion(motion);
-      this.dragon3D?.update(delta);
-    } else {
-      this.dragon3D?.hide();
+      if (this.movement?.state === WYVERN_STATES.ATTACK) {
+        motion = 'attack';
+      } else if (this.movement?.state === WYVERN_STATES.SPECIAL) {
+        motion = 'special';
+      } else if (this.movement?.state === WYVERN_STATES.GUARD) {
+        motion = 'special';
+      } else if (this.wyvernFlying) {
+        motion = 'fly';
+      } else if (moved) {
+        motion = 'walk';
+      }
+      this.sanctuary3D.setMotion(motion);
+      this.sanctuary3D.update(delta);
     }
 
     // Prompt/marker depths and wandering actors are dynamic. The sanctuary's
@@ -212,6 +204,27 @@ export default class BaseScene extends Phaser.Scene {
       { projectionView, selectedWyvernId: this.selectedWyvernId },
     );
     this.resolveControlledResident();
+
+    // Hide Phaser tiles/decor/residents so only Three.js is visible
+    this.world.placed.tiles.forEach((t) => t.sprite?.setAlpha(0));
+    this.world.placed.decor.forEach((d) => d.sprite?.setAlpha(0));
+    this.residents.forEach((r) => {
+      if (r.sprite) r.sprite.setAlpha(0);
+      if (r.shadow) r.shadow.setAlpha(0);
+      if (r.aura) r.aura.setAlpha(0);
+      if (r.selectionRing) r.selectionRing.setAlpha(0);
+      if (r.label) r.label.setAlpha(0);
+    });
+
+    // Instantiate 3D diorama
+    this.sanctuary3D = createSanctuary3D({
+      scene: this,
+      tiles: worldData.tiles,
+      interactions: worldData.interactions,
+      residents: this.residents,
+      selectedWyvernId: this.selectedWyvernId
+    });
+    this.sanctuary3D.show();
 
     this.movement = createSanctuaryMovement({
       scene: this,
@@ -355,8 +368,21 @@ export default class BaseScene extends Phaser.Scene {
         feed: (target) => this.feedInWorld(target),
         resident: (target) => this.focusResident(target),
         atlas: (target) => this.activateAtlasMarker(target),
+        strikeDummy: (target) => this.strikeDummy(target),
+        lightBrazier: (target) => this.lightBrazier(target),
+        resonateCrystal: (target) => this.resonateCrystal(target),
       },
     });
+
+    this.interactions.pointerLogicalPoint = (pointer) => {
+      if (this.sanctuary3D && pointer) {
+        return this.sanctuary3D.unprojectClick(pointer.x, pointer.y);
+      }
+      if (!pointer || !this.cameras.main?.getWorldPoint) return null;
+      const projected = { x: pointer.worldX, y: pointer.worldY };
+      const corner = unprojectGround(projected.x, projected.y, this.projectionView);
+      return { col: corner.col - 0.5, row: corner.row - 0.5 };
+    };
   }
 
   buildOverlay() {
@@ -610,6 +636,45 @@ export default class BaseScene extends Phaser.Scene {
     return false;
   }
 
+  strikeDummy(target) {
+    const animal = gainXp(this.selectedWyvernId, 10);
+    if (!animal) return false;
+    this.movement?.playAction(WYVERN_STATES.ATTACK, 650);
+    this.sanctuary3D?.strikeDummy(target.col, target.row);
+    playSanctuaryEffect(
+      this, this.world.layer, targetFootprint(target, this.projectionView), 'train',
+      this.projectionView,
+    );
+    this.showResult(`${animal.name} strikes the dummy. XP +10.`);
+    return true;
+  }
+
+  lightBrazier(target) {
+    const animal = raiseBond(this.selectedWyvernId, 5);
+    if (!animal) return false;
+    this.movement?.playAction(WYVERN_STATES.SPECIAL, 800);
+    this.sanctuary3D?.lightBrazier(target.col, target.row);
+    playSanctuaryEffect(
+      this, this.world.layer, targetFootprint(target, this.projectionView), 'restore',
+      this.projectionView,
+    );
+    this.showResult(`${animal.name} lights the volcanic brazier. Bond +5.`);
+    return true;
+  }
+
+  resonateCrystal(target) {
+    const animal = gainXp(this.selectedWyvernId, 15);
+    if (!animal) return false;
+    this.movement?.playAction(WYVERN_STATES.SPECIAL, 800);
+    this.sanctuary3D?.resonateCrystal(target.col, target.row);
+    playSanctuaryEffect(
+      this, this.world.layer, targetFootprint(target, this.projectionView), 'select',
+      this.projectionView,
+    );
+    this.showResult(`${animal.name} resonates with the magic crystal. XP +15.`);
+    return true;
+  }
+
   trainFromPanel(id) {
     if (this.cameraController?.transitioning) return false;
     const animal = gainXp(id, 25);
@@ -671,10 +736,12 @@ export default class BaseScene extends Phaser.Scene {
     this.wanderers?.destroy();
     this.movement?.destroy();
     this.cameraController?.destroy();
+    this.sanctuary3D?.destroy();
     this.interactions = null;
     this.wanderers = null;
     this.movement = null;
     this.cameraController = null;
+    this.sanctuary3D = null;
   }
 
   destroyWorldDisplay() {
@@ -696,10 +763,7 @@ export default class BaseScene extends Phaser.Scene {
     this.messageTimer?.remove(false);
     this.messageTimer = null;
     this.destroyControllers();
-    // Hide (not destroy) so Vault/Atlas/Mission never render the 3D layer,
-    // while reusing the same renderer/loaded model on the next Base entry —
-    // see docs/SANCTUARY_3D_DRAGON_PLAN.md Milestone 1.
-    this.dragon3D?.hide();
+    this.sanctuary3D?.hide();
     this.world = null;
     this.residents = [];
     this.selectedResident = null;

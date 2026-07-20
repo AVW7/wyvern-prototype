@@ -11,6 +11,7 @@ import {
   polygon,
 } from './draw.js';
 import { projectionBasis } from './sanctuaryProjection.js';
+import { DECOR_DRAWERS } from './decorArt.js';
 
 const GROUND_ART_UNIT = ISO.tileWidth / 2;
 const TAU = Math.PI * 2;
@@ -25,6 +26,15 @@ export const EXTERIOR_SANCTUARY_DECOR_TYPES = Object.freeze([
   'arena',
   'nest',
   'obelisk',
+  'ruin',
+  'dummy',
+  'unlitBrazier',
+  'litBrazier',
+  'mushroom',
+  'reeds',
+  'vent',
+  'obsidian',
+  'pillar',
 ]);
 
 const EXTERIOR_TYPE_SET = new Set(EXTERIOR_SANCTUARY_DECOR_TYPES);
@@ -535,6 +545,51 @@ const EXTERIOR_DRAWERS = Object.freeze({
   arena: (ctx, geometry) => drawArena(ctx, geometry),
   nest: (ctx, geometry) => drawNest(ctx, geometry),
   obelisk: (ctx, geometry, variant) => drawObelisk(ctx, geometry, variant),
+  ruin: (ctx, geometry, variant, colors) => {
+    const pt = geometry.point(0, 0, 0);
+    const yawOffset = (geometry.basis?.yawDeg ?? 0) * 0.01;
+    DECOR_DRAWERS.ruin(ctx, pt.x + yawOffset, pt.y, geometry.s, variant, colors);
+  },
+  dummy: (ctx, geometry, variant, colors) => {
+    const pt = geometry.point(0, 0, 0);
+    const yawOffset = (geometry.basis?.yawDeg ?? 0) * 0.01;
+    DECOR_DRAWERS.dummy(ctx, pt.x + yawOffset, pt.y, geometry.s, variant, colors);
+  },
+  unlitBrazier: (ctx, geometry, variant, colors) => {
+    const pt = geometry.point(0, 0, 0);
+    const yawOffset = (geometry.basis?.yawDeg ?? 0) * 0.01;
+    DECOR_DRAWERS.unlitBrazier(ctx, pt.x + yawOffset, pt.y, geometry.s, variant, colors);
+  },
+  litBrazier: (ctx, geometry, variant, colors) => {
+    const pt = geometry.point(0, 0, 0);
+    const yawOffset = (geometry.basis?.yawDeg ?? 0) * 0.01;
+    DECOR_DRAWERS.litBrazier(ctx, pt.x + yawOffset, pt.y, geometry.s, variant, colors);
+  },
+  mushroom: (ctx, geometry, variant, colors) => {
+    const pt = geometry.point(0, 0, 0);
+    const yawOffset = (geometry.basis?.yawDeg ?? 0) * 0.01;
+    DECOR_DRAWERS.mushroom(ctx, pt.x + yawOffset, pt.y, geometry.s, variant, colors);
+  },
+  reeds: (ctx, geometry, variant, colors) => {
+    const pt = geometry.point(0, 0, 0);
+    const yawOffset = (geometry.basis?.yawDeg ?? 0) * 0.01;
+    DECOR_DRAWERS.reeds(ctx, pt.x + yawOffset, pt.y, geometry.s, variant, colors);
+  },
+  vent: (ctx, geometry, variant, colors) => {
+    const pt = geometry.point(0, 0, 0);
+    const yawOffset = (geometry.basis?.yawDeg ?? 0) * 0.01;
+    DECOR_DRAWERS.vent(ctx, pt.x + yawOffset, pt.y, geometry.s, variant, colors);
+  },
+  obsidian: (ctx, geometry, variant, colors) => {
+    const pt = geometry.point(0, 0, 0);
+    const yawOffset = (geometry.basis?.yawDeg ?? 0) * 0.01;
+    DECOR_DRAWERS.obsidian(ctx, pt.x + yawOffset, pt.y, geometry.s, variant, colors);
+  },
+  pillar: (ctx, geometry, variant, colors) => {
+    const pt = geometry.point(0, 0, 0);
+    const yawOffset = (geometry.basis?.yawDeg ?? 0) * 0.01;
+    DECOR_DRAWERS.pillar(ctx, pt.x + yawOffset, pt.y, geometry.s, variant, colors);
+  },
 });
 
 /**
