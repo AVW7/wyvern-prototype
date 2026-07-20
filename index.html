@@ -8,9 +8,12 @@
   <link rel="stylesheet" href="src/ui/ui.css" />
 </head>
 <body>
-  <!-- Phaser mounts its canvas into #game. The HTML/CSS management-sim UI
-       overlay (rosters, base screens) lives in #ui-overlay on top of it. -->
+  <!-- Phaser mounts its canvas into #game. #dragon3d is the scoped Three.js
+       experiment layer (docs/SANCTUARY_3D_DRAGON_PLAN.md) — a single
+       resident's 3D render, composited between the 2D game and the HTML/CSS
+       management-sim UI overlay (rosters, base screens) in #ui-overlay. -->
   <div id="game"></div>
+  <canvas id="dragon3d"></canvas>
   <div id="ui-overlay"></div>
 
   <!-- Vite resolves the pinned npm Phaser dependency before loading the game. -->

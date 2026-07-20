@@ -54,6 +54,16 @@
   }
 }
 
+@keyframes panel-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes panel-pill-fade-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 /* Management-sim UI overlay. Sits above the Phaser canvas. Style the base and
    roster screens here with normal CSS instead of drawing them on canvas. */
 
@@ -76,12 +86,42 @@ html, body {
   height: 100%;
 }
 
+/* Scoped 3D dragon experiment layer (docs/SANCTUARY_3D_DRAGON_PLAN.md) —
+   reuses the same letterbox rect as #ui-overlay so it stays pixel-aligned
+   with the Phaser canvas under Scale.FIT with no separate resize logic. */
+#dragon3d {
+  position: absolute;
+  top: var(--stage-top, 0px);
+  left: var(--stage-left, 0px);
+  width: var(--stage-width, 100%);
+  height: var(--stage-height, 100%);
+  pointer-events: none;
+}
+
 #ui-overlay {
   position: absolute;
   top: var(--stage-top, 0px);
   left: var(--stage-left, 0px);
   width: var(--stage-width, 100%);
   height: var(--stage-height, 100%);
+  container-type: size;
+}
+
+/* Global scrollbars for overlay elements */
+#ui-overlay ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+#ui-overlay ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-inner);
+}
+#ui-overlay ::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
+  border-radius: var(--radius-inner);
+}
+#ui-overlay ::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.5);
 }
 
 #ui-overlay {
@@ -94,12 +134,16 @@ html, body {
   top: var(--gutter);
   left: var(--gutter);
   width: 320px;
+  max-width: calc(100% - var(--gutter) * 2);
+  max-height: calc(100% - var(--gutter) * 2);
+  overflow-y: auto;
   padding: var(--space-5);
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-card);
   box-shadow: var(--elev-float);
   backdrop-filter: blur(14px);
+  animation: panel-fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Small ✕ in the panel header that collapses the roster panel so the
@@ -123,6 +167,7 @@ html, body {
   padding: 9px 16px;
   font-size: 13px;
   border-radius: var(--radius-pill);
+  animation: panel-pill-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Sanctuary view toggle — swaps between the grounds and the vault. */
@@ -758,7 +803,7 @@ button:active { transform: scale(0.97); }
   position: absolute;
   bottom: 104px;
   left: 50%;
-  width: clamp(300px, 31vw, 390px);
+  width: clamp(300px, 31cqw, 390px);
   padding: 9px 11px 11px;
   transform: translateX(-50%);
   border: 1px solid var(--panel-border);
@@ -786,14 +831,14 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
 }
 
-@media (max-width: 1080px) {
+@container (max-width: 1080px) {
   .vault-roster-panel { width: 250px; }
   .vault-profile-panel { width: 270px; }
-  .vault-action-dock { bottom: 96px; width: min(360px, calc(100vw - 568px)); }
+  .vault-action-dock { bottom: 96px; width: min(360px, calc(100cqw - 568px)); }
 }
 
-@media (max-height: 640px) {
-  .vault-roster-panel, .vault-profile-panel { max-height: calc(100vh - 180px); overflow-y: auto; }
+@container (max-height: 640px) {
+  .vault-roster-panel, .vault-profile-panel { max-height: calc(100cqh - 180px); overflow-y: auto; }
   .vault-profile-panel { bottom: 140px; }
   .vault-action-dock { bottom: 76px; }
 }
@@ -801,7 +846,7 @@ button:active { transform: scale(0.97); }
 /* --- World atlas overlay (AtlasScene / ui/atlasPanel.js) --- */
 
 /* Taller than the roost panel: it carries two lists. The map pans behind it. */
-.atlas-panel { width: 300px; bottom: auto; max-height: calc(100vh - var(--gutter) * 2 - 40px); overflow-y: auto; }
+.atlas-panel { width: 300px; bottom: auto; max-height: calc(100cqh - var(--gutter) * 2 - 40px); overflow-y: auto; }
 
 .atlas-regions, .atlas-pois { list-style: none; margin: 0 0 18px; padding: 0; }
 .atlas-regions li, .atlas-pois li { margin-bottom: 5px; }
@@ -983,6 +1028,20 @@ button:active { transform: scale(0.97); }
   background: var(--panel-bg);
   box-shadow: var(--elev-float);
   backdrop-filter: blur(14px);
+  animation: panel-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-island button {
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font-size: 13px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s, border-color 0.15s;
+}
+.nav-island button:hover {
+  transform: translateY(-2px);
+}
+.nav-island button:active {
+  transform: translateY(0) scale(0.97);
 }
 
 /* Vault visibility controls stay available even when every surrounding panel
@@ -1026,9 +1085,9 @@ button:active { transform: scale(0.97); }
 .vault-action-dock.is-hidden,
 .nav-island.is-hidden { display: none; }
 
-@media (max-width: 760px) {
+@container (max-width: 760px) {
   .vault-visibility-strip { top: 10px; gap: 3px; }
   .vault-visibility-strip > span { display: none; }
   .vault-visibility-toggle { padding-inline: 6px; }
-  .vault-action-dock { width: min(360px, calc(100% - 24px)); }
+  .vault-action-dock { width: min(360px, calc(100cqw - 24px)); }
 }

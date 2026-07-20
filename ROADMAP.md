@@ -28,6 +28,20 @@ the existing Base/Vault/Atlas/Mission loop remains playable after every change.
 This is a multi-AI initiative; implementation sessions should also update
 [`AI_CONTRIBUTIONS.md`](AI_CONTRIBUTIONS.md).
 
+## Active experiment — 3D dragon rendering
+
+A separate, owner-approved experiment: render exactly one sanctuary
+resident (the player-controlled roster wyvern, in `BaseScene`) as a
+Three.js 3D model instead of a 2D sprite, while the rest of the sanctuary
+stays 2D isometric. This is not a camera or projection change — it does not
+touch `sanctuaryProjection.js`, `sanctuaryCamera.js`, or any other scene.
+Milestone 1 uses a small untextured test mesh (no rig/animation) to prove
+positioning/compositing; a later milestone swaps in a fully animated,
+rigged dragon model. Full scope, non-goals, and milestones live in
+[`docs/SANCTUARY_3D_DRAGON_PLAN.md`](docs/SANCTUARY_3D_DRAGON_PLAN.md). This
+does not block or reopen the rotatable-camera plan's Milestone 5
+directional-art acceptance gate above.
+
 ## Phase 1 — Close the base ↔ mission loop
 
 The two layers currently don't talk to each other beyond one hardcoded read.
@@ -100,5 +114,8 @@ Fixing that is higher priority than new content because every later feature
   loop.
 - A free 360°/3D sanctuary camera — first prove the owner-requested 90° range
   with the manual 2D isometric projection and directional art contract.
+  (Distinct from the scoped Three.js single-resident render in
+  `docs/SANCTUARY_3D_DRAGON_PLAN.md`, which does not add a 3D camera or
+  change the sanctuary's 2D projection.)
 - Any build tooling/bundler — keep zero-build per CLAUDE.md guardrails
   until art/code size actually demands it.

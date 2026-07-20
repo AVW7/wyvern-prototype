@@ -34,8 +34,9 @@ import {
 import { buildSanctuaryExterior } from '../data/sanctuary.js';
 import { buildRoostOverlay } from '../ui/roostPanel.js';
 import {
-  gainXp, getAnimal, raiseBond, recruitAnimal,
+  gainXp, getAnimal, getRoster, raiseBond, recruitAnimal,
 } from '../systems/roster.js';
+import { createSanctuaryDragon3D } from '../systems/sanctuaryDragon3D.js';
 
 // Scene starts destroy display objects, but this small in-memory preference row
 // survives Base -> Vault/Mission -> Base. Durable save/load remains deliberately
@@ -99,6 +100,21 @@ export default class BaseScene extends Phaser.Scene {
       : SANCTUARY_CAMERA_MODES.OVERVIEW;
     this.projectionView = normalizeView(SANCTUARY_SESSION.cameraView);
 
+    // Milestone 1 of docs/SANCTUARY_3D_DRAGON_PLAN.md: lazily create once
+    // (this Scene instance persists across Base re-entries) and reuse across
+    // rebuilds — reloading the GLTF on every recruit/select would be wasteful.
+    if (!this.dragon3D) this.dragon3D = createSanctuaryDragon3D();
+    this.dragon3D.show();
+
+    // G toggles flight for the 3D resident. Deliberately a plain key rather
+    // than a roster/HUD affordance: flight is an experiment-only state with no
+    // gameplay meaning yet (see the plan's Non-goals). Not F — that is already
+    // the Follow camera mode, and not E/[/]/PgUp/PgDn/Home/Space either.
+    this.dragon3DFlying = false;
+    this.input.keyboard?.on('keydown-G', () => {
+      this.dragon3DFlying = !this.dragon3DFlying;
+    });
+
     // Register before our individual controllers so their input hooks can be
     // released as one unit. Scene transitions save camera state explicitly;
     // Phaser system plugins may shut the CameraManager down before this event.
@@ -130,6 +146,27 @@ export default class BaseScene extends Phaser.Scene {
     );
     updateSanctuaryOccluders(this.world.placed, footprint);
 
+    // Milestone 1 of docs/SANCTUARY_3D_DRAGON_PLAN.md: step the 3D layer only
+    // while the controlled resident is the one it owns (sprite === null, set
+    // by spawnSanctuaryResidents using the same selectedWyvernId match).
+    // applyCameraProjection() deliberately does not re-orient this layer on
+    // yaw/elevation changes — see the plan's Non-goals.
+    if (this.selectedResident?.sprite === null && footprint) {
+      this.dragon3D?.syncToFootprint(
+        footprint.col, footprint.row, this.projectionView, this.cameras.main,
+        footprint.surfaceLift ?? 0,
+      );
+      // Flight is a visual state only — the dragon still walks the same
+      // walkable mask underneath, so it cannot fly over blocked tiles.
+      let motion = 'idle';
+      if (this.dragon3DFlying) motion = 'fly';
+      else if (moved) motion = 'walk';
+      this.dragon3D?.setMotion(motion);
+      this.dragon3D?.update(delta);
+    } else {
+      this.dragon3D?.hide();
+    }
+
     // Prompt/marker depths and wandering actors are dynamic. The sanctuary's
     // population is small enough that a single continuous painter sort is the
     // clearest and safest implementation.
@@ -155,12 +192,22 @@ export default class BaseScene extends Phaser.Scene {
       { projectionView },
     );
     this.world.data = worldData;
+
+    // Resolve the controlled wyvern before spawning so spawnSanctuaryResidents
+    // knows which resident (if any) to render via sanctuaryDragon3D.js instead
+    // of a sprite — see docs/SANCTUARY_3D_DRAGON_PLAN.md. Mirrors the same
+    // fallback resolveControlledResident() applies afterward, so both agree.
+    const wyverns = getRoster().filter((animal) => animal.species === 'wyvern');
+    this.selectedWyvernId = wyverns.find((animal) => animal.id === this.selectedWyvernId)?.id
+      ?? wyverns[0]?.id
+      ?? null;
+
     this.residents = spawnSanctuaryResidents(
       this,
       this.world.layer,
       SANCTUARY.VIEWS.OUTSIDE,
       this.world.zoom,
-      { projectionView },
+      { projectionView, selectedWyvernId: this.selectedWyvernId },
     );
     this.resolveControlledResident();
 
@@ -647,6 +694,10 @@ export default class BaseScene extends Phaser.Scene {
     this.messageTimer?.remove(false);
     this.messageTimer = null;
     this.destroyControllers();
+    // Hide (not destroy) so Vault/Atlas/Mission never render the 3D layer,
+    // while reusing the same renderer/loaded model on the next Base entry —
+    // see docs/SANCTUARY_3D_DRAGON_PLAN.md Milestone 1.
+    this.dragon3D?.hide();
     this.world = null;
     this.residents = [];
     this.selectedResident = null;

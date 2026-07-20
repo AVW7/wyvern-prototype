@@ -14,7 +14,8 @@
     "check": "npm run check:syntax && npm run validate:atlas && npm test && npm run build"
   },
   "dependencies": {
-    "phaser": "3.80.1"
+    "phaser": "3.80.1",
+    "three": "0.185.1"
   },
   "devDependencies": {
     "jsdom": "^29.1.1",

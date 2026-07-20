@@ -493,14 +493,26 @@ export function spawnSanctuaryResidents(scene, layer, view, zoom, options = {}) 
     const usesProfileTexture = Boolean(
       animal.assetKey && scene.textures.exists(animal.assetKey),
     );
-    const sprite = usesProfileTexture
-      ? scene.add.sprite(px, py, visual.textureKey, visual.frameName)
-      : scene.add.image(px, py, `species-${animal.species}`);
+    // Milestone 1 of docs/SANCTUARY_3D_DRAGON_PLAN.md: the controlled roster
+    // wyvern renders via a separate Three.js layer instead of a Phaser
+    // sprite. footprint/label/selectionRing stay real so movement, wanderer
+    // exclusion, and interactions (which key off animal.id/footprint, not
+    // sprite existence) keep working unchanged.
+    const isDragon3D = options.selectedWyvernId != null
+      && animal.id === options.selectedWyvernId
+      && animal.species === 'wyvern';
+    const sprite = isDragon3D
+      ? null
+      : (usesProfileTexture
+        ? scene.add.sprite(px, py, visual.textureKey, visual.frameName)
+        : scene.add.image(px, py, `species-${animal.species}`));
     const accent = wyvernAccentColor(animal);
     let aura = null;
     let shadow = null;
 
-    if (usesProfileTexture) {
+    if (isDragon3D) {
+      // No aura/shadow/anim for the 3D-owned resident in Milestone 1.
+    } else if (usesProfileTexture) {
       aura = scene.add.ellipse(
         px,
         py + 1,
@@ -536,10 +548,12 @@ export function spawnSanctuaryResidents(scene, layer, view, zoom, options = {}) 
     } else {
       sprite.setOrigin(0.5, 0.85); // feet-ish anchor for generated residents
     }
-    sprite.setData('residentId', animal.id);
-    sprite.setData('depth', py + 0.2);
-    sprite.setData('depthTie', i * 10 + 4);
-    layer.add(sprite);
+    if (sprite) {
+      sprite.setData('residentId', animal.id);
+      sprite.setData('depth', py + 0.2);
+      sprite.setData('depthTie', i * 10 + 4);
+      layer.add(sprite);
+    }
 
     // One hidden ring per resident makes selection changes cheap and keeps the
     // selected actor's world affordance attached to the same footprint as its
@@ -558,9 +572,11 @@ export function spawnSanctuaryResidents(scene, layer, view, zoom, options = {}) 
     selectionRing.setData('depthTie', i * 10 + 2);
     layer.add(selectionRing);
 
-    const labelLift = usesProfileTexture
-      ? WYVERN_ART.sanctuaryHeight * visual.origin.y + 8
-      : 40;
+    const labelLift = isDragon3D
+      ? SANCTUARY.dragon3D.labelLift
+      : (usesProfileTexture
+        ? WYVERN_ART.sanctuaryHeight * visual.origin.y + 8
+        : 40);
     const label = scene.add.text(px, py - labelLift, animal.name, {
       font: `${Math.round(11 / zoom)}px monospace`,
       color: '#d8e6ff',
@@ -571,8 +587,10 @@ export function spawnSanctuaryResidents(scene, layer, view, zoom, options = {}) 
     label.setData('depthTie', i * 10 + 5);
     layer.add(label);
 
+    // The 3D-owned resident's idle motion is driven by sanctuaryDragon3D.js
+    // instead (see docs/SANCTUARY_3D_DRAGON_PLAN.md) — only its label bobs.
     const bobTween = scene.tweens.add({
-      targets: [sprite, label],
+      targets: [sprite, label].filter(Boolean),
       y: `-=${amplitude}`,
       duration: durationMs + i * 97,
       yoyo: true,

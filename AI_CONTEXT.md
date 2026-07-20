@@ -14,7 +14,9 @@ is the sole owner of the design or implementation.
    verification record.
 5. `docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md` — implemented camera/projection
    engineering and the remaining directional-art acceptance work.
-6. `AI_CONTRIBUTIONS.md` — model registry and append-only work log.
+6. `docs/SANCTUARY_3D_DRAGON_PLAN.md` — scoped, owner-approved Three.js
+   single-resident 3D rendering experiment (no camera/projection change).
+7. `AI_CONTRIBUTIONS.md` — model registry and append-only work log.
 
 ## Collaboration contract
 
@@ -24,7 +26,9 @@ is the sole owner of the design or implementation.
 - Keep Base, Vault, Atlas, and Mission scene logic separate. Share only small,
   low-level systems where the architecture already permits it.
 - Keep the zero-build vanilla-JavaScript setup unless a human explicitly
-  approves a toolchain change.
+  approves a toolchain change (see the 2026-07-20 Three.js approval recorded
+  in `docs/SANCTUARY_3D_DRAGON_PLAN.md` — scoped to that one dependency and
+  module, not a general license for further additions).
 - Prefer small, playable milestones and verify scene transitions manually.
 - Record new architectural decisions in the relevant plan or context file.
 - After a material contribution, register the model if needed and append one
@@ -59,6 +63,15 @@ sanctuary systems, projection math, or wyvern exports.
 
 Durable save/load, controller/touch input, audio, mounted riding, and a free
 360°/3D camera remain deferred.
+
+A separate, scoped experiment is planned in
+`docs/SANCTUARY_3D_DRAGON_PLAN.md`: render exactly one Base-scene resident
+(the controlled roster wyvern) as a Three.js 3D model instead of a 2D
+sprite, to prove a 3D creature can move freely inside the existing 2D
+isometric sanctuary. It does not touch the sanctuary camera/projection, and
+does not affect Vault, Atlas, or Mission. Milestone 1 targets a small
+untextured test mesh (no rig/animation); a later milestone swaps in a fully
+rigged, animated dragon model.
 
 ## Verification baseline
 

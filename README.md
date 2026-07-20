@@ -8,6 +8,9 @@
 > baseline](docs/SANCTUARY_FREE_ROAM_PLAN.md). Camera/projection engineering and
 > the remaining directional-art work are tracked in the
 > [rotatable sanctuary camera plan](docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md).
+> A separate, scoped experiment rendering one sanctuary resident as a 3D
+> model over the 2D sanctuary is tracked in the
+> [3D dragon experiment plan](docs/SANCTUARY_3D_DRAGON_PLAN.md).
 
 A Phaser 3 scaffold for a two-layer game: an **isometric-background action mission**
 with **sprite wyverns**, plus a **base/roster management sim** between missions.
@@ -50,6 +53,9 @@ supported because the game uses ES modules and loaded assets.
   sanctuary baseline.
 - `docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md` records the implemented camera
   yaw/elevation and view-aware projection plus the open directional-art gate.
+- `docs/SANCTUARY_3D_DRAGON_PLAN.md` records the scoped, owner-approved
+  Three.js single-resident 3D rendering experiment (does not change the
+  sanctuary camera or projection).
 
 Models should add themselves only after a material contribution, then append a
 work record with the files/evidence and verification performed.

@@ -110,6 +110,30 @@ export const SANCTUARY = {
     labelMaxScale: 1.15,
   },
   selectionRing: { width: 52, height: 17, alpha: 0.85 },
+  // Milestone 1 (docs/SANCTUARY_3D_DRAGON_PLAN.md): the controlled roster
+  // wyvern renders via a Three.js layer (src/systems/sanctuaryDragon3D.js)
+  // instead of a sprite. modelUrl is the untextured test mesh; Milestone 2
+  // swaps it for a rigged/animated one and adds idleClip/walkClip/crossfadeMs.
+  dragon3D: {
+    modelUrl: 'assets/models/dragon/drogon-sanctuary.glb',
+    // Matches WYVERN_ART.sanctuaryHeight so the 3D model reads at roughly
+    // the same on-screen size as the 2D residents at default zoom.
+    targetHeightPx: 64,
+    // Clip names as they exist in drogon-sanctuary.glb. tools/prep-drogon.mjs
+    // keeps only these (plus the unused DaenerysDragon_Battle_Up flight
+    // alternative) out of the source model's 52.
+    clips: {
+      idle: 'DaenerysDragon_Neutural_Watch',
+      walk: 'DaenerysDragon_Battle_Walk',
+      fly: 'DaenerysDragon_Battle_SkyMoveL',
+    },
+    crossfadeMs: 250,
+    // How far the dragon rises off its tile while flying, and how quickly it
+    // eases there. The logical footprint is unchanged — this is purely visual.
+    flightLiftPx: 70,
+    flightLiftLerpHz: 3,
+    labelLift: 90,
+  },
   // Tall props fade only while their projected foreground overlaps the actor.
   occlusion: { alpha: 0.28, radiusX: 38, radiusY: 74, response: 0.16 },
   // Residents' idle bob: pixels of travel and base duration (staggered per

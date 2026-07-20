@@ -8,7 +8,9 @@ This repository intentionally supports collaboration among Claude, Codex,
 Gemini, other models, and humans. Read `AI_CONTEXT.md` for the shared handoff,
 `docs/SANCTUARY_FREE_ROAM_PLAN.md` for the implemented sanctuary baseline,
 `docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md` for the active follow-up initiative,
-and `AI_CONTRIBUTIONS.md` before recording material work. After contributing,
+`docs/SANCTUARY_3D_DRAGON_PLAN.md` for the scoped, owner-approved 3D
+rendering experiment, and `AI_CONTRIBUTIONS.md` before recording material
+work. After contributing,
 append a truthful contribution row; do not infer an exact model version that
 was not recorded.
 
@@ -270,6 +272,27 @@ back to east-facing baseline art. For the rotatable-camera milestone:
   that needs multiple pages. Full details live in
   `assets/sprites/wyverns/README.md`.
 
+#### 3D dragon experiment (single resident)
+
+The canonical brief is `docs/SANCTUARY_3D_DRAGON_PLAN.md`; this section is
+only the architecture summary. Status: planned/in progress — read the plan
+for the current milestone before touching `sanctuaryDragon3D.js` or the
+`spawnSanctuaryResidents` selection branch described there.
+
+- Scoped to **exactly one** Base-scene resident: the player-controlled
+  roster wyvern. Every other resident, and Vault/Atlas/Mission, stay 2D.
+- Owns its own module, `systems/sanctuaryDragon3D.js` — the only file that
+  imports `three`. Reads `sanctuaryProjection.js`'s `projectFootprint()`/
+  `projectionBasis()` as the single source of truth for position/camera
+  angle; does not reimplement projection math.
+- The 3D-owned resident gets `sprite: null, aura: null, shadow: null` from
+  `spawnSanctuaryResidents` but keeps `footprint`/`label`/`selectionRing` —
+  movement, wanderer-exclusion, and interactions all key off
+  `resident.animal.id`/`resident.footprint`, not sprite existence.
+- Does not change the sanctuary camera rig or 2D projection. Live
+  re-orientation on yaw/elevation change is an explicit deferred follow-up,
+  not built in the first milestone.
+
 ### The world atlas
 
 `data/atlas.js` (what exists) → `systems/atlasWorld.js` (where it goes) →
@@ -394,6 +417,12 @@ needs behavior beyond the four existing effect fields.
 
 - Don't introduce a build system, framework, or npm dependency without being
   asked — the no-tooling setup is deliberate for prototype speed.
+- **One recorded exception:** `three` (pinned, exact version) may be added
+  as an npm dependency, used only by `src/systems/sanctuaryDragon3D.js` for
+  the scoped 3D dragon experiment in `docs/SANCTUARY_3D_DRAGON_PLAN.md`.
+  This is the one human-approved toolchain exception recorded there — it
+  does not authorize further framework or dependency additions elsewhere in
+  the prototype.
 - Don't pin a different Phaser major version; APIs used here target Phaser 3.
 - Keep the prototype runnable with zero art at every step (placeholders first,
   then swap in real assets).
