@@ -106,13 +106,14 @@ export default class BaseScene extends Phaser.Scene {
     if (!this.dragon3D) this.dragon3D = createSanctuaryDragon3D();
     this.dragon3D.show();
 
-    // G toggles flight for the 3D resident. Deliberately a plain key rather
+    // G toggles flight for the wyvern. Deliberately a plain key rather
     // than a roster/HUD affordance: flight is an experiment-only state with no
     // gameplay meaning yet (see the plan's Non-goals). Not F — that is already
     // the Follow camera mode, and not E/[/]/PgUp/PgDn/Home/Space either.
-    this.dragon3DFlying = false;
+    this.wyvernFlying = false;
     this.input.keyboard?.on('keydown-G', () => {
-      this.dragon3DFlying = !this.dragon3DFlying;
+      this.wyvernFlying = !this.wyvernFlying;
+      this.movement?.setFlying?.(this.wyvernFlying);
     });
 
     // Register before our individual controllers so their input hooks can be
@@ -159,7 +160,7 @@ export default class BaseScene extends Phaser.Scene {
       // Flight is a visual state only — the dragon still walks the same
       // walkable mask underneath, so it cannot fly over blocked tiles.
       let motion = 'idle';
-      if (this.dragon3DFlying) motion = 'fly';
+      if (this.wyvernFlying) motion = 'fly';
       else if (moved) motion = 'walk';
       this.dragon3D?.setMotion(motion);
       this.dragon3D?.update(delta);
@@ -177,6 +178,7 @@ export default class BaseScene extends Phaser.Scene {
   // controlled wyvern. Selection and camera state are captured before the
   // shared fitted-view helper resets the camera, then restored and clamped.
   buildWorld({ restoreView = null } = {}) {
+    this.wyvernFlying = false;
     const cameraView = restoreView ?? this.captureCameraView();
     const projectionView = normalizeView(cameraView ?? this.projectionView);
     this.projectionView = projectionView;

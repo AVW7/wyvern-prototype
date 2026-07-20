@@ -628,6 +628,7 @@ export function createSanctuaryMovement({
   inputBlocked = false,
 } = {}) {
   const mask = createWalkableMask(tiles);
+  const flyingMask = tiles.map((row) => (row || []).map((cell) => Boolean(cell)));
   const heights = createHeightGrid(tiles);
   const config = movementTuning(tuning);
   const keys = suppliedKeys || scene?.input?.keyboard?.addKeys?.(
@@ -639,7 +640,9 @@ export function createSanctuaryMovement({
     scene,
     layer,
     tiles: tiles || [],
-    mask,
+    get mask() {
+      return this.isFlying ? flyingMask : mask;
+    },
     heights,
     resident: null,
     footprint: null,
@@ -649,6 +652,7 @@ export function createSanctuaryMovement({
     inputBlocked,
     isMoving: false,
     moved: false,
+    isFlying: false,
     direction: directionForWorld(DEFAULT_WORLD_FACING, initialView, 'e'),
     lastWorldVector: { ...DEFAULT_WORLD_FACING },
     state: WYVERN_STATES.IDLE,
@@ -660,7 +664,9 @@ export function createSanctuaryMovement({
     actionRemainingMs: 0,
     flight: { lift: 0, bob: 0, phase: 0 },
     path: null,
-    climbStep: config.climbStep,
+    get climbStep() {
+      return this.isFlying ? Infinity : config.climbStep;
+    },
 
     getFootprint() {
       return this.footprint ? { ...this.footprint } : null;
@@ -672,6 +678,11 @@ export function createSanctuaryMovement({
 
     setPath(nextPath) {
       this.path = nextPath || null;
+      return this;
+    },
+
+    setFlying(flying) {
+      this.isFlying = Boolean(flying);
       return this;
     },
 
@@ -739,6 +750,7 @@ export function createSanctuaryMovement({
       this.resident = nextResident || null;
       this.isMoving = false;
       this.moved = false;
+      this.isFlying = false;
       this.path = null;
       this.actionState = null;
       this.actionRemainingMs = 0;
@@ -799,7 +811,7 @@ export function createSanctuaryMovement({
       this.refreshView();
       if (this.destroyed || !this.enabled || !this.resident || !this.footprint
         || !this.logical
-        || !objectAlive(this.resident.sprite)) {
+        || (this.resident.sprite !== null && !objectAlive(this.resident.sprite))) {
         this.isMoving = false;
         this.moved = false;
         return false;
@@ -829,7 +841,7 @@ export function createSanctuaryMovement({
             this.logical,
             worldInput.col * distance,
             worldInput.row * distance,
-            config,
+            { ...config, climbStep: this.climbStep },
             this.heights,
           );
           if (moved) {
@@ -867,7 +879,7 @@ export function createSanctuaryMovement({
               this.logical,
               deltaCol / remaining * distance,
               deltaRow / remaining * distance,
-              config,
+              { ...config, climbStep: this.climbStep },
               this.heights,
             );
             if (moved) {
@@ -892,14 +904,14 @@ export function createSanctuaryMovement({
         this.resident, this.footprint, this.logical, this.tiles, this.view,
       );
 
-      const nextState = this.actionState || (moved ? WYVERN_STATES.FLY : WYVERN_STATES.IDLE);
+      const nextState = this.actionState || (this.isFlying ? WYVERN_STATES.FLY : (moved ? WYVERN_STATES.FLY : WYVERN_STATES.IDLE));
       if (nextState !== this.state || moved) {
         this.state = nextState;
         this.animationKey = playResidentState(
           this.scene, this.resident, nextState, this.direction, this.animationKey,
         );
       }
-      updateFlight(this.flight, poseDelta, moved, config);
+      updateFlight(this.flight, poseDelta, moved || this.isFlying, config);
       syncPresentation(
         this.resident,
         this.footprint,
