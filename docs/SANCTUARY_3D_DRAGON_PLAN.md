@@ -375,6 +375,26 @@ append your work to AI_CONTRIBUTIONS.md.
 - **Suggested first vertical slice:** Already implemented and verified.
 - **Confidence / unknowns:** High confidence. Checked with Vite compilation and vitest suite.
 
+### Review R-008 — Gemini 3.5 Flash (High)
+
+- **Date:** 2026-07-20
+- **Model ID:** AI-003
+- **Focus:** Three.js standards audit: imports, pixel ratio, shadow mapping, and resource disposal
+- **Files inspected:** [sanctuary3D.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/systems/sanctuary3D.js)
+- **Summary:** Evaluated the 3D sanctuary codebase against Three.js best practices, modern r148+ ES module import guidelines, high-DPI scaling needs, and real-time shadow casting capabilities. Identified opportunities to standardize imports to the modern `three/addons/` format, improve rendering crispness on high-DPI devices via `devicePixelRatio` configuration, and dramatically enhance visual spatiality by introducing high-performance PCFSoftShadowMap shadows cast by 3D terrain and assets.
+- **Must fix before implementation:** None.
+- **Recommended changes:**
+  1. **Standardize Add-on Imports:** Update import paths for `GLTFLoader` and `SkeletonUtils` from legacy examples to official `three/addons/` format.
+  2. **Device Pixel Ratio Support:** Implement device-aware pixel ratio setting: `renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))` to ensure crystal-clear pixel art and meshes on Retina / high-DPI displays.
+  3. **Enable Real-Time Shadow Mapping:** Introduce soft PBR shadow mapping on the renderer and `sunLight` DirectionalLight. Enable shadow casting and receiving across instanced terrain meshes, 3D props, and the dragon model to make the diorama feel spatial and high-end.
+- **Keep as designed:**
+  1. The custom modular caching (`_renderer`, `_gltfCache`, `_textureCache`, etc.) that persists between scene travel.
+  2. Procedural 3D prop geometry setups.
+- **Risks and edge cases:**
+  1. **Shadow Camera Frustum Alignment:** A frustum that is too large reduces shadow resolution, while a frustum that is too small clips shadows on the edges of the 40x40 map. Calibrate the directional shadow camera boundaries carefully.
+- **Suggested first vertical slice:** Implement standardized imports and pixel ratio scaling, verify with syntax check, then add shadow mapping and verify visual depth.
+- **Confidence / unknowns:** High confidence in Three.js and Vite import resolution.
+
 ## Handoff rule
 
 Before material implementation:

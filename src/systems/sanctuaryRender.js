@@ -703,6 +703,7 @@ export function playSanctuaryEffect(scene, layer, footprint, kind, view = {}) {
     feed: 0xf472b6,
     select: 0xa78bfa,
     atlas: 0x7dd3fc,
+    dracarys: 0xff3300,
   };
   const color = colors[kind] ?? 0xffffff;
   const groundDepth = interactionGroundDepth(footprint, view);
@@ -723,12 +724,12 @@ export function playSanctuaryEffect(scene, layer, footprint, kind, view = {}) {
     onComplete: () => { releaseRing(); ring.destroy(); },
   });
 
-  if (kind !== 'feed' && kind !== 'train') return;
+  if (kind !== 'feed' && kind !== 'train' && kind !== 'dracarys') return;
   const glyph = scene.add.text(
     footprint.x,
     footprint.y - 20,
-    kind === 'feed' ? '♥' : '✦',
-    { font: '18px monospace', color: kind === 'feed' ? '#f9a8d4' : '#fde68a' },
+    kind === 'feed' ? '♥' : (kind === 'dracarys' ? '🔥' : '✦'),
+    { font: '18px monospace', color: kind === 'feed' ? '#f9a8d4' : (kind === 'dracarys' ? '#f97316' : '#fde68a') },
   );
   const releaseGlyph = trackSanctuaryEffect(scene, glyph);
   glyph.setOrigin(0.5);

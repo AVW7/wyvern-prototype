@@ -112,6 +112,14 @@ export default class BaseScene extends Phaser.Scene {
       this.movement?.setFlying?.(this.wyvernFlying);
     });
 
+    // Shift + D triggers the Dracarys action
+    this.input.keyboard?.on('keydown-D', (event) => {
+      if (event.shiftKey) {
+        event.preventDefault();
+        this.dracarysFromPanel(this.selectedWyvernId);
+      }
+    });
+
     // Register before our individual controllers so their input hooks can be
     // released as one unit. Scene transitions save camera state explicitly;
     // Phaser system plugins may shut the CameraManager down before this event.
@@ -145,7 +153,9 @@ export default class BaseScene extends Phaser.Scene {
 
     if (this.sanctuary3D) {
       let motion = 'idle';
-      if (this.movement?.state === WYVERN_STATES.ATTACK) {
+      if (this.movement?.state === WYVERN_STATES.DRACARYS) {
+        motion = 'dracarys';
+      } else if (this.movement?.state === WYVERN_STATES.ATTACK) {
         motion = 'attack';
       } else if (this.movement?.state === WYVERN_STATES.SPECIAL) {
         motion = 'special';
@@ -406,6 +416,7 @@ export default class BaseScene extends Phaser.Scene {
       onCameraRig: (action) => this.handleCameraRig(action),
       onTrain: (id) => this.trainFromPanel(id),
       onFeed: (id) => this.feedFromPanel(id),
+      onDracarys: (id) => this.dracarysFromPanel(id),
       onRecruit: (speciesId) => this.recruitFromPanel(speciesId),
       onCollapse: () => this.setPanelCollapsed(true),
       onExpand: () => this.setPanelCollapsed(false),
@@ -701,6 +712,20 @@ export default class BaseScene extends Phaser.Scene {
       this, this.world.layer, resident?.footprint, 'feed', this.projectionView,
     );
     this.showResult(`${animal.name} is fed. Bond +15.`);
+  }
+
+  dracarysFromPanel(id) {
+    if (this.cameraController?.transitioning) return false;
+    const animal = getAnimal(id);
+    if (!animal) return;
+    if (id === this.selectedWyvernId) {
+      this.movement?.playAction(WYVERN_STATES.DRACARYS, 1500);
+      const resident = this.residents.find((entry) => entry.animal.id === id);
+      playSanctuaryEffect(
+        this, this.world.layer, resident?.footprint, 'dracarys', this.projectionView,
+      );
+    }
+    this.showResult(`${animal.name} breathes fire! DRACARYS! 🔥`);
   }
 
   recruitFromPanel(speciesId) {

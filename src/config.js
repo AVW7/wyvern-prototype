@@ -140,6 +140,7 @@ export const SANCTUARY = {
       fly: 'DaenerysDragon_Battle_SkyMoveL',
       special: 'DaenerysDragon_Battle_Up',
       attack: 'DaenerysDragon_Battle_Up',
+      dracarys: 'DaenerysDragon_Battle_Up',
     },
     crossfadeMs: 250,
     // Flight height is now real, player-controlled altitude — see
@@ -228,6 +229,7 @@ export const WYVERN_STATES = {
   SPECIAL: 'special',
   HURT: 'hurt',
   DEATH: 'death',
+  DRACARYS: 'dracarys',
 };
 
 // Real atlas frames are authored at high resolution, while generated emoji

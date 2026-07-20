@@ -77,7 +77,7 @@ function applyCameraTransitionLock(overlay, transitioning) {
  */
 export function buildRoostOverlay({
   subtitle, travelLabel, collapsed, launchLabel = 'World Atlas',
-  onTravel, onLaunch, onTrain, onFeed, onRecruit, onCollapse, onExpand,
+  onTravel, onLaunch, onTrain, onFeed, onDracarys, onRecruit, onCollapse, onExpand,
   selectedId = null, cameraMode = 'overview', resultMessage = '',
   cameraView = { yawDeg: 0, elevationStep: 0 }, cameraTransitioning = false,
   onSelect = () => {}, onCameraMode = () => {}, onCameraRig = () => {},
@@ -172,6 +172,13 @@ export function buildRoostOverlay({
       event.stopPropagation();
       onFeed(a.id);
     };
+    const dracarysBtn = document.getElementById(`dracarys-${a.id}`);
+    if (dracarysBtn) {
+      dracarysBtn.onclick = (event) => {
+        event.stopPropagation();
+        onDracarys(a.id);
+      };
+    }
   });
   overlay.querySelectorAll('.roster-card').forEach((card) => {
     const choose = () => onSelect(card.dataset.animalId);
@@ -223,6 +230,7 @@ function renderCard(a, selected) {
         <div class="card-actions">
           <button id="train-${a.id}" class="icon-btn" title="Train ${a.name} (+XP)">💪</button>
           <button id="feed-${a.id}" class="icon-btn" title="Feed ${a.name} (+Bond)">🍖</button>
+          ${a.species === 'wyvern' ? `<button id="dracarys-${a.id}" class="icon-btn" title="Dracarys ${a.name} (Breathe Fire!)">🔥</button>` : ''}
         </div>
       </div>
     </li>`;

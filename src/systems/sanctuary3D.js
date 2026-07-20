@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { GAME, SANCTUARY, TERRAIN } from '../config.js';
 import { BIOMES } from '../data/biomes.js';
 import { TILE_SIZE, HEIGHT_SCALE, gridToWorld3D, tileCenterY } from './grid3d.js';
@@ -77,8 +77,11 @@ function getRenderer() {
   // First call, or canvas was replaced (shouldn't happen in this prototype).
   if (_renderer) _renderer.dispose();
   _renderer = new THREE.WebGLRenderer({ canvas: target, alpha: true, antialias: true });
+  _renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   _renderer.setClearColor(0x000000, 0);
   _renderer.outputColorSpace = THREE.SRGBColorSpace;
+  _renderer.shadowMap.enabled = true;
+  _renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   return _renderer;
 }
 
@@ -482,6 +485,18 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   threeScene.add(new THREE.HemisphereLight(0xe0e8ff, 0x1f1f2e, 1.2));
   const sunLight = new THREE.DirectionalLight(0xffffff, 0.95);
   sunLight.position.set(400, 800, 300);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.width = 2048;
+  sunLight.shadow.mapSize.height = 2048;
+  const d = 500;
+  sunLight.shadow.camera.left = -d;
+  sunLight.shadow.camera.right = d;
+  sunLight.shadow.camera.top = d;
+  sunLight.shadow.camera.bottom = -d;
+  sunLight.shadow.camera.near = 10;
+  sunLight.shadow.camera.far = 2000;
+  sunLight.shadow.bias = -0.0005;
+  sunLight.shadow.normalBias = 0.02;
   threeScene.add(sunLight);
 
   const tileMeshes = [];
@@ -494,6 +509,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   const actions = {};
   let currentMotion = null;
   let pendingMotion = 'idle';
+  let dracarysTimer = 0;
 
   // Camera State
   let camTarget = new THREE.Vector3(0, 0, 0);
@@ -551,6 +567,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     const count = list.length;
     const materials = getTileMaterials(biome);
     const instMesh = new THREE.InstancedMesh(baseGeo, materials, count);
+    instMesh.castShadow = true;
+    instMesh.receiveShadow = true;
 
     const tilesData = [];
     list.forEach((tileInfo, index) => {
@@ -606,6 +624,12 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     if (is3DProp) {
       const surface = gridToWorld3D(col, row, cell.height, cols, rows);
       propObject.position.set(surface.x, surface.y, surface.z);
+      propObject.traverse((node) => {
+        if (node.isMesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+        }
+      });
       threeScene.add(propObject);
 
       decorSprites[key] = {
@@ -701,6 +725,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       cloned.traverse((node) => {
         if (node.isMesh) {
           node.frustumCulled = false;
+          node.castShadow = true;
+          node.receiveShadow = true;
           if (node.material) {
             node.material = node.material.clone();
             node.material.roughness = 0.6;
@@ -868,6 +894,13 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       const rightWing = new THREE.Mesh(rightWingGeom, wireframeMat);
       rightWing.position.set(10, 5, 0);
       placeholderGroup.add(rightWing);
+
+      placeholderGroup.traverse((node) => {
+        if (node.isMesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+        }
+      });
 
       _gltfCache.set(url, {
         scene: placeholderGroup,
@@ -1037,6 +1070,61 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     });
   }
 
+  // Create 3D fire breath particles for the dragon
+  function createDracarysParticles(position, yaw) {
+    const count = 20;
+    const geo = new THREE.BufferGeometry();
+    const positions = [];
+    const velocities = [];
+    const lifetimes = [];
+
+    const dirX = Math.sin(yaw);
+    const dirZ = Math.cos(yaw);
+
+    // Head is located roughly 12 units forward and 10 units high relative to dragon position
+    const startX = position.x + dirX * 12;
+    const startY = position.y + 10;
+    const startZ = position.z + dirZ * 12;
+
+    for (let i = 0; i < count; i++) {
+      positions.push(
+        startX + (Math.random() - 0.5) * 1.5,
+        startY + (Math.random() - 0.5) * 1.5,
+        startZ + (Math.random() - 0.5) * 1.5,
+      );
+
+      const speed = Math.random() * 35 + 25;
+      const spreadX = (Math.random() - 0.5) * 0.35;
+      const spreadY = (Math.random() - 0.5) * 0.2 - 0.08;
+      const spreadZ = (Math.random() - 0.5) * 0.35;
+
+      velocities.push(
+        (dirX + spreadX) * speed,
+        spreadY * speed,
+        (dirZ + spreadZ) * speed,
+      );
+      lifetimes.push(Math.random() * 0.6 + 0.3);
+    }
+
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0xff4500,
+      size: 4.5,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+    });
+    const points = new THREE.Points(geo, mat);
+    threeScene.add(points);
+
+    activeParticles.push({
+      points,
+      velocities,
+      lifetimes,
+      maxLifetimes: [...lifetimes],
+      isFireBreath: true,
+    });
+  }
+
   return {
     show() {
       target.style.display = 'block';
@@ -1146,6 +1234,20 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     update(deltaMs) {
       const deltaSec = deltaMs / 1000;
 
+      // Spawning dracarys fire breath particles
+      if (pendingMotion === 'dracarys' && controlledDragon) {
+        dracarysTimer += deltaMs;
+        if (dracarysTimer >= 60) {
+          dracarysTimer = 0;
+          const dragonPos = new THREE.Vector3();
+          controlledDragon.getWorldPosition(dragonPos);
+          const yaw = controlledDragon.rotation.y;
+          createDracarysParticles(dragonPos, yaw);
+        }
+      } else {
+        dracarysTimer = 0;
+      }
+
       // Update particle systems
       for (let pIdx = activeParticles.length - 1; pIdx >= 0; pIdx--) {
         const p = activeParticles[pIdx];
@@ -1162,10 +1264,30 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
             posAttr.array[idx + 1] += p.velocities[idx + 1] * deltaSec;
             posAttr.array[idx + 2] += p.velocities[idx + 2] * deltaSec;
 
+            if (p.isFireBreath) {
+              p.velocities[idx] *= 0.94;
+              p.velocities[idx + 2] *= 0.94;
+              p.velocities[idx + 1] += 8 * deltaSec;
+            }
+
             // Fade particles out
             p.points.material.opacity = Math.max(0, p.lifetimes[i] / p.maxLifetimes[i]);
           }
         }
+
+        if (p.isFireBreath && alive) {
+          const avgLifetime = p.lifetimes.reduce((sum, val) => sum + Math.max(0, val), 0) / p.lifetimes.length;
+          const avgMax = p.maxLifetimes.reduce((sum, val) => sum + val, 0) / p.lifetimes.length;
+          const ratio = avgLifetime / avgMax;
+          if (ratio > 0.7) {
+            p.points.material.color.setHex(0xffeedd);
+          } else if (ratio > 0.4) {
+            p.points.material.color.setHex(0xffaa00);
+          } else {
+            p.points.material.color.setHex(0xff3300);
+          }
+        }
+
         posAttr.needsUpdate = true;
 
         if (!alive) {
@@ -1317,6 +1439,13 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     destroy() {
       controlledDragon = null;
       mixer = null;
+
+      // Dispose shadow map resources to prevent GPU memory leaks
+      threeScene.traverse((obj) => {
+        if (obj.shadow && typeof obj.shadow.dispose === 'function') {
+          obj.shadow.dispose();
+        }
+      });
 
       // Dispose per-instance objects that are NOT in the shared caches:
       // particle geometries/materials and per-resident label textures.
