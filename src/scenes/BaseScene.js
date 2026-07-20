@@ -37,6 +37,7 @@ import {
   gainXp, getAnimal, getRoster, raiseBond, recruitAnimal,
 } from '../systems/roster.js';
 import { createSanctuary3D } from '../systems/sanctuary3D.js';
+import { createDragonTestPanel } from '../ui/testPanel.js';
 
 // Scene starts destroy display objects, but this small in-memory preference row
 // survives Base -> Vault/Mission -> Base. Durable save/load remains deliberately
@@ -101,6 +102,8 @@ export default class BaseScene extends Phaser.Scene {
     this.projectionView = normalizeView(SANCTUARY_SESSION.cameraView);
 
     this.sanctuary3D = null;
+    this.testPanel = null;
+    this.testOverrideAction = null;
 
     // G toggles flight for the wyvern. Deliberately a plain key rather
     // than a roster/HUD affordance: flight is an experiment-only state with no
@@ -152,19 +155,21 @@ export default class BaseScene extends Phaser.Scene {
     updateSanctuaryOccluders(this.world.placed, footprint);
 
     if (this.sanctuary3D) {
-      let motion = 'idle';
-      if (this.movement?.state === WYVERN_STATES.DRACARYS) {
-        motion = 'dracarys';
-      } else if (this.movement?.state === WYVERN_STATES.ATTACK) {
-        motion = 'attack';
-      } else if (this.movement?.state === WYVERN_STATES.SPECIAL) {
-        motion = 'special';
-      } else if (this.movement?.state === WYVERN_STATES.GUARD) {
-        motion = 'special';
-      } else if (this.wyvernFlying) {
-        motion = 'fly';
-      } else if (moved) {
-        motion = 'walk';
+      let motion = this.testOverrideAction || 'idle';
+      if (!this.testOverrideAction) {
+        if (this.movement?.state === WYVERN_STATES.DRACARYS) {
+          motion = 'dracarys';
+        } else if (this.movement?.state === WYVERN_STATES.ATTACK) {
+          motion = 'attack';
+        } else if (this.movement?.state === WYVERN_STATES.SPECIAL) {
+          motion = 'special';
+        } else if (this.movement?.state === WYVERN_STATES.GUARD) {
+          motion = 'special';
+        } else if (this.wyvernFlying) {
+          motion = 'fly';
+        } else if (moved) {
+          motion = 'walk';
+        }
       }
       this.sanctuary3D.setMotion(motion);
       this.sanctuary3D.update(delta);
@@ -235,6 +240,10 @@ export default class BaseScene extends Phaser.Scene {
       selectedWyvernId: this.selectedWyvernId
     });
     this.sanctuary3D.show();
+
+    if (this.sanctuary3D) {
+      this.testPanel = createDragonTestPanel(this, this.sanctuary3D);
+    }
 
     this.movement = createSanctuaryMovement({
       scene: this,
@@ -724,6 +733,64 @@ export default class BaseScene extends Phaser.Scene {
       playSanctuaryEffect(
         this, this.world.layer, resident?.footprint, 'dracarys', this.projectionView,
       );
+
+      // Fire propagation check: trigger unlit braziers and training dummies in front of the dragon!
+      const dir = this.movement?.lastWorldVector || { col: 1, row: 0 };
+      const myCol = resident?.footprint?.col;
+      const myRow = resident?.footprint?.row;
+      if (typeof myCol === 'number' && typeof myRow === 'number') {
+        const affectedCells = [];
+        for (let step = 1; step <= 3; step++) {
+          const colStep = Math.round(myCol + dir.col * step);
+          const rowStep = Math.round(myRow + dir.row * step);
+          affectedCells.push({ col: colStep, row: rowStep });
+
+          // Slight cone width expansion
+          if (dir.col === 0) {
+            affectedCells.push(
+              { col: colStep - 1, row: rowStep },
+              { col: colStep + 1, row: rowStep }
+            );
+          } else if (dir.row === 0) {
+            affectedCells.push(
+              { col: colStep, row: rowStep - 1 },
+              { col: colStep, row: rowStep + 1 }
+            );
+          } else {
+            affectedCells.push(
+              { col: colStep, row: Math.round(myRow) },
+              { col: Math.round(myCol), row: rowStep }
+            );
+          }
+        }
+
+        const targets = this.interactions?.targets || [];
+        targets.forEach((target) => {
+          if (target.action === 'strikeDummy' || target.action === 'lightBrazier') {
+            const isAffected = affectedCells.some(
+              (c) => c.col === target.col && c.row === target.row
+            );
+            if (isAffected) {
+              // Delay activation to match particle flight speed
+              this.time.delayedCall(300 + Math.random() * 200, () => {
+                if (target.action === 'strikeDummy') {
+                  this.sanctuary3D?.strikeDummy(target.col, target.row);
+                  playSanctuaryEffect(
+                    this, this.world.layer, targetFootprint(target, this.projectionView),
+                    'train', this.projectionView
+                  );
+                } else if (target.action === 'lightBrazier') {
+                  this.sanctuary3D?.lightBrazier(target.col, target.row);
+                  playSanctuaryEffect(
+                    this, this.world.layer, targetFootprint(target, this.projectionView),
+                    'restore', this.projectionView
+                  );
+                }
+              });
+            }
+          }
+        });
+      }
     }
     this.showResult(`${animal.name} breathes fire! DRACARYS! 🔥`);
   }
@@ -765,6 +832,8 @@ export default class BaseScene extends Phaser.Scene {
     this.wanderers?.destroy();
     this.movement?.destroy();
     this.cameraController?.destroy();
+    this.testPanel?.destroy();
+    this.testPanel = null;
     this.sanctuary3D?.destroy();
     this.interactions = null;
     this.wanderers = null;

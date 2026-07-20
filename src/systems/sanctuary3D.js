@@ -503,6 +503,10 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   const decorSprites = {}; // key: col_row -> { sprite, type, cell, ... }
   const residentVisuals = {}; // key: id -> { root, shadow, ring, label, ... }
   const activeParticles = [];
+  const activeFireLights = [];
+
+  let _fireParticleTex = null;
+  let _smokeParticleTex = null;
 
   let controlledDragon = null; // reference to the GLTF dragon
   let mixer = null;
@@ -510,6 +514,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   let currentMotion = null;
   let pendingMotion = 'idle';
   let dracarysTimer = 0;
+  let currentScaleMult = 1.0;
+  let currentAnimSpeed = 1.0;
 
   // Camera State
   let camTarget = new THREE.Vector3(0, 0, 0);
@@ -744,6 +750,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       });
 
       cloned.scale.setScalar(finalScale);
+      cloned.userData.finalScale = finalScale;
       residentGroup.add(cloned);
 
       const localMixer = new THREE.AnimationMixer(cloned);
@@ -988,6 +995,11 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         Object.assign(actions, localActions);
         playMotion(pendingMotion, 0);
         controlledDragon = cloned;
+
+        // Apply current/pending tuning values
+        const baseScale = cloned.userData.finalScale || 1;
+        cloned.scale.setScalar(currentScaleMult * baseScale);
+        localMixer.timeScale = currentAnimSpeed;
       });
     } else {
       // 2.5D Sprite Billboard for other residents
@@ -1070,59 +1082,173 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     });
   }
 
-  // Create 3D fire breath particles for the dragon
-  function createDracarysParticles(position, yaw) {
-    const count = 20;
-    const geo = new THREE.BufferGeometry();
-    const positions = [];
-    const velocities = [];
-    const lifetimes = [];
+  // Create a soft radial gradient canvas texture for fire particles
+  function getFireParticleTexture() {
+    if (!_fireParticleTex) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 16;
+      canvas.height = 16;
+      const ctx = canvas.getContext('2d');
+      const grad = ctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      grad.addColorStop(0.3, 'rgba(255, 180, 0, 0.8)');
+      grad.addColorStop(0.6, 'rgba(240, 60, 0, 0.4)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 16, 16);
+      _fireParticleTex = new THREE.CanvasTexture(canvas);
+    }
+    return _fireParticleTex;
+  }
 
+  // Create a soft radial gradient canvas texture for smoke particles
+  function getSmokeParticleTexture() {
+    if (!_smokeParticleTex) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 16;
+      canvas.height = 16;
+      const ctx = canvas.getContext('2d');
+      const grad = ctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+      grad.addColorStop(0, 'rgba(100, 100, 100, 0.6)');
+      grad.addColorStop(0.4, 'rgba(70, 70, 70, 0.3)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 16, 16);
+      _smokeParticleTex = new THREE.CanvasTexture(canvas);
+    }
+    return _smokeParticleTex;
+  }
+
+  // Create 3D fire breath particles and smoke for the dragon
+  function createDracarysParticles(position, yaw) {
     const dirX = Math.sin(yaw);
     const dirZ = Math.cos(yaw);
 
-    // Head is located roughly 12 units forward and 10 units high relative to dragon position
+    // Mouth position (roughly 12 units forward and 10 units high relative to dragon position)
     const startX = position.x + dirX * 12;
     const startY = position.y + 10;
     const startZ = position.z + dirZ * 12;
 
-    for (let i = 0; i < count; i++) {
-      positions.push(
+    // 1. Spawn Fire Particles
+    const fireCount = 24;
+    const fireGeo = new THREE.BufferGeometry();
+    const firePositions = [];
+    const fireVelocities = [];
+    const fireLifetimes = [];
+
+    for (let i = 0; i < fireCount; i++) {
+      firePositions.push(
         startX + (Math.random() - 0.5) * 1.5,
         startY + (Math.random() - 0.5) * 1.5,
         startZ + (Math.random() - 0.5) * 1.5,
       );
 
-      const speed = Math.random() * 35 + 25;
+      const speed = Math.random() * 45 + 30;
+      // Spread cone
       const spreadX = (Math.random() - 0.5) * 0.35;
-      const spreadY = (Math.random() - 0.5) * 0.2 - 0.08;
+      const spreadY = (Math.random() - 0.5) * 0.2 - 0.05;
       const spreadZ = (Math.random() - 0.5) * 0.35;
 
-      velocities.push(
-        (dirX + spreadX) * speed,
+      // Add dynamic wave turbulence
+      const waveX = Math.sin(i + position.x) * 0.1;
+      const waveZ = Math.cos(i + position.z) * 0.1;
+
+      fireVelocities.push(
+        (dirX + spreadX + waveX) * speed,
         spreadY * speed,
-        (dirZ + spreadZ) * speed,
+        (dirZ + spreadZ + waveZ) * speed,
       );
-      lifetimes.push(Math.random() * 0.6 + 0.3);
+      fireLifetimes.push(Math.random() * 0.5 + 0.3);
     }
 
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    const mat = new THREE.PointsMaterial({
-      color: 0xff4500,
-      size: 4.5,
+    fireGeo.setAttribute('position', new THREE.Float32BufferAttribute(firePositions, 3));
+    const fireMat = new THREE.PointsMaterial({
+      color: 0xffaa00,
+      size: 7.0,
+      map: getFireParticleTexture(),
       transparent: true,
       blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
-    const points = new THREE.Points(geo, mat);
-    threeScene.add(points);
+    const firePoints = new THREE.Points(fireGeo, fireMat);
+    threeScene.add(firePoints);
 
     activeParticles.push({
-      points,
-      velocities,
-      lifetimes,
-      maxLifetimes: [...lifetimes],
+      points: firePoints,
+      velocities: fireVelocities,
+      lifetimes: fireLifetimes,
+      maxLifetimes: [...fireLifetimes],
       isFireBreath: true,
+      isSmoke: false,
     });
+
+    // 2. Spawn Smoke Particles
+    const smokeCount = 10;
+    const smokeGeo = new THREE.BufferGeometry();
+    const smokePositions = [];
+    const smokeVelocities = [];
+    const smokeLifetimes = [];
+
+    for (let i = 0; i < smokeCount; i++) {
+      smokePositions.push(
+        startX + (Math.random() - 0.5) * 2.5,
+        startY + (Math.random() - 0.5) * 2.5,
+        startZ + (Math.random() - 0.5) * 2.5,
+      );
+
+      const speed = Math.random() * 20 + 10;
+      const spreadX = (Math.random() - 0.5) * 0.5;
+      const spreadY = Math.random() * 8 + 4; // rises upward
+      const spreadZ = (Math.random() - 0.5) * 0.5;
+
+      smokeVelocities.push(
+        (dirX * 0.6 + spreadX) * speed,
+        spreadY,
+        (dirZ * 0.6 + spreadZ) * speed,
+      );
+      smokeLifetimes.push(Math.random() * 1.2 + 0.8);
+    }
+
+    smokeGeo.setAttribute('position', new THREE.Float32BufferAttribute(smokePositions, 3));
+    const smokeMat = new THREE.PointsMaterial({
+      color: 0x555555,
+      size: 10.0,
+      map: getSmokeParticleTexture(),
+      transparent: true,
+      blending: THREE.NormalBlending,
+      depthWrite: false,
+    });
+    const smokePoints = new THREE.Points(smokeGeo, smokeMat);
+    threeScene.add(smokePoints);
+
+    activeParticles.push({
+      points: smokePoints,
+      velocities: smokeVelocities,
+      lifetimes: smokeLifetimes,
+      maxLifetimes: [...smokeLifetimes],
+      isFireBreath: false,
+      isSmoke: true,
+    });
+
+    // 3. Spawn a Traveling Point Light
+    if (activeFireLights.length < 3) {
+      const fireLight = new THREE.PointLight(0xff5500, 5, 120);
+      fireLight.position.set(startX, startY, startZ);
+      fireLight.castShadow = true;
+      fireLight.shadow.bias = -0.002;
+      threeScene.add(fireLight);
+
+      activeFireLights.push({
+        light: fireLight,
+        velocity: {
+          x: dirX * 55,
+          y: -2,
+          z: dirZ * 55,
+        },
+        lifetime: 0.5,
+        maxLifetime: 0.5,
+      });
+    }
   }
 
   return {
@@ -1137,6 +1263,44 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     // Focus camera on a resident by ID
     setFollow(id) {
       followId = id;
+    },
+
+    // Tune 3D dragon and scene properties dynamically
+    setTuning(param, value) {
+      if (param === 'scale') {
+        currentScaleMult = value;
+        if (controlledDragon) {
+          const baseScale = controlledDragon.userData.finalScale || 1;
+          controlledDragon.scale.setScalar(value * baseScale);
+        }
+      }
+      if (param === 'animationSpeed') {
+        currentAnimSpeed = value;
+        if (mixer) {
+          mixer.timeScale = value;
+        }
+      }
+      if (param === 'wireframe') {
+        threeScene.traverse((child) => {
+          if (child.isMesh && child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach((m) => { m.wireframe = value; });
+            } else {
+              child.material.wireframe = value;
+            }
+          }
+        });
+      }
+      if (param === 'sunIntensity') {
+        sunLight.intensity = value;
+      }
+      if (param === 'ambientIntensity') {
+        threeScene.traverse((child) => {
+          if (child instanceof THREE.HemisphereLight) {
+            child.intensity = value;
+          }
+        });
+      }
     },
 
     // Light brazier: change texture and trigger fire particles
@@ -1237,7 +1401,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       // Spawning dracarys fire breath particles
       if (pendingMotion === 'dracarys' && controlledDragon) {
         dracarysTimer += deltaMs;
-        if (dracarysTimer >= 60) {
+        if (dracarysTimer >= 40) {
           dracarysTimer = 0;
           const dragonPos = new THREE.Vector3();
           controlledDragon.getWorldPosition(dragonPos);
@@ -1246,6 +1410,25 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         }
       } else {
         dracarysTimer = 0;
+      }
+
+      // Update fire lights
+      for (let lIdx = activeFireLights.length - 1; lIdx >= 0; lIdx--) {
+        const fl = activeFireLights[lIdx];
+        fl.lifetime -= deltaSec;
+        if (fl.lifetime <= 0) {
+          threeScene.remove(fl.light);
+          fl.light.dispose();
+          activeFireLights.splice(lIdx, 1);
+        } else {
+          fl.light.position.x += fl.velocity.x * deltaSec;
+          fl.light.position.y += fl.velocity.y * deltaSec;
+          fl.light.position.z += fl.velocity.z * deltaSec;
+
+          const ratio = fl.lifetime / fl.maxLifetime;
+          const flicker = 0.8 + Math.sin(Date.now() * 0.05) * 0.2;
+          fl.light.intensity = ratio * 5 * flicker;
+        }
       }
 
       // Update particle systems
@@ -1265,13 +1448,22 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
             posAttr.array[idx + 2] += p.velocities[idx + 2] * deltaSec;
 
             if (p.isFireBreath) {
-              p.velocities[idx] *= 0.94;
-              p.velocities[idx + 2] *= 0.94;
+              p.velocities[idx] *= 0.93;
+              p.velocities[idx + 2] *= 0.93;
               p.velocities[idx + 1] += 8 * deltaSec;
+            } else if (p.isSmoke) {
+              p.velocities[idx] *= 0.88;
+              p.velocities[idx + 2] *= 0.88;
+              p.velocities[idx + 1] += 12 * deltaSec;
             }
 
             // Fade particles out
-            p.points.material.opacity = Math.max(0, p.lifetimes[i] / p.maxLifetimes[i]);
+            const ratio = p.lifetimes[i] / p.maxLifetimes[i];
+            p.points.material.opacity = Math.max(0, ratio);
+
+            if (p.isSmoke) {
+              p.points.material.size = 10.0 + (1 - ratio) * 12.0;
+            }
           }
         }
 
@@ -1360,12 +1552,28 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
 
         // Handle rotations (yaw facing)
         if (r.animal.id === selectedWyvernId && controlledDragon) {
-          // Continuous yaw calculation based on moving vector
+          const isMoving = scene.movement?.isMoving;
           const moveVector = scene.movement?.lastWorldVector;
-          if (moveVector && (moveVector.col !== 0 || moveVector.row !== 0)) {
-            // Facing angle in XZ plane
+          if (isMoving && moveVector && (moveVector.col !== 0 || moveVector.row !== 0)) {
+            // Face the direction of active movement vector
             const yaw = Math.atan2(moveVector.col, moveVector.row);
             controlledDragon.rotation.y = yaw;
+          } else {
+            // Fall back to the direction string when stationary/performing actions
+            const dir = scene.movement?.direction;
+            const DIRECTION_TO_YAW = {
+              's': 0,
+              'se': Math.PI / 4,
+              'e': Math.PI / 2,
+              'ne': 3 * Math.PI / 4,
+              'n': Math.PI,
+              'nw': -3 * Math.PI / 4,
+              'w': -Math.PI / 2,
+              'sw': -Math.PI / 4,
+            };
+            if (dir && DIRECTION_TO_YAW[dir] !== undefined) {
+              controlledDragon.rotation.y = DIRECTION_TO_YAW[dir];
+            }
           }
         }
       });
@@ -1446,6 +1654,23 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
           obj.shadow.dispose();
         }
       });
+
+      // Dispose fire lights
+      activeFireLights.forEach((fl) => {
+        threeScene.remove(fl.light);
+        fl.light.dispose();
+      });
+      activeFireLights.length = 0;
+
+      // Dispose textures
+      if (_fireParticleTex) {
+        _fireParticleTex.dispose();
+        _fireParticleTex = null;
+      }
+      if (_smokeParticleTex) {
+        _smokeParticleTex.dispose();
+        _smokeParticleTex = null;
+      }
 
       // Dispose per-instance objects that are NOT in the shared caches:
       // particle geometries/materials and per-resident label textures.

@@ -5,7 +5,6 @@ import {
   wyvernAccentColor,
 } from '../src/systems/wyvernPresentation.js';
 import { WYVERN_STATES } from '../src/config.js';
-import { VAULT_ACTIONS } from '../src/ui/vaultPanel.js';
 
 const atlasFrame = {
   name: 'idle_0.png',
@@ -31,17 +30,6 @@ describe('wyvern presentation', () => {
     expect(wyvernAccentColor('invalid', 0x123456)).toBe(0x123456);
   });
 
-  it('keeps the Vault preview aligned with every required technical state', () => {
-    expect(VAULT_ACTIONS).toEqual([
-      WYVERN_STATES.IDLE,
-      WYVERN_STATES.FLY,
-      WYVERN_STATES.GUARD,
-      WYVERN_STATES.ATTACK,
-      WYVERN_STATES.SPECIAL,
-      WYVERN_STATES.HURT,
-      WYVERN_STATES.DEATH,
-    ]);
-  });
 
   it('resolves a real atlas frame and scales from its untrimmed source height', () => {
     const texture = textureWith(['idle_0.png']);

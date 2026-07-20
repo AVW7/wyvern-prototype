@@ -7,7 +7,7 @@ visible without treating any model as the sole author.
 
 - Distinct contributing model entries: 10
 - Providers represented: 3
-- Contribution records: 43
+- Contribution records: 47
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -78,6 +78,10 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-041 | 2026-07-20 | AI-003 | Optimized diorama's terrain rendering using THREE.InstancedMesh. Replaced flat 2.5D interactive prop billboards (crystals, obelisks, braziers, training dummies, nests, arenas, gates) with detailed procedural 3D geometries and custom interactive state animations. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 14 test files / 164 tests passed, built successfully) |
 | C-042 | 2026-07-20 | AI-003 | Standardized Three.js imports, added pixelRatio scaling for high-DPI displays, and implemented PBR DirectionalLight shadows on the renderer, terrain, and 3D assets. | `src/systems/sanctuary3D.js`, `docs/SANCTUARY_3D_DRAGON_PLAN.md` | `npm run check` full gate pass (all 14 test files / 164 tests passed, built successfully) |
 | C-043 | 2026-07-20 | AI-003 | Added "Dracarys" action in the 3D sanctuary, including a UI card action button, keyboard shortcut (Shift+D), Phaser 2D footprint ripple and rising emoji, and a Three.js cone particle emitter with dynamic color fading, drag, and thermal lift. | `src/config.js`, `src/ui/roostPanel.js`, `src/scenes/BaseScene.js`, `src/systems/sanctuaryRender.js`, `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 14 test files / 164 tests passed, built successfully) |
+| C-044 | 2026-07-20 | AI-003 | Improved visual quality and power of "Dracarys" fire-breathing: added dynamically generated soft radial canvas textures for fire/smoke, dynamic wave turbulence, secondary trailing rising smoke particle systems, traveling shadow-casting point lights, and forward cone visual prop propagation (igniting braziers, wobbling dummies). | `src/scenes/BaseScene.js`, `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 14 test files / 164 tests passed, built successfully) |
+| C-045 | 2026-07-20 | AI-003 | Fixed stationary rotation synchronization bug: when the wyvern stops to breathe fire or is idle, fall back to the logical 2D direction string to prevent the 3D model from spinning to DEFAULT_WORLD_FACING. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 14 test files / 164 tests passed, built successfully) |
+| C-046 | 2026-07-20 | AI-009 | Built a floating debug/test UI panel overlay for the 3D wyvern to tune scale, anim speed, altitude, lighting intensities, wireframe mode, and trigger actions. | `src/systems/sanctuary3D.js`, `src/scenes/BaseScene.js`, `src/systems/sanctuaryMovement.js`, `src/ui/testPanel.js`, `src/ui/ui.css` | `npm run check` full gate pass (all 14 test files / 164 tests passed, built successfully) |
+| C-047 | 2026-07-20 | AI-003 | Converted the Vault scene to a 3D Three.js diorama, removed all legacy 2D sprite rendering code, and removed all wyverns, profiles, rosters, actions, and tuning panels (as they are only for outside), rendering the empty chamber with exit raycasting and simplified travel controls. | `src/scenes/VaultScene.js`, `src/systems/sanctuary3D.js`, `src/ui/vaultPanel.js`, `tests/wyvernPresentation.test.js` | `npm run check` full gate pass (all 14 test files / 163 tests passed, built successfully) |
 
 ## How another model adds itself
 

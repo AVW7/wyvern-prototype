@@ -701,6 +701,12 @@ export function createSanctuaryMovement({
       return this.altitude;
     },
 
+    setAltitude(alt) {
+      this.targetAltitude = alt;
+      this.altitude = alt;
+      this.isFlying = alt > 0;
+    },
+
     getLogicalFootprint() {
       return this.logical ? { ...this.logical } : null;
     },
