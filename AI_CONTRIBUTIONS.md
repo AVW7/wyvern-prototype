@@ -7,7 +7,7 @@ visible without treating any model as the sole author.
 
 - **Distinct contributing model entries:** 8
 - **Providers represented:** 3
-- **Contribution records:** 30
+- **Contribution records:** 35
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -63,6 +63,11 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-028 | 2026-07-18 | AI-003 | Packed Galeclaw's raw frames into a 4096×4096 texture atlas using Pillow, updated JSON meta image, registered the atlas in `src/data/wyverns.js`, and restored the Embertooth assets. Verified in browser that Galeclaw renders with the new atlas and her Idle animation loops. | `assets/sprites/wyverns/Galeclaw/galeclaw.{png,json}`, `src/data/wyverns.js`, `assets/sprites/wyverns/Embertooth/` | `npm run check` full gate pass (all 12 test files / 143 tests passed, build succeeds); browser verification of Galeclaw's Idle loop and movement. |
 | C-029 | 2026-07-20 | AI-003 | Implemented togglable flight (via G key) and click-to-move pathfinding for the 3D controlled wyvern. Fixed a bug in the movement controller guard preventing 3D residents from moving, and added dynamic flying masks and dynamic height checks to allow the wyvern to fly over obstacles and ignore cliff limits. | `src/scenes/BaseScene.js`, `src/systems/sanctuaryMovement.js` | `npm run check:syntax`, `npm test` passed. |
 | C-030 | 2026-07-20 | AI-003 | Upgraded the sanctuary exterior environment to a fully 3D voxel diorama in Three.js. Expanded the grounds layout to 40x40 with 5 height zones, 2.5D billboard props/residents, animated 3D dragon action animations (wobbling training dummies, fire particles on braziers, and pulsating crystal resonance), and integrated Three.js raycasting for Phaser's mouse clicks/hovers. | `src/systems/sanctuary3D.js` (new); `src/scenes/BaseScene.js`, `src/data/sanctuary.js`, `src/systems/decorArt.js`, `src/config.js` | `npm run check` (all 12 test files / 143 tests passed, syntax check passed, atlas validation passed, production build passed). |
+| C-031 | 2026-07-20 | AI-003 | Reviewed the Sanctuary 3D Dragon Experiment plan and appended Review R-006 to the multi-model review workspace, focusing on WebGL renderer lifetime leaks, GLTF asset load thrashing, texture caching, instanced rendering optimizations, and dynamic billboard occlusion. | `docs/SANCTUARY_3D_DRAGON_PLAN.md` | `npm run check` full gate pass (all 12 test files / 152 tests, build succeeds) |
+| C-032 | 2026-07-20 | AI-003 | Added threejs-fundamentals skill to workspace customizations directory. | `.skills/threejs-fundamentals/SKILL.md` | not run |
+| C-033 | 2026-07-20 | AI-003 | Added threejs-interaction skill to workspace customizations directory. | `.skills/threejs-interaction/SKILL.md` | not run |
+| C-034 | 2026-07-20 | AI-003 | Added threejs-geometry skill to workspace customizations directory. | `.skills/threejs-geometry/SKILL.md` | not run |
+| C-035 | 2026-07-20 | AI-003 | Added threejs-materials skill to workspace customizations directory. | `.skills/threejs-materials/SKILL.md` | not run |
 
 ## How another model adds itself
 

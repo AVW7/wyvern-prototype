@@ -334,7 +334,28 @@ append your work to AI_CONTRIBUTIONS.md.
 
 ### Recorded reviews
 
-None yet.
+### Review R-006 — Gemini 3.5 Flash (High)
+
+- **Date:** 2026-07-20
+- **Model ID:** AI-003
+- **Focus:** Three.js Voxel Environment & 3D Roster Integration
+- **Files inspected:** [BaseScene.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/scenes/BaseScene.js), [sanctuary3D.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/systems/sanctuary3D.js), [sanctuaryRender.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/systems/sanctuaryRender.js), [decorArt.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/systems/decorArt.js), [config.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/config.js), [main.js](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/main.js), [ui.css](file:///Users/ajadvanwyk/Documents/wyvern-prototype/src/ui/ui.css)
+- **Summary:** The initial implementation has taken a bold step beyond the original "single-controlled 3D resident" plan by upgrading the entire Base scene into a fully 3D voxel diorama in Three.js, complete with animated dummies, fires, and resonance effects. While this voxel-based pivot elegantly resolves the complex depth-sorting and occlusion challenges that would plague a hybrid 2D/3D approach, it introduces critical stability, memory, and lifecycle issues by rebuilding the WebGL context and loading assets from scratch on every transition and recruitment.
+- **Must fix before implementation:**
+  1. **WebGL Renderer Lifetime Leaks:** Instantiating a new `THREE.WebGLRenderer` in `createSanctuary3D()` during every `buildWorldDisplay()` call and disposing of it on scene transitions or world rebuilds (e.g. when a wyvern is recruited) will quickly exhaust the browser's WebGL context limit. This causes "Too many active WebGL contexts" warnings, resulting in empty 3D viewports or browser crashes. The scene must lazily initialize the `THREE.WebGLRenderer` once and cache it on the `BaseScene` instance or globally, sharing/reusing it across scene travels and rebuilds instead of recreating it.
+  2. **GLTF Asset Load Thrashing:** Calling `new GLTFLoader().load(modelUrl, ...)` inside `createSanctuary3D()`'s initial spawn block forces a network or browser-cache load and full CPU parse of `wyvern-test.glb` (2.9 MB) every time `BaseScene` is loaded or reconstructed. This results in measurable jank/freezes during gameplay transitions. The model data should be preloaded and cached using Phaser's loader or a shared Three.js asset cache.
+- **Recommended changes:**
+  1. **Three.js Texture Cache Re-use:** Currently, Phaser canvas textures (e.g. `species-${r.animal.species}`) are uploaded into Three.js as `new THREE.CanvasTexture` on every resident spawn. These textures must be cached in a registry (e.g. `threeTextureCache`) keying off the texture key to prevent VRAM bloat and texture upload overhead.
+  2. **Instanced Mesh Optimization for Voxel Tiles:** Rendering an individual `THREE.Mesh` and `THREE.BoxGeometry` for every tile in the 40x40 grid results in ~1,600 unique draw calls. While acceptable for a prototype, this should be optimized using `THREE.InstancedMesh` or merging geometries into a single mesh group to keep draw calls low on lower-end devices.
+  3. **Occlusion Fade in 3D:** Implement view-dependent opacity changes for 3D billboard props and decor. When the camera rotations place a tree or obelisk directly between the camera and the controlled dragon, its material opacity should be dynamically tweened/reduced.
+- **Keep as designed:**
+  1. **Voxel Diorama Pivot:** Transitioning the entire BaseScene terrain and residents to a unified 3D viewport is highly endorsed. Trying to render a 3D dragon that moves smoothly in a 2D isometric Phaser projection would lead to complex, fragile depth-sorting logic.
+  2. **CSS Custom Property Layout Sync:** Sizing the Three.js canvas dynamically via `--stage-*` custom properties synchronizes the rendering aspect ratio perfectly under Phaser's `Scale.FIT` without duplicating resizing logic.
+- **Risks and edge cases:**
+  1. **WebGL Context Lost Handling:** In-game scene transitions (especially switching to `MissionScene` which uses WebGL via Phaser) may trigger context loss. A listener for `webglcontextlost` must be registered on the canvas to handle recovery gracefully.
+  2. **Three.js Camera aspect ratio on first load:** The initial aspect ratio is set via `GAME.width / GAME.height`, but the canvas size might be letterboxed. Rely on the `ResizeObserver` callbacks in `main.js` to ensure the initial resize is triggered before the first frame is rendered to prevent stretching.
+- **Suggested first vertical slice:** Refactor `createSanctuary3D` and `BaseScene.js` to lazily instantiate a single, persistent `THREE.WebGLRenderer` cached on `BaseScene` (or as a persistent game-level system) and verify that switching between Base and Vault 10 times consecutively does not leak contexts or trigger texture re-uploads.
+- **Confidence / unknowns:** High confidence in Three.js integration patterns and Phaser's WebGL context interactions. Unknown: performance limits of the unoptimized voxel drawing on older mobile GPUs.
 
 ## Handoff rule
 
