@@ -525,6 +525,17 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   let targetDistance = 450;
   let followId = selectedWyvernId;
 
+  // Free-orbit camera (used by the Vault, which has no follow target). When
+  // enabled, update() eases these targets instead of reading the Phaser rig.
+  let freeCamera = false;
+  let targetYaw = camYaw;
+  let targetPitch = camPitch;
+  const FREE_PITCH_MIN = 10 * Math.PI / 180;
+  const FREE_PITCH_MAX = 80 * Math.PI / 180;
+  const FREE_DIST_MIN = 55;
+  const FREE_DIST_MAX = 1200;
+  const freeDefaults = { yaw: camYaw, pitch: camPitch, distance: camDistance, target: new THREE.Vector3() };
+
   // Shared resident geometry — only created once per module lifetime.
   const shadowGeo = new THREE.RingGeometry(0, 8, 32);
   const ringGeo = new THREE.RingGeometry(7.2, 8, 32);
@@ -1265,6 +1276,85 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       followId = id;
     },
 
+    // ── Free-orbit camera (Vault) ──────────────────────────────────────
+    // Enable a user-driven pan/tilt/zoom camera framing the whole room. The
+    // orbit math is shared with the Phaser-driven path in update().
+    enableFreeCamera() {
+      let sum = 0;
+      let n = 0;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cell = tiles[r]?.[c];
+          if (cell) { sum += cell.height || 1; n++; }
+        }
+      }
+      const avgHeight = n ? sum / n : 1;
+      const width = Math.max(cols, rows) * TILE_SIZE;
+
+      camTarget.set(0, tileCenterY(avgHeight), 0);
+      camYaw = -45 * Math.PI / 180;
+      camPitch = 30 * Math.PI / 180;
+      camDistance = Math.min(FREE_DIST_MAX, Math.max(FREE_DIST_MIN, width * 1.15));
+      targetYaw = camYaw;
+      targetPitch = camPitch;
+      targetDistance = camDistance;
+
+      freeDefaults.yaw = camYaw;
+      freeDefaults.pitch = camPitch;
+      freeDefaults.distance = camDistance;
+      freeDefaults.target.copy(camTarget);
+      freeCamera = true;
+    },
+
+    // Rotate (yaw, free 360°) and tilt (pitch, clamped) by screen-drag degrees.
+    orbitBy(dxDeg, dyDeg) {
+      if (!freeCamera) return;
+      targetYaw += (dxDeg || 0) * Math.PI / 180;
+      targetPitch = Math.min(
+        FREE_PITCH_MAX,
+        Math.max(FREE_PITCH_MIN, targetPitch + (dyDeg || 0) * Math.PI / 180),
+      );
+    },
+
+    // Slide the look-at point across the floor along the camera's ground axes.
+    panBy(dxScreen, dyScreen) {
+      if (!freeCamera) return;
+      const s = Math.sin(camYaw);
+      const c = Math.cos(camYaw);
+      const fx = -s; const fz = -c; // camera→target forward, ground-projected
+      const rx = -c; const rz = s; // right (perpendicular to forward)
+      const scale = camDistance * 0.0016;
+      camTarget.x -= (rx * dxScreen + fx * dyScreen) * scale;
+      camTarget.z -= (rz * dxScreen + fz * dyScreen) * scale;
+
+      // Keep the target within the map footprint (+ margin) so the view can't
+      // drift off into empty space.
+      const halfX = (cols * TILE_SIZE) / 2 + TILE_SIZE * 3;
+      const halfZ = (rows * TILE_SIZE) / 2 + TILE_SIZE * 3;
+      camTarget.x = Math.min(halfX, Math.max(-halfX, camTarget.x));
+      camTarget.z = Math.min(halfZ, Math.max(-halfZ, camTarget.z));
+    },
+
+    zoomBy(factor) {
+      if (!freeCamera || !(factor > 0)) return;
+      targetDistance = Math.min(
+        FREE_DIST_MAX,
+        Math.max(FREE_DIST_MIN, targetDistance / factor),
+      );
+    },
+
+    // Discrete nudges for the on-screen buttons / keyboard.
+    stepYaw(dir) { this.orbitBy(45 * Math.sign(dir || 0), 0); },
+    stepTilt(dir) { this.orbitBy(0, 7.5 * Math.sign(dir || 0)); },
+
+    resetCamera() {
+      if (!freeCamera) return;
+      targetYaw = freeDefaults.yaw;
+      targetPitch = freeDefaults.pitch;
+      targetDistance = freeDefaults.distance;
+      camTarget.copy(freeDefaults.target);
+    },
+
     // Tune 3D dragon and scene properties dynamically
     setTuning(param, value) {
       if (param === 'scale') {
@@ -1550,44 +1640,59 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         if (visual.pivot) visual.pivot.position.y = altitude;
         if (visual.label) visual.label.position.y = LABEL_BASE_Y + altitude;
 
-        // Handle rotations (yaw facing)
+        // Handle rotations (yaw facing). The model's heading is WORLD space, so
+        // derive it from the last world movement vector and keep it when idle.
+        // Deliberately NOT movement.direction: that is a camera-relative 8-way
+        // art heading for the 2D sprites, so using it here re-pointed the model
+        // every time the camera orbited (the dragon appeared to spin with you).
         if (r.animal.id === selectedWyvernId && controlledDragon) {
-          const isMoving = scene.movement?.isMoving;
           const moveVector = scene.movement?.lastWorldVector;
-          if (isMoving && moveVector && (moveVector.col !== 0 || moveVector.row !== 0)) {
-            // Face the direction of active movement vector
-            const yaw = Math.atan2(moveVector.col, moveVector.row);
-            controlledDragon.rotation.y = yaw;
-          } else {
-            // Fall back to the direction string when stationary/performing actions
-            const dir = scene.movement?.direction;
-            const DIRECTION_TO_YAW = {
-              's': 0,
-              'se': Math.PI / 4,
-              'e': Math.PI / 2,
-              'ne': 3 * Math.PI / 4,
-              'n': Math.PI,
-              'nw': -3 * Math.PI / 4,
-              'w': -Math.PI / 2,
-              'sw': -Math.PI / 4,
-            };
-            if (dir && DIRECTION_TO_YAW[dir] !== undefined) {
-              controlledDragon.rotation.y = DIRECTION_TO_YAW[dir];
-            }
+          if (moveVector && (moveVector.col !== 0 || moveVector.row !== 0)) {
+            controlledDragon.rotation.y = Math.atan2(moveVector.col, moveVector.row);
           }
         }
       });
 
+      // Free-orbit camera (Vault): ease toward user-driven targets and skip the
+      // Phaser rig / follow path entirely.
+      if (freeCamera) {
+        camYaw += (targetYaw - camYaw) * 0.2;
+        camPitch += (targetPitch - camPitch) * 0.2;
+        camDistance += (targetDistance - camDistance) * 0.15;
+
+        camera.position.x = camTarget.x + camDistance * Math.cos(camPitch) * Math.sin(camYaw);
+        camera.position.y = camTarget.y + camDistance * Math.sin(camPitch);
+        camera.position.z = camTarget.z + camDistance * Math.cos(camPitch) * Math.cos(camYaw);
+        camera.lookAt(camTarget);
+
+        if (mixer) mixer.update(deltaSec);
+        renderer.render(threeScene, camera);
+        return;
+      }
+
       // Synchronize 3D Camera with Phaser Camera inputs
       const phaserCam = scene.cameras.main;
       if (phaserCam) {
-        // Read configuration settings
+        // Read configuration settings. yawDeg/elevationStep are now continuous
+        // (drag orbit), so derive pitch from the same linear rig the projection
+        // uses (30° at step 0, ±7.5° per step) instead of a discrete lookup, and
+        // ease toward the targets so both drag and stepped changes read smoothly.
         const rig = scene.cameraController?.view || { yawDeg: 0, elevationStep: 0 };
-        const pitchMap = SANCTUARY.cameraRig.elevation.pitchDeg;
-        const pitchAngle = (pitchMap[rig.elevationStep] ?? 30) * Math.PI / 180;
+        const elevation = Number.isFinite(rig.elevationStep) ? rig.elevationStep : 0;
+        const defaultPitchDeg = SANCTUARY.cameraRig.elevation.pitchDeg?.[0] ?? 30;
+        const pitchStepDeg = SANCTUARY.cameraRig.elevation.pitchStepDeg ?? 7.5;
+        const pitchDeg = defaultPitchDeg + elevation * pitchStepDeg;
 
-        camYaw = (rig.yawDeg - 45) * Math.PI / 180; // offset 45 degrees to match isometric view angle
-        camPitch = pitchAngle;
+        const targetYaw = (rig.yawDeg - 45) * Math.PI / 180; // -45° matches the isometric base angle
+        const targetPitch = pitchDeg * Math.PI / 180;
+        // Ease along the SHORT angular path so a full-turn yaw (or a reset from a
+        // large accumulated angle) never unwinds through multiple spins.
+        const yawDelta = Math.atan2(
+          Math.sin(targetYaw - camYaw),
+          Math.cos(targetYaw - camYaw),
+        );
+        camYaw += yawDelta * 0.2;
+        camPitch += (targetPitch - camPitch) * 0.2;
 
         // Sync target coordinates to followed resident
         const targetResident = residents.find((r) => r.animal.id === followId);

@@ -193,10 +193,9 @@ function endpointGroundBasis(yawDeg, groundYScale) {
  * authored height level upward. At yaw/elevation zero these are exactly the
  * coefficients used by systems/iso.js.
  */
-export function projectionBasis(view = {}) {
-  const normalized = normalizeView(view);
+function buildBasis(resolved) {
   const tuning = rigTuning();
-  const pitchDeg = pitchForStep(normalized.elevationStep, tuning.elevation);
+  const pitchDeg = pitchForStep(resolved.elevationStep, tuning.elevation);
   const defaultPitchDeg = pitchForStep(
     tuning.elevation.defaultStep,
     tuning.elevation,
@@ -205,7 +204,7 @@ export function projectionBasis(view = {}) {
   const pitchRad = pitchDeg * DEG_TO_RAD;
   const groundYScale = Math.sin(pitchRad) / Math.sin(defaultPitchRad);
   const heightScale = Math.cos(pitchRad) / Math.cos(defaultPitchRad);
-  const ground = endpointGroundBasis(normalized.yawDeg, groundYScale);
+  const ground = endpointGroundBasis(resolved.yawDeg, groundYScale);
   const height = { x: 0, y: -ISO.elevation * heightScale };
   const determinant = ground.col.x * ground.row.y - ground.col.y * ground.row.x;
 
@@ -214,7 +213,7 @@ export function projectionBasis(view = {}) {
   }
 
   return {
-    ...normalized,
+    ...resolved,
     pitchDeg,
     groundYScale,
     heightScale,
@@ -224,6 +223,75 @@ export function projectionBasis(view = {}) {
     height,
     determinant,
   };
+}
+
+export function projectionBasis(view = {}) {
+  return buildBasis(normalizeView(view));
+}
+
+/**
+ * Clamp-only view resolution used by the live 3D camera / camera-relative
+ * movement: yaw stays continuous over a full turn (endpointGroundBasis is a
+ * pure rotation, correct at every angle), only elevation is bounded so pitch
+ * stays sane. Deliberately does NOT snap — that is reserved for `normalizeView`,
+ * whose discrete output keys the texture-bake cache.
+ */
+export function clampViewFree(view = {}) {
+  const tuning = rigTuning();
+  const source = view ?? {};
+  const elevationRange = { min: tuning.elevation.min, max: tuning.elevation.max };
+  return {
+    yawDeg: finite(source.yawDeg, tuning.yaw.defaultDeg),
+    elevationStep: clamp(
+      finite(source.elevationStep, tuning.elevation.defaultStep),
+      elevationRange.min,
+      elevationRange.max,
+    ),
+  };
+}
+
+/** Continuous-yaw projection basis for the 3D camera / camera-relative input. */
+export function projectionBasisFree(view = {}) {
+  return buildBasis(clampViewFree(view));
+}
+
+/** Free-yaw grid-plane displacement projection (no origin/height). */
+export function projectVectorFree(deltaCol, deltaRow, view = {}) {
+  requireFinite(deltaCol, 'deltaCol');
+  requireFinite(deltaRow, 'deltaRow');
+  const basis = projectionBasisFree(view);
+  return {
+    x: deltaCol * basis.col.x + deltaRow * basis.row.x,
+    y: deltaCol * basis.col.y + deltaRow * basis.row.y,
+  };
+}
+
+/** Invert a projected displacement into grid space at continuous yaw. */
+export function unprojectVectorFree(x, y, view = {}) {
+  requireFinite(x, 'x');
+  requireFinite(y, 'y');
+  const basis = projectionBasisFree(view);
+  return {
+    col: (x * basis.row.y - y * basis.row.x) / basis.determinant,
+    row: (basis.col.x * y - basis.col.y * x) / basis.determinant,
+  };
+}
+
+/** Eight-way art heading for a world vector at continuous yaw. */
+export function viewDirectionForWorldVectorFree(
+  deltaCol,
+  deltaRow,
+  view = {},
+  fallback = 'e',
+) {
+  requireFinite(deltaCol, 'deltaCol');
+  requireFinite(deltaRow, 'deltaRow');
+  if (deltaCol === 0 && deltaRow === 0) {
+    return VIEW_DIRECTIONS.includes(fallback) ? fallback : 'e';
+  }
+  const projected = projectVectorFree(deltaCol, deltaRow, view);
+  const sector = Math.round(Math.atan2(projected.y, projected.x) / (Math.PI / 4));
+  return VIEW_DIRECTIONS[(sector + VIEW_DIRECTIONS.length) % VIEW_DIRECTIONS.length];
 }
 
 function resolveHeightAndView(height, view) {

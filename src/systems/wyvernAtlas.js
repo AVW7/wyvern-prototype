@@ -13,7 +13,6 @@ export const REQUIRED_WYVERN_STATES = Object.freeze([
 ]);
 
 export const LOOPING_WYVERN_STATES = Object.freeze(['idle', 'fly', 'guard']);
-export const ONE_SHOT_WYVERN_STATES = Object.freeze(['attack', 'special', 'hurt', 'death']);
 
 // Compass directions use screen-space/map-space shorthand. East is the
 // required baseline pose, so an atlas remains fully compatible without any

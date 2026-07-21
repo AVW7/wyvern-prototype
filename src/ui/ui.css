@@ -75,6 +75,9 @@ html, body {
   background: var(--bg);
   font-family: var(--font-family);
   color: var(--text);
+  /* A horizontal two-finger swipe rotates the camera. Without this the browser
+     claims that gesture for back/forward navigation and the rotation is lost. */
+  overscroll-behavior: none;
 }
 
 /* Game + overlay fill the window; Phaser's Scale.FIT letterboxes the canvas
@@ -587,6 +590,12 @@ button:active { transform: scale(0.97); }
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 1.6px;
+}
+.vault-camera-hint {
+  margin: 8px 0 6px;
+  color: var(--color-text-dim, #9aa0ae);
+  font-size: 10px;
+  letter-spacing: 0.4px;
 }
 .vault-roster { display: flex; flex-direction: column; gap: 8px; }
 .vault-wyvern-card {

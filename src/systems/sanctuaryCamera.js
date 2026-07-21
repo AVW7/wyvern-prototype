@@ -10,6 +10,13 @@ export const SANCTUARY_CAMERA_MODES = Object.freeze({
 });
 
 const FRAME_MS = 1000 / 60;
+// Continuous drag-orbit sensitivity. Yaw is in degrees per screen pixel; tilt
+// is in elevation-steps per pixel. Both are clamped to the rig's supported
+// range so the shared projection (and camera-relative WASD) stay valid.
+const ORBIT_YAW_SENS = 0.35;
+const ORBIT_TILT_SENS = 0.006;
+// Degrees of yaw per unit of horizontal wheel delta (touchpad two-finger swipe).
+const WHEEL_YAW_SENS = 0.2;
 const DEFAULT_CAMERA_RIG = Object.freeze({
   yaw: Object.freeze({ min: -45, max: 45, step: 45, default: 0 }),
   elevation: Object.freeze({ minStep: -1, maxStep: 1, step: 1, defaultStep: 0 }),
@@ -86,17 +93,15 @@ function snapToStep(value, min, max, step, fallback) {
   return clamp(anchor + Math.round((clamped - anchor) / step) * step, min, max);
 }
 
-/** Clamp and snap a serializable sanctuary rig view to configured endpoints. */
+/**
+ * Resolve a serializable sanctuary rig view. Yaw is kept continuous over a full
+ * turn so the camera can orbit all the way around a resident (see its front);
+ * elevation stays snapped to the discrete tilt steps.
+ */
 export function normalizeSanctuaryCameraView(view = {}) {
   const rig = cameraRigTuning();
   return Object.freeze({
-    yawDeg: snapToStep(
-      view?.yawDeg,
-      rig.yaw.min,
-      rig.yaw.max,
-      rig.yaw.step,
-      rig.yaw.default,
-    ),
+    yawDeg: finite(view?.yawDeg, rig.yaw.default),
     elevationStep: snapToStep(
       view?.elevationStep,
       rig.elevation.minStep,
@@ -179,6 +184,7 @@ export class SanctuaryCameraController {
     onModeChange = null,
     view = null,
     onViewChange = null,
+    onOrbit = null,
   } = {}) {
     if (!scene?.cameras?.main || !scene?.input) {
       throw new TypeError('Sanctuary camera requires a scene with camera and input APIs.');
@@ -191,6 +197,7 @@ export class SanctuaryCameraController {
     this.followTarget = followTarget;
     this.onModeChange = typeof onModeChange === 'function' ? onModeChange : null;
     this.onViewChange = typeof onViewChange === 'function' ? onViewChange : null;
+    this.onOrbit = typeof onOrbit === 'function' ? onOrbit : null;
 
     this._mode = SANCTUARY_CAMERA_MODES.OVERVIEW;
     this._view = normalizeSanctuaryCameraView(view);
@@ -204,6 +211,18 @@ export class SanctuaryCameraController {
     this._finishViewTransition = null;
     this._transitionError = null;
     this.pan = {
+      active: false,
+      pointerId: null,
+      startX: 0,
+      startY: 0,
+      lastX: 0,
+      lastY: 0,
+      movedBy: 0,
+    };
+    // Left-drag orbits the view continuously (yaw + tilt) around the current
+    // focus. A stationary left-click is left untouched so world selection/
+    // interaction still works via the shared click-suppression handshake.
+    this.orbit = {
       active: false,
       pointerId: null,
       startX: 0,
@@ -312,23 +331,46 @@ export class SanctuaryCameraController {
       const right = pointerButtonDown(pointer, 'right', 2, 2);
       const middle = pointerButtonDown(pointer, 'middle', 4, 1);
       if (right || middle || this.spaceKey?.isDown) this._beginPan(pointer);
+      else this._beginOrbit(pointer);
     };
     this._onPointerMove = (pointer) => {
-      if (this.pan.active && this._matchesPanPointer(pointer)) this._dragPan(pointer);
+      if (this.pan.active && this._matchesGesturePointer(pointer, this.pan.pointerId)) {
+        this._dragPan(pointer);
+      } else if (this.orbit.active
+        && this._matchesGesturePointer(pointer, this.orbit.pointerId)) {
+        this._dragOrbit(pointer);
+      }
     };
     this._onPointerUp = (pointer) => {
-      if (!this.pan.active || !this._matchesPanPointer(pointer)) return;
-      this._measurePan(pointer);
-      this._clickSuppressed ||= this.pan.movedBy > SANCTUARY.dragClickSlop;
-      this.pan.active = false;
-      this.pan.pointerId = null;
+      if (this.pan.active && this._matchesGesturePointer(pointer, this.pan.pointerId)) {
+        this._measurePan(pointer);
+        this._clickSuppressed ||= this.pan.movedBy > SANCTUARY.dragClickSlop;
+        this.pan.active = false;
+        this.pan.pointerId = null;
+      } else if (this.orbit.active
+        && this._matchesGesturePointer(pointer, this.orbit.pointerId)) {
+        this._measureOrbit(pointer);
+        this._clickSuppressed ||= this.orbit.movedBy > SANCTUARY.dragClickSlop;
+        this.orbit.active = false;
+        this.orbit.pointerId = null;
+      }
     };
     this._onGameOut = () => {
       this.pan.active = false;
       this.pan.pointerId = null;
+      this.orbit.active = false;
+      this.orbit.pointerId = null;
     };
     this._onWheel = (pointer, objects, deltaX, deltaY) => {
-      if (deltaY === 0 || this._transitioning) return;
+      if (this._transitioning) return;
+      // Touchpad: a horizontal two-finger swipe rotates (yaw), a vertical swipe
+      // zooms. Dominant axis wins so a diagonal glide never does both. A mouse
+      // wheel only reports deltaY, so it always zooms — consistent with drag.
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        this.orbitBy(deltaX * WHEEL_YAW_SENS, 0);
+        return;
+      }
+      if (deltaY === 0) return;
       const factor = deltaY < 0 ? SANCTUARY.zoom.step : 1 / SANCTUARY.zoom.step;
       this.zoomAt(pointer, factor);
     };
@@ -345,10 +387,10 @@ export class SanctuaryCameraController {
     this.scene.events?.once('destroy', this._onSceneShutdown);
   }
 
-  _matchesPanPointer(pointer) {
-    return this.pan.pointerId === null
+  _matchesGesturePointer(pointer, gesturePointerId) {
+    return gesturePointerId === null
       || pointer?.id === undefined
-      || pointer.id === this.pan.pointerId;
+      || pointer.id === gesturePointerId;
   }
 
   _beginPan(pointer) {
@@ -384,6 +426,63 @@ export class SanctuaryCameraController {
     this._measurePan(pointer);
     this._clickSuppressed ||= this.pan.movedBy > SANCTUARY.dragClickSlop;
     this._clampCamera();
+  }
+
+  _beginOrbit(pointer) {
+    if (this._transitioning) return false;
+    this.orbit.active = true;
+    this.orbit.pointerId = pointer?.id ?? null;
+    this.orbit.startX = pointer.x;
+    this.orbit.startY = pointer.y;
+    this.orbit.lastX = pointer.x;
+    this.orbit.lastY = pointer.y;
+    this.orbit.movedBy = 0;
+    return true;
+  }
+
+  _measureOrbit(pointer) {
+    const distance = Math.hypot(
+      pointer.x - this.orbit.startX,
+      pointer.y - this.orbit.startY,
+    );
+    this.orbit.movedBy = Math.max(this.orbit.movedBy, distance);
+  }
+
+  _dragOrbit(pointer) {
+    const dx = pointer.x - this.orbit.lastX;
+    const dy = pointer.y - this.orbit.lastY;
+    this.orbit.lastX = pointer.x;
+    this.orbit.lastY = pointer.y;
+    this._measureOrbit(pointer);
+    this._clickSuppressed ||= this.orbit.movedBy > SANCTUARY.dragClickSlop;
+    // Drag right → yaw increases; drag up → tilt up (higher elevation step).
+    this.orbitBy(dx * ORBIT_YAW_SENS, -dy * ORBIT_TILT_SENS);
+  }
+
+  /**
+   * Continuously nudge yaw (deg) and tilt (elevation steps), clamped to the
+   * rig's supported range. This is the lightweight path used by drag orbit: it
+   * updates the view and notifies `onOrbit` without the fade/reproject the
+   * discrete `setView` transition performs.
+   */
+  orbitBy(deltaYawDeg, deltaElevationStep) {
+    if (this._destroyed || this._transitioning) return false;
+    const rig = cameraRigTuning();
+    // Yaw is unclamped so drag/step can orbit a full turn to view the front;
+    // tilt stays bounded to the rig's supported pitch range.
+    const yawDeg = this._view.yawDeg + finite(deltaYawDeg, 0);
+    const elevationStep = clamp(
+      this._view.elevationStep + finite(deltaElevationStep, 0),
+      rig.elevation.minStep,
+      rig.elevation.maxStep,
+    );
+    if (yawDeg === this._view.yawDeg && elevationStep === this._view.elevationStep) {
+      return false;
+    }
+    const previous = this._view;
+    this._view = Object.freeze({ yawDeg, elevationStep });
+    this.onOrbit?.(this.view, { ...previous });
+    return true;
   }
 
   /** Return and clear whether the current/most recent gesture became a drag. */
@@ -769,6 +868,7 @@ export class SanctuaryCameraController {
     this.scene.events?.off('shutdown', this._onSceneShutdown);
     this.scene.events?.off('destroy', this._onSceneShutdown);
     this.pan.active = false;
+    this.orbit.active = false;
     this.followTarget = null;
     this._finishViewTransition?.(false);
     this._finishViewTransition = null;

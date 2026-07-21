@@ -8,10 +8,12 @@ import {
 import { sortByDepth } from './iso.js';
 import {
   normalizeView,
+  clampViewFree,
   projectFootprint,
   projectVector,
   unprojectVector,
-  viewDirectionForWorldVector,
+  unprojectVectorFree,
+  viewDirectionForWorldVectorFree,
 } from './sanctuaryProjection.js';
 import { wyvernAnimationKey } from '../data/wyverns.js';
 
@@ -130,7 +132,9 @@ function sameView(a, b) {
 
 function viewFrom(source, fallback = DEFAULT_VIEW) {
   const value = typeof source === 'function' ? source() : source;
-  return normalizeView(value ?? fallback);
+  // Keep yaw continuous (full turn) so camera-relative input tracks the free 3D
+  // orbit; only elevation is bounded. Snapping stays in the render/bake path.
+  return clampViewFree(value ?? fallback);
 }
 
 function logicalFromProjected(x, y, view = DEFAULT_VIEW) {
@@ -443,7 +447,7 @@ function publishFootprint(resident, footprint, logical, tiles, view = DEFAULT_VI
 }
 
 function directionForWorld(vector, view, fallback = 'e') {
-  return viewDirectionForWorldVector(
+  return viewDirectionForWorldVectorFree(
     finite(vector?.col, 0),
     finite(vector?.row, 0),
     view,
@@ -481,7 +485,7 @@ function normalizedInput(keys) {
 
 function logicalInputVector(input, view) {
   if (input.x === 0 && input.y === 0) return { col: 0, row: 0 };
-  const logical = unprojectVector(input.x, input.y, view);
+  const logical = unprojectVectorFree(input.x, input.y, view);
   const metricLength = worldMetricLength(logical.col, logical.row);
   if (!(metricLength > 0)) return { col: 0, row: 0 };
   return {

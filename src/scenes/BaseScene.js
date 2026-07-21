@@ -272,6 +272,7 @@ export default class BaseScene extends Phaser.Scene {
       onViewChange: (next, previous, complete) => (
         this.transitionCameraView(next, previous, complete)
       ),
+      onOrbit: (next) => this.applyCameraOrbit(next),
     });
     this.buildInteractions(worldData.interactions);
 
@@ -461,6 +462,17 @@ export default class BaseScene extends Phaser.Scene {
     }
     if (action === 'reset') return this.cameraController.reset({ reason: 'ui-reset' });
     return false;
+  }
+
+  // Lightweight per-drag orbit: the 3D camera reads the controller's continuous
+  // view each frame, so here we only keep the camera-relative movement frame in
+  // step. movement/wanderers/interactions snap the view to the nearest rig step
+  // internally (cheap, no world rebuild or texture rebake), which keeps WASD
+  // aligned with the visible camera to within a grid sector.
+  applyCameraOrbit(next) {
+    this.movement?.setView?.(next);
+    this.wanderers?.setView?.(next);
+    this.interactions?.setView?.(next);
   }
 
   transitionCameraView(next, previous, complete) {

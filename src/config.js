@@ -59,7 +59,7 @@ export const SANCTUARY = {
   panelBias: 120,
   // The fitted overview is the zoom-out floor. Follow and survey may zoom in
   // to this ceiling, with wheel steps matching the Atlas camera's feel.
-  zoom: { max: 2.2, step: 1.12 },
+  zoom: { max: 3.6, step: 1.12 },
   // Follow uses a gentle per-frame lerp. Camera bounds include this much
   // world-space slack, and pointer travel past dragClickSlop suppresses clicks.
   followLerp: 0.1,

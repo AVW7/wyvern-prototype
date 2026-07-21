@@ -9,12 +9,16 @@ import { createNavIsland } from './uiKit.js';
 
 function cameraRigMarkup(view = {}, transitioning = false, collapsed = false) {
   const yaw = Number.isFinite(view.yawDeg) ? view.yawDeg : 0;
+  // Yaw is a full-turn bearing now; show it wrapped to 0–359°.
+  const yawBearing = ((Math.round(yaw) % 360) + 360) % 360;
   const elevation = Number.isFinite(view.elevationStep) ? view.elevationStep : 0;
   const rig = SANCTUARY.cameraRig;
   const elevationLabel = elevation < 0 ? 'Lower' : elevation > 0 ? 'Higher' : 'Default';
   const disabled = transitioning ? ' disabled' : '';
-  const leftDisabled = transitioning || yaw <= rig.yaw.min ? ' disabled' : '';
-  const rightDisabled = transitioning || yaw >= rig.yaw.max ? ' disabled' : '';
+  // Rotation is unbounded (orbit all the way around), so the yaw buttons only
+  // gate on an in-flight transition, never on reaching an endpoint.
+  const leftDisabled = disabled;
+  const rightDisabled = disabled;
   const downDisabled = transitioning || elevation <= rig.elevation.minStep ? ' disabled' : '';
   const upDisabled = transitioning || elevation >= rig.elevation.maxStep ? ' disabled' : '';
 
@@ -22,7 +26,7 @@ function cameraRigMarkup(view = {}, transitioning = false, collapsed = false) {
     <div class="camera-rig${collapsed ? ' is-collapsed' : ''}"
       role="group" aria-label="Sanctuary viewpoint">
       <span class="camera-rig-readout" aria-live="polite">
-        <strong>${yaw > 0 ? '+' : ''}${yaw}°</strong>
+        <strong>${yawBearing}°</strong>
         <small>${elevationLabel}${transitioning ? ' · moving' : ''}</small>
       </span>
       <button class="camera-rig-btn" data-camera-rig="yaw-left"
@@ -92,8 +96,9 @@ export function buildRoostOverlay({
     <div class="sanctuary-controls-hint" aria-hidden="true">
       Move <kbd>WASD</kbd>/<kbd>Arrows</kbd> · Interact <kbd>E</kbd> ·
       Fly <kbd>G</kbd> · Altitude <kbd>R</kbd>/<kbd>Q</kbd> ·
-      Orbit <kbd>[</kbd>/<kbd>]</kbd> · Elevate <kbd>PgUp</kbd>/<kbd>PgDn</kbd> ·
-      Follow <kbd>F</kbd> · Reset <kbd>Home</kbd> · Pan <kbd>Space</kbd>/right-drag · Wheel zoom
+      Orbit left-drag / two-finger swipe / <kbd>[</kbd>/<kbd>]</kbd> ·
+      Elevate <kbd>PgUp</kbd>/<kbd>PgDn</kbd> · Follow <kbd>F</kbd> · Reset <kbd>Home</kbd> ·
+      Pan <kbd>Space</kbd>/right-drag · Wheel zoom
     </div>`;
   const message = resultMessage
     ? `<div class="sanctuary-result" role="status" aria-live="polite">${resultMessage}</div>`
