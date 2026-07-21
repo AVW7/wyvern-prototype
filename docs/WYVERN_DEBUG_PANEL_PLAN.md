@@ -209,7 +209,69 @@ The core of the owner's ask: exercise every built-in movement without a keyboard
 **Exit criteria:** each of the 18 clips can be provoked through actual movement,
 not only by forcing the slot; flight brackets correctly from the panel.
 
-### Milestone 4 — Clip/asset pipeline
+### Preset vocabulary (owner-requested, 2026-07-21)
+
+*"make sure all the presets like fly, scout, hunt, attack, attack with fire,
+fly attack, fly attack with fire are presets that we can improve if need"*
+
+A preset is a named combination of **base clip + altitude + optional one-shot +
+optional particle effect** — not a new clip type. The key finding is that
+**fire is a particle effect the game spawns over a clip**, never baked into
+one: `dracarys` already plays `Skill08` *and* calls `createDracarysParticles()`
+(`sanctuary3D.js`). So every "with fire" preset is its plain counterpart plus
+the emitter.
+
+| Preset | Base clip | Altitude | One-shot | Fire |
+| --- | --- | --- | --- | --- |
+| fly | `fly` (SkyMoveL/R, banked) | cruise | — | no |
+| scout | `scout` (SkyMoveR01, level) | high | — | no |
+| hunt | `alert` → `walk` | ground | — | no |
+| attack | `idle`/`alert` | ground | `attack` / `attackAlt` | no |
+| attack with fire | `idle`/`alert` | ground | `dracarys` | **yes** |
+| fly attack | `fly` | cruise | `flyAttackLeft`/`Right` | no |
+| fly attack with fire | `fly` | cruise | `flyAttackLeft`/`Right` | **yes** |
+
+`hunt` and the ground attacks compose from clips already shipping; `scout` and
+the fly attacks needed the Milestone 4 clip additions below. Implementing the
+preset table itself (a pure module plus a **Presets** folder in the panel) is
+the remaining piece.
+
+### Milestone 4 — Clip/asset pipeline *(done 2026-07-21)*
+
+Re-ran the pipeline against the source FBX; the shipped GLB now carries **22
+clips, 11.1 MB** (was 16 clips, 9.9 MB).
+
+**How the aerial clips were identified.** The pelvis (`Bip002`) never leaves
+z≈414 in any of the 52 source clips — the rig animates in place and lets the
+engine move the character — so height cannot separate a ground clip from an
+airborne one. Measuring the **toe tip's drop relative to the pelvis** does:
+
+| Band | Mean drop | Clips |
+| --- | --- | --- |
+| Grounded | 270–390 | Stand, Watch, Turn20/90/180, Attack01–03 |
+| Walking | 433–469 | Walk, WalkL, WalkR |
+| Airborne | 567–760 | SkyMoveL/R/R01, Up, Down, Down02, **Skill10_L/R**, **Skill11_L/R** |
+
+Rendered stills at mid-clip confirmed each candidate by eye.
+
+**Added:** `SkyMoveR01` (scout), `Skill10_L`/`Skill10_R` (fly attack),
+`Attack01` (second ground attack), `TurnL180`/`TurnR180` (about-face).
+
+**Deliberately excluded:** `Skill11_L/R` — keyframe-identical to `Skill10_L/R`
+(same foot-drop to one decimal, same key counts). Fire is an effect, not a clip.
+
+**Size.** At the original `resample({tolerance: 1e-4})` the 22 clips came to
+19.8 MB (animation data 13.7 MB). Loosening to `1e-3` gives 11.1 MB with no
+visible degradation. Animation keyframes are ~90% of this file; mesh and
+textures are only 1.4 MB combined.
+
+**Reproducing.** `@gltf-transform` is not in `node_modules`. The source is now
+only `Dragon.fbx` (the 121 MB intermediate GLB is gone), so the FBX→GLB step
+runs in Blender first (`bpy.ops.import_scene.fbx` → prune actions to `KEEP` →
+`bpy.ops.export_scene.gltf`), then `tools/prep-drogon.mjs` does material
+conversion, texture compression, resampling and quantisation.
+
+### Milestone 4 — original scope
 
 Widen `KEEP` in `tools/prep-drogon.mjs:21-38` (hover, glide, further roars,
 damage reactions, alternate skills) guided by the drift audit the tool already
