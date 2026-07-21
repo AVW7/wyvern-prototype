@@ -17,8 +17,8 @@ import { createNoise } from '../systems/noise.js';
 export const INTERACTIONS = {
   outside: [
     {
-      id: 'vault-gate', type: 'gate', propType: 'barredDoor', col: 16, row: 13,
-      label: 'Enter the Dragon Vault', action: 'vault', range: 78, once: false,
+      id: 'vault-gate', type: 'gate', propType: 'barredDoor', col: 10, row: 6,
+      label: 'Enter the Rider Vault', action: 'vault', range: 78, once: false,
     },
     {
       id: 'spring-main', type: 'spring', col: 25, row: 27,
@@ -165,9 +165,10 @@ export function buildSanctuaryExterior() {
     }
   }
 
-  // Vault gate entrance
-  b.setTile(16, 13, 2);
-  b.setProp(16, 13, 'barredDoor', 0, -4);
+  // Vault gate entrance — set into the flat Ancient Ruins flagstone, clear of
+  // the Central Monolith Summit terraces.
+  b.setTile(10, 6, 1, 'flagstone');
+  b.setProp(10, 6, 'barredDoor', 0, -4);
 
   // Landmarks & Props:
   b.setProp(31, 18, 'arena');
@@ -312,7 +313,7 @@ export const RESIDENT_SPOTS = {
   ],
 };
 
-// The Dragon Vault showcases one selected profile on this clear central cell.
+// The Rider Vault showcases one selected profile on this clear central cell.
 // Keeping the spot beside the authored map data makes moving the display dais
 // a one-line change when the interior layout is revised.
 export const VAULT_PREVIEW_SPOT = { col: 12, row: 12 };

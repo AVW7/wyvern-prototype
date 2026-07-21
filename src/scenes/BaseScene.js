@@ -233,17 +233,6 @@ export default class BaseScene extends Phaser.Scene {
     );
     this.resolveControlledResident();
 
-    // Hide Phaser tiles/decor/residents so only Three.js is visible
-    this.world.placed.tiles.forEach((t) => t.sprite?.setAlpha(0));
-    this.world.placed.decor.forEach((d) => d.sprite?.setAlpha(0));
-    this.residents.forEach((r) => {
-      if (r.sprite) r.sprite.setAlpha(0);
-      if (r.shadow) r.shadow.setAlpha(0);
-      if (r.aura) r.aura.setAlpha(0);
-      if (r.selectionRing) r.selectionRing.setAlpha(0);
-      if (r.label) r.label.setAlpha(0);
-    });
-
     // Instantiate 3D diorama
     this.sanctuary3D = createSanctuary3D({
       scene: this,

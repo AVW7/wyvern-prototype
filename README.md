@@ -64,7 +64,7 @@ work record with the files/evidence and verification performed.
 
 1. **Roost** (base sim + free roam) — directly explore the sanctuary as the
    selected wyvern, interact with residents and five authored landmarks, manage
-   the roster, and enter the Emberkeep Dragon Vault.
+   the roster, and enter the Emberkeep Rider Vault.
    - Move: Arrow keys / WASD
    - Interact: E or click/tap a nearby target
    - Orbit: `[` / `]`; elevate: Page Down / Page Up
@@ -75,7 +75,7 @@ work record with the files/evidence and verification performed.
    `-45°..+45°` yaw through a view-aware 2D projection. Camera-correct movement
    and direction-key selection are implemented; configured atlases still need
    complete eight-direction dragon art before final visual acceptance.
-2. **Dragon Vault** — select one of three demo wyverns, preview the six currently
+2. **Rider Vault** — select one of three demo wyverns, preview the six currently
    exposed animation states, inspect live frame/texture diagnostics, and tune display
    height, flight lift, shadow opacity, and playback rate. Embertooth uses its
    real atlas; the other profiles demonstrate the fallback pipeline.

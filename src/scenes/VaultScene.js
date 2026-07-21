@@ -1,9 +1,8 @@
 // VaultScene: a focused 3D chamber. The authored sanctuary interior is the backdrop
 // rendered in Three.js. This scene owns only the 3D diorama and the exit.
 import { SANCTUARY } from '../config.js';
-import { sortByDepth } from '../systems/iso.js';
 import {
-  buildSanctuaryView, animateSanctuaryProps,
+  buildSanctuaryView,
 } from '../systems/sanctuaryRender.js';
 import { buildSanctuaryInterior } from '../data/sanctuary.js';
 import { buildVaultOverlay } from '../ui/vaultPanel.js';
@@ -124,12 +123,6 @@ export default class VaultScene extends Phaser.Scene {
   buildWorld() {
     const { tiles } = buildSanctuaryInterior();
     this.world = buildSanctuaryView(this, SANCTUARY.VIEWS.INSIDE, tiles);
-    sortByDepth(this.world.layer);
-    animateSanctuaryProps(this, this.world.placed);
-
-    // Hide Phaser tiles/decor so only Three.js is visible
-    this.world.placed.tiles.forEach((t) => t.sprite?.setAlpha(0));
-    this.world.placed.decor.forEach((d) => d.sprite?.setAlpha(0));
 
     // Instantiate 3D diorama (empty of residents)
     this.sanctuary3D = createSanctuary3D({

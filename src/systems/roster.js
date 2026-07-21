@@ -23,7 +23,7 @@ export function getAnimal(id) {
   return roster.find((a) => a.id === id);
 }
 
-// The Dragon Vault intentionally showcases the three authored demo profiles,
+// The Rider Vault intentionally showcases the three authored demo profiles,
 // not every generic animal recruited through the management prototype.
 export function getShowcaseWyverns() {
   const ids = new Set(DEMO_WYVERNS.map((profile) => profile.id));

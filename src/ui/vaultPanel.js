@@ -13,11 +13,11 @@ export function buildVaultOverlay({
   ]);
 
   overlay.innerHTML = `
-    <section class="panel vault-roster-panel" aria-label="Dragon Vault">
+    <section class="panel vault-roster-panel" aria-label="Rider Vault">
       <div class="panel-header vault-header">
         <p class="vault-eyebrow">EMBERKEEP</p>
-        <h1>Dragon Vault</h1>
-        <p class="subtitle">Welcome to the Emberkeep Dragon Vault.</p>
+        <h1>Rider Vault</h1>
+        <p class="subtitle">Welcome to the Emberkeep Rider Vault.</p>
       </div>
       <p class="vault-camera-hint">Drag or two-finger swipe to orbit · right-drag to pan · wheel to zoom</p>
       <div class="camera-rig" role="group" aria-label="Vault camera controls">

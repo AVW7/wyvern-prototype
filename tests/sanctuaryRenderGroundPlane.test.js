@@ -83,55 +83,6 @@ describe('sanctuary resident ground affordances', () => {
   });
 });
 
-describe('sanctuary transient ground effects', () => {
-  it('projects the action ring while leaving its glyph upright', () => {
-    const ellipses = [];
-    const texts = [];
-    const tweenConfigs = [];
-    const scene = {
-      add: {
-        ellipse: () => {
-          const object = display();
-          ellipses.push(object);
-          return object;
-        },
-        text: () => {
-          const object = display();
-          object.y = 20;
-          texts.push(object);
-          return object;
-        },
-      },
-      tweens: {
-        add: vi.fn((config) => {
-          tweenConfigs.push(config);
-          return config;
-        }),
-      },
-    };
-    const layer = { add: vi.fn() };
-    const view = { yawDeg: 45, elevationStep: 1 };
-    const footprint = {
-      ...projectFootprint(2, 3, view),
-      col: 2,
-      row: 3,
-    };
-    const transform = groundPlaneTransform(view);
-
-    playSanctuaryEffect(scene, layer, footprint, 'train', view);
-
-    expect(ellipses).toHaveLength(1);
-    expect(ellipses[0].scaleX).toBeCloseTo(transform.scaleX);
-    expect(ellipses[0].scaleY).toBeCloseTo(transform.scaleY);
-    expect(ellipses[0].rotation).toBeCloseTo(transform.rotation);
-    expect(tweenConfigs[0]).toMatchObject({
-      scaleX: expect.closeTo(transform.scaleX * 1.8, 10),
-      scaleY: expect.closeTo(transform.scaleY * 1.8, 10),
-    });
-    expect(texts).toHaveLength(1);
-    expect(texts[0].setRotationCalls).toBe(0);
-  });
-});
 
 describe('sanctuary world shadow', () => {
   it('tracks projected ground bounds instead of the viewport backdrop', () => {

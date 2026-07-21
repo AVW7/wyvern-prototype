@@ -59,6 +59,14 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* .nav-island is centered via a static translateX(-50%); a plain
+   translateY-only animation would clobber that transform mid-animation
+   and the pill bar would jump uncentered until the animation finishes. */
+@keyframes nav-island-fade-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 @keyframes panel-pill-fade-in {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
@@ -1037,7 +1045,7 @@ button:active { transform: scale(0.97); }
   background: var(--panel-bg);
   box-shadow: var(--elev-float);
   backdrop-filter: blur(14px);
-  animation: panel-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: nav-island-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .nav-island button {
   border-radius: var(--radius-pill);

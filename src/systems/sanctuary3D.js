@@ -843,6 +843,10 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     if (is3DProp) {
       const surface = gridToWorld3D(col, row, cell.height, cols, rows);
       propObject.position.set(surface.x, surface.y, surface.z);
+      // Raycasting hits child meshes, not this root — unprojectClick walks
+      // back up to whichever ancestor carries col/row.
+      propObject.userData.col = col;
+      propObject.userData.row = row;
       propObject.traverse((node) => {
         if (node.isMesh) {
           node.castShadow = true;
@@ -880,6 +884,11 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       return;
     }
 
+    if (scene.sys.settings.key === 'Vault') {
+      // In Rider Vault, we don't render flat 2D billboard sprites
+      return;
+    }
+
     // Billboard the 2D drawer art for props with no 3D build. The texture has
     // to be *baked* first, not merely looked up: BaseScene bakes the exterior
     // props under the projected `sanctuary-…-<view>` keys, so the fixed-view
@@ -899,6 +908,10 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
 
     const surface = gridToWorld3D(col, row, cell.height, cols, rows);
     sprite.position.set(surface.x, surface.y + 12, surface.z);
+    // Raycast target for hover/click hit-testing — without this the pointer
+    // ray passes through the billboard onto whatever tile lies behind it.
+    sprite.userData.col = col;
+    sprite.userData.row = row;
 
     // Prop sizes
     let scaleX = 24;
@@ -1754,21 +1767,25 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(mouse, camera);
 
-      const intersects = raycaster.intersectObjects(tileMeshes);
-      if (intersects.length > 0) {
-        const hit = intersects[0];
+      // Include every decor prop — 3D builds and billboard sprites alike — so
+      // the ray can't pass through one onto whatever tile lies behind it.
+      // Sorted nearest-first so occlusion between props and tiles resolves
+      // correctly.
+      const propRoots = Object.values(decorSprites).map((d) => d.sprite);
+      const intersects = raycaster.intersectObjects([...tileMeshes, ...propRoots], true);
+
+      for (const hit of intersects) {
         if (hit.object instanceof THREE.InstancedMesh) {
           const instanceId = hit.instanceId;
           const data = hit.object.userData.tilesData[instanceId];
-          if (data) {
-            return { col: data.col, row: data.row };
-          }
-        } else {
-          const data = hit.object.userData;
-          if (data) {
-            return { col: data.col, row: data.row };
-          }
+          if (data) return { col: data.col, row: data.row };
+          continue;
         }
+        // Prop hits land on a child mesh; walk up to the root that carries
+        // col/row (tile meshes already have it directly on the hit object).
+        let node = hit.object;
+        while (node && node.userData.col === undefined) node = node.parent;
+        if (node) return { col: node.userData.col, row: node.userData.row };
       }
       return null;
     },

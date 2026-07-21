@@ -128,16 +128,7 @@ export function buildSanctuaryView(scene, view, tiles, options = {}) {
   const shadowGeometry = hasProjectedView
     ? sanctuaryWorldShadowGeometry(tiles, projectionView)
     : null;
-  const shadow = shadowGeometry
-    ? scene.add.ellipse(
-      shadowGeometry.x,
-      shadowGeometry.y,
-      shadowGeometry.width,
-      shadowGeometry.height,
-      0x000000,
-      0.3,
-    )
-    : null;
+  const shadow = null;
 
   const layer = scene.add.layer();
   const placed = placeSanctuaryTiles(scene, layer, tiles, projectionView);
@@ -200,46 +191,15 @@ export function placeSanctuaryTiles(scene, layer, tiles, projectionView = null) 
       const cell = tiles[row][col];
       if (!cell) continue;
       const legacy = gridToScreen(col, row);
-      const projectedTop = activeView
-        ? projectGrid(col, row, cell.height, activeView)
-        : { x: legacy.x, y: legacy.y - (cell.height - TERRAIN.baseHeight) * ISO.elevation };
       const ground = activeView
         ? projectFootprint(col, row, TERRAIN.baseHeight, activeView)
         : { x: legacy.x, y: legacy.y + ISO.tileHeight / 2 };
-      const texture = activeView
-        ? ensureProjectedSanctuaryTileTexture(
-          scene.textures,
-          cell.biome,
-          cell.variant,
-          cell.height,
-          cell.overlay,
-          activeView,
-        )
-        : {
-          key: ensureTileTexture(
-            scene.textures, cell.biome, cell.variant, cell.height, cell.overlay,
-          ),
-          offsetX: 0,
-          offsetY: 0,
-          originX: 0.5,
-          originY: 0,
-        };
-      const tile = scene.add.image(
-        projectedTop.x + texture.offsetX,
-        projectedTop.y + texture.offsetY,
-        texture.key,
-      );
-      tile.setOrigin(texture.originX, texture.originY);
-      // Sort by the tile's FOOTPRINT (diamond center on the ground plane),
-      // not its lifted art, so a tall wall still sorts by where it stands.
-      tile.setData('depth', ground.y);
-      tile.setData('depthTie', row * 1000 + col * 10);
-      layer.add(tile);
+
       placed.tiles.push({
         col,
         row,
         cell,
-        sprite: tile,
+        sprite: null,
         footprint: ground,
         logicalFootprint: { col, row },
       });
@@ -254,9 +214,7 @@ export function placeSanctuaryTiles(scene, layer, tiles, projectionView = null) 
           col,
           row,
           cell,
-          sprite: decorPlacement.sprite,
-          // Props render on lifted top faces, but gameplay uses their owning
-          // ground-plane footprint. This is the same depth point used below.
+          sprite: null,
           footprint: decorPlacement.footprint,
           logicalFootprint: decorPlacement.logicalFootprint,
         });
@@ -279,46 +237,13 @@ function placeDecor(scene, layer, cell, col, row, projectionView = null) {
     col: col + logicalOffset.col,
     row: row + logicalOffset.row,
   };
-  const projectedOffset = projectionView
-    ? projectVector(logicalOffset.col, logicalOffset.row, projectionView)
-    : { x: decor.offsetX, y: decor.offsetY };
-  const visualBase = projectionView
-    ? projectFootprint(col, row, cell.height, projectionView)
-    : {
-      x: legacy.x,
-      y: legacy.y - (cell.height - TERRAIN.baseHeight) * ISO.elevation
-        + ISO.tileHeight / 2,
-    };
   const footprint = projectionView
     ? projectFootprint(logicalFootprint.col, logicalFootprint.row, TERRAIN.baseHeight, projectionView)
     : {
       x: legacy.x + decor.offsetX,
       y: legacy.y + ISO.tileHeight / 2 + decor.offsetY,
     };
-  const texture = projectionView
-    ? ensureProjectedSanctuaryDecorTexture(
-      scene.textures, cell.biome, decor.type, decor.variant, projectionView,
-    )
-    : {
-      key: ensureDecorTexture(scene.textures, cell.biome, decor.type, decor.variant),
-      originX: DECOR_BOX.baseX / DECOR_BOX.width,
-      originY: DECOR_BOX.baseY / DECOR_BOX.height,
-    };
-  const sprite = scene.add.image(
-    visualBase.x + projectedOffset.x,
-    visualBase.y + projectedOffset.y,
-    texture.key,
-  );
-  // Anchor the prop by its feet — the point inside the texture where it meets
-  // the ground — so tall props grow upward from the tile.
-  sprite.setOrigin(texture.originX, texture.originY);
-  // Depth uses the owning tile's footprint on the ground plane (plus a nudge
-  // so the prop draws over its own tile), keeping occlusion right even when
-  // the prop's visual base is lifted onto a wall or terrace.
-  sprite.setData('depth', footprint.y + 1);
-  sprite.setData('depthTie', row * 1000 + col * 10 + 5);
-  layer.add(sprite);
-  return { sprite, footprint, logicalFootprint };
+  return { sprite: null, footprint, logicalFootprint };
 }
 
 /**
@@ -346,11 +271,11 @@ export function reprojectSanctuaryView(scene, world, view) {
       cell.overlay,
       projectionView,
     );
-    sprite.setTexture?.(texture.key);
-    sprite.setOrigin(texture.originX, texture.originY);
-    sprite.setPosition(top.x + texture.offsetX, top.y + texture.offsetY);
-    sprite.setData('depth', ground.y);
-    sprite.setData('depthTie', row * 1000 + col * 10);
+    sprite?.setTexture?.(texture.key);
+    sprite?.setOrigin?.(texture.originX, texture.originY);
+    sprite?.setPosition?.(top.x + texture.offsetX, top.y + texture.offsetY);
+    sprite?.setData?.('depth', ground.y);
+    sprite?.setData?.('depthTie', row * 1000 + col * 10);
     if (entry.footprint) Object.assign(entry.footprint, ground);
     else entry.footprint = ground;
   });
@@ -378,11 +303,11 @@ export function reprojectSanctuaryView(scene, world, view) {
       entry.variant,
       projectionView,
     );
-    sprite.setTexture?.(texture.key);
-    sprite.setOrigin(texture.originX, texture.originY);
-    sprite.setPosition(visualBase.x + offset.x, visualBase.y + offset.y);
-    sprite.setData('depth', ground.y + 1);
-    sprite.setData('depthTie', row * 1000 + col * 10 + 5);
+    sprite?.setTexture?.(texture.key);
+    sprite?.setOrigin?.(texture.originX, texture.originY);
+    sprite?.setPosition?.(visualBase.x + offset.x, visualBase.y + offset.y);
+    sprite?.setData?.('depth', ground.y + 1);
+    sprite?.setData?.('depthTie', row * 1000 + col * 10 + 5);
     if (entry.footprint) Object.assign(entry.footprint, ground);
     else entry.footprint = ground;
   });
@@ -493,120 +418,18 @@ export function spawnSanctuaryResidents(scene, layer, view, zoom, options = {}) 
     const usesProfileTexture = Boolean(
       animal.assetKey && scene.textures.exists(animal.assetKey),
     );
-    // Milestone 1 of docs/SANCTUARY_3D_DRAGON_PLAN.md: the controlled roster
-    // wyvern renders via a separate Three.js layer instead of a Phaser
-    // sprite. footprint/label/selectionRing stay real so movement, wanderer
-    // exclusion, and interactions (which key off animal.id/footprint, not
-    // sprite existence) keep working unchanged.
-    const isDragon3D = options.selectedWyvernId != null
-      && animal.id === options.selectedWyvernId
-      && animal.species === 'wyvern';
-    const sprite = isDragon3D
-      ? null
-      : (usesProfileTexture
-        ? scene.add.sprite(px, py, visual.textureKey, visual.frameName)
-        : scene.add.image(px, py, `species-${animal.species}`));
-    const accent = wyvernAccentColor(animal);
-    let aura = null;
-    let shadow = null;
-
-    if (isDragon3D) {
-      // No aura/shadow/anim for the 3D-owned resident in Milestone 1.
-    } else if (usesProfileTexture) {
-      aura = scene.add.ellipse(
-        px,
-        py + 1,
-        WYVERN_ART.sanctuaryAura.width,
-        WYVERN_ART.sanctuaryAura.height,
-        accent,
-        WYVERN_ART.sanctuaryAura.alpha,
-      );
-      aura.setStrokeStyle(1, accent, 0.38);
-      aura.setData('depth', py + 0.05);
-      aura.setData('depthTie', i * 10 + 1);
-      layer.add(aura);
-
-      shadow = scene.add.ellipse(
-        px,
-        py + 2,
-        WYVERN_ART.sanctuaryShadow.width,
-        WYVERN_ART.sanctuaryShadow.height,
-        0x05070a,
-        WYVERN_ART.sanctuaryShadow.alpha,
-      );
-      shadow.setData('depth', py + 0.15);
-      shadow.setData('depthTie', i * 10 + 3);
-      layer.add(shadow);
-
-      sprite.setOrigin(visual.origin.x, visual.origin.y);
-      sprite.setScale(WYVERN_ART.sanctuaryHeight / Math.max(visual.referenceHeight, 1));
-
-      const idleKey = wyvernAnimationKey(animal, 'idle');
-      if (scene.anims.exists(idleKey)) sprite.play(idleKey);
-    } else {
-      sprite.setOrigin(0.5, 0.85); // feet-ish anchor for generated residents
-    }
-    if (sprite) {
-      sprite.setData('residentId', animal.id);
-      sprite.setData('depth', py + 0.2);
-      sprite.setData('depthTie', i * 10 + 4);
-      layer.add(sprite);
-    }
-
-    // One hidden ring per resident makes selection changes cheap and keeps the
-    // selected actor's world affordance attached to the same footprint as its
-    // existing aura and shadow. Non-selected residents look exactly as before.
-    const selectionRing = scene.add.ellipse(
-      px,
-      py + 2,
-      SANCTUARY.selectionRing.width,
-      SANCTUARY.selectionRing.height,
-      0x000000,
-      0,
-    );
-    selectionRing.setStrokeStyle(2, accent, SANCTUARY.selectionRing.alpha);
-    selectionRing.setVisible(false);
-    selectionRing.setData('depth', py + 0.1);
-    selectionRing.setData('depthTie', i * 10 + 2);
-    layer.add(selectionRing);
-
-    const labelLift = isDragon3D
-      ? SANCTUARY.dragon3D.labelLift
-      : (usesProfileTexture
-        ? WYVERN_ART.sanctuaryHeight * visual.origin.y + 8
-        : 40);
-    const label = scene.add.text(px, py - labelLift, animal.name, {
-      font: `${Math.round(11 / zoom)}px monospace`,
-      color: '#d8e6ff',
-    });
-    label.setOrigin(0.5, 1);
-    label.setAlpha(0.85);
-    label.setData('depth', py + 0.25);
-    label.setData('depthTie', i * 10 + 5);
-    layer.add(label);
-
-    // The 3D-owned resident's idle motion is driven by sanctuaryDragon3D.js
-    // instead (see docs/SANCTUARY_3D_DRAGON_PLAN.md) — only its label bobs.
-    const bobTween = scene.tweens.add({
-      targets: [sprite, label].filter(Boolean),
-      y: `-=${amplitude}`,
-      duration: durationMs + i * 97,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
 
     const resident = {
       animal,
-      sprite,
-      label,
-      shadow,
-      aura,
-      selectionRing,
-      bobTween,
+      sprite: null,
+      label: null,
+      shadow: null,
+      aura: null,
+      selectionRing: null,
+      bobTween: null,
       visual,
       usesProfileTexture,
-      labelLift,
+      labelLift: 40,
       baseZoom: zoom,
       logicalFootprint,
       footprint: {
@@ -620,7 +443,6 @@ export function spawnSanctuaryResidents(scene, layer, view, zoom, options = {}) 
         homeY: py,
       },
     };
-    reprojectSanctuaryResidentAffordances(resident, projectionView ?? {});
     residents.push(resident);
   });
 
@@ -642,129 +464,29 @@ export function updateSanctuaryResidentReadability(
   selectedId,
   hoveredResidentId = null,
 ) {
-  if (!camera?.zoom) return;
-  residents.forEach((resident) => {
-    if (!resident.label?.active) return;
-    const rawScale = resident.baseZoom / camera.zoom;
-    const scale = Math.max(
-      SANCTUARY.interaction.labelMinScale,
-      Math.min(SANCTUARY.interaction.labelMaxScale, rawScale),
-    );
-    resident.label.setScale(scale);
-
-    // If the 3D diorama is active, Phaser 2D labels must remain invisible (alpha 0)
-    // to prevent duplicates, as the 3D layer renders its own billboard sprites.
-    const scene = resident.label.scene;
-    if (scene && scene.sanctuary3D) {
-      resident.label.setAlpha(0);
-      return;
-    }
-
-    const emphasized = resident.animal.id === selectedId
-      || resident.animal.id === hoveredResidentId;
-    resident.label.setAlpha(emphasized ? 1 : 0.58);
-  });
+  // No-op: 3D diorama renders and manages its own billboard sprite text labels
 }
 
 // Fade tall foreground props when their projected art sits between the actor
 // and camera. Only authored prop sprites are considered; tile sidewalls keep
 // their normal depth ordering and never flicker from approximate hit boxes.
 export function updateSanctuaryOccluders(placed, actorFootprint) {
-  const occluderTypes = new Set(['tree', 'barredDoor', 'obelisk']);
-  const tuning = SANCTUARY.occlusion;
-  placed.decor.forEach((decor) => {
-    if (!decor.sprite?.active || !occluderTypes.has(decor.type)) return;
-    if (decor.sprite.getData('occlusionBaseAlpha') == null) {
-      decor.sprite.setData('occlusionBaseAlpha', decor.sprite.alpha);
-    }
-    const baseAlpha = decor.sprite.getData('occlusionBaseAlpha');
-    const dx = Math.abs(decor.footprint.x - (actorFootprint?.x ?? Infinity));
-    const dy = decor.footprint.y - (actorFootprint?.y ?? -Infinity);
-    const covered = dx <= tuning.radiusX && dy >= -4 && dy <= tuning.radiusY;
-    const target = covered ? Math.min(baseAlpha, tuning.alpha) : baseAlpha;
-    decor.sprite.alpha += (target - decor.sprite.alpha) * tuning.response;
-  });
+  // No-op: Phaser 2D props are not rendered
 }
 
 export function clearSanctuaryEffects(scene) {
-  const effects = scene?._sanctuaryTransientEffects;
-  if (!effects) return;
-  effects.forEach((effect) => effect?.destroy?.());
-  effects.clear();
-}
-
-function trackSanctuaryEffect(scene, effect) {
-  if (!scene._sanctuaryTransientEffects) scene._sanctuaryTransientEffects = new Set();
-  scene._sanctuaryTransientEffects.add(effect);
-  return () => scene._sanctuaryTransientEffects?.delete(effect);
+  // No-op: Phaser 2D effects are not rendered
 }
 
 // Short footprint effects make management actions readable even while a
 // wyvern's sprite is visually airborne. Effects are procedural and disposable,
 // so the sanctuary still runs with no external art.
 export function playSanctuaryEffect(scene, layer, footprint, kind, view = {}) {
-  if (!footprint) return;
-  const colors = {
-    restore: 0x63d8ff,
-    train: 0xf6c453,
-    feed: 0xf472b6,
-    select: 0xa78bfa,
-    atlas: 0x7dd3fc,
-    dracarys: 0xff3300,
-  };
-  const color = colors[kind] ?? 0xffffff;
-  const groundDepth = interactionGroundDepth(footprint, view);
-  const ring = scene.add.ellipse(footprint.x, footprint.y + 2, 34, 11, color, 0.12);
-  const groundTransform = applyGroundPlaneTransform(ring, view);
-  const releaseRing = trackSanctuaryEffect(scene, ring);
-  ring.setStrokeStyle(2, color, 0.9);
-  ring.setData('depth', groundDepth + 0.04);
-  layer.add(ring);
-
-  scene.tweens.add({
-    targets: ring,
-    scaleX: groundTransform.scaleX * 1.8,
-    scaleY: groundTransform.scaleY * 1.8,
-    alpha: 0,
-    duration: 520,
-    ease: 'Sine.easeOut',
-    onComplete: () => { releaseRing(); ring.destroy(); },
-  });
-
-  if (kind !== 'feed' && kind !== 'train' && kind !== 'dracarys') return;
-  const glyph = scene.add.text(
-    footprint.x,
-    footprint.y - 20,
-    kind === 'feed' ? '♥' : (kind === 'dracarys' ? '🔥' : '✦'),
-    { font: '18px monospace', color: kind === 'feed' ? '#f9a8d4' : (kind === 'dracarys' ? '#f97316' : '#fde68a') },
-  );
-  const releaseGlyph = trackSanctuaryEffect(scene, glyph);
-  glyph.setOrigin(0.5);
-  glyph.setData('depth', groundDepth + 0.05);
-  layer.add(glyph);
-  scene.tweens.add({
-    targets: glyph,
-    y: glyph.y - 24,
-    alpha: 0,
-    duration: 620,
-    ease: 'Sine.easeOut',
-    onComplete: () => { releaseGlyph(); glyph.destroy(); },
-  });
+  // No-op: 3D diorama owns the visual effects layer
 }
 
 // Ambient prop animation: braziers breathe and glow motes pulse, each on its
 // own beat so nothing moves in lockstep. No-op for views without either.
 export function animateSanctuaryProps(scene, placed) {
-  placed.decor
-    .filter((d) => d.type === 'torch' || d.type === 'glow')
-    .forEach(({ sprite }, i) => {
-      scene.tweens.add({
-        targets: sprite,
-        alpha: SANCTUARY.torchFlicker.alphaTo,
-        duration: SANCTUARY.torchFlicker.durationMs + i * 133,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-      });
-    });
+  // No-op: 3D diorama handles its own prop animations (wobbles, pulses, lights)
 }

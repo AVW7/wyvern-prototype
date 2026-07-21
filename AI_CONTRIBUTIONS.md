@@ -7,7 +7,7 @@ visible without treating any model as the sole author.
 
 - Distinct contributing model entries: 11
 - Providers represented: 3
-- Contribution records: 52
+- Contribution records: 55
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -88,6 +88,9 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-050 | 2026-07-21 | AI-011 | Cleaned up leftover `usesAtlas` references across core codebase files: simplified `resolveWyvernVisual` and `scaleWyvernVisual` in `src/systems/wyvernPresentation.js`, removed `usesAtlas` conditional branches in `src/entities/Wyvern.js`, simplified `sprite.setScale` in `src/systems/sanctuaryRender.js`, and updated presentation tests in `tests/wyvernPresentation.test.js`. | `src/systems/wyvernPresentation.js`, `src/entities/Wyvern.js`, `src/systems/sanctuaryRender.js`, `tests/wyvernPresentation.test.js` | `npm run check` full gate pass (all 15 test files / 196 tests passed, built successfully) |
 | C-051 | 2026-07-21 | AI-010 | Purged large files (wyvernassets-3d testing/) from the git history of the unpushed local commits to allow pushing, added the directory to .gitignore, and successfully synced 17 commits to origin/main. | `.gitignore` | `npm run check` full gate pass (all 15 test files / 196 tests passed, built successfully) |
 | C-052 | 2026-07-21 | AI-010 | Fixed the duplicate name labels in BaseScene by disabling the 2D Phaser labels in `updateSanctuaryResidentReadability` when the Three.js 3D diorama is active. | `src/systems/sanctuaryRender.js` | `npm run check` full gate pass (all 15 test files / 196 tests passed, built successfully) |
+| C-053 | 2026-07-21 | AI-010 | Completely removed all 2D Phaser graphics creation (sprites, shadows, auras, text labels, and flickers/tweens) from the sanctuary rendering pipeline to make it logical-only. Removed obsolete 2D effect tests and setAlpha(0) hide loops from BaseScene/VaultScene. | `src/systems/sanctuaryRender.js`, `src/scenes/BaseScene.js`, `src/scenes/VaultScene.js`, `tests/sanctuaryRenderGroundPlane.test.js` | `npm run check` full gate pass (all 15 test files / 195 tests passed, built successfully) |
+| C-054 | 2026-07-21 | AI-010 | Renamed 'Dragon Vault' to 'Rider Vault' across text, UI overlays, and code comments, and removed final 2D Phaser depth-sorting/animation loops from VaultScene. | `src/scenes/VaultScene.js`, `src/ui/vaultPanel.js`, `src/data/sanctuary.js`, `src/systems/roster.js`, `README.md` | `npm run check` full gate pass (all 15 test files / 195 tests passed, built successfully) |
+| C-055 | 2026-07-21 | AI-010 | Prevented 2D billboard sprite creation inside Three.js for flat props (such as the sleeping dragon, torches, crystals, and chests) when rendering inside the Rider Vault, cleaning up the 3D scene from legacy 2.5D graphics. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 15 test files / 195 tests passed, built successfully) |
 
 ## How another model adds itself
 
