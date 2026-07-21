@@ -651,6 +651,15 @@ export function updateSanctuaryResidentReadability(
       Math.min(SANCTUARY.interaction.labelMaxScale, rawScale),
     );
     resident.label.setScale(scale);
+
+    // If the 3D diorama is active, Phaser 2D labels must remain invisible (alpha 0)
+    // to prevent duplicates, as the 3D layer renders its own billboard sprites.
+    const scene = resident.label.scene;
+    if (scene && scene.sanctuary3D) {
+      resident.label.setAlpha(0);
+      return;
+    }
+
     const emphasized = resident.animal.id === selectedId
       || resident.animal.id === hoveredResidentId;
     resident.label.setAlpha(emphasized ? 1 : 0.58);
