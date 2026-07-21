@@ -370,7 +370,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_config",
-      "community": 12,
+      "community": 1,
       "norm_label": "config.js"
     },
     {
@@ -380,7 +380,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_config_game",
-      "community": 142,
+      "community": 0,
       "norm_label": "game"
     },
     {
@@ -390,7 +390,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_config_iso",
-      "community": 129,
+      "community": 1,
       "norm_label": "iso"
     },
     {
@@ -400,7 +400,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_config_terrain",
-      "community": 141,
+      "community": 129,
       "norm_label": "terrain"
     },
     {
@@ -410,7 +410,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_config_sanctuary",
-      "community": 129,
+      "community": 9,
       "norm_label": "sanctuary"
     },
     {
@@ -420,7 +420,7 @@
       "source_location": "L266",
       "_origin": "ast",
       "id": "src_config_atlas",
-      "community": 6,
+      "community": 131,
       "norm_label": "atlas"
     },
     {
@@ -430,7 +430,7 @@
       "source_location": "L309",
       "_origin": "ast",
       "id": "src_config_wyvern_states",
-      "community": 12,
+      "community": 1,
       "norm_label": "wyvern_states"
     },
     {
@@ -440,7 +440,7 @@
       "source_location": "L323",
       "_origin": "ast",
       "id": "src_config_wyvern_art",
-      "community": 12,
+      "community": 1,
       "norm_label": "wyvern_art"
     },
     {
@@ -450,7 +450,7 @@
       "source_location": "L357",
       "_origin": "ast",
       "id": "src_config_enemy_states",
-      "community": 12,
+      "community": 1,
       "norm_label": "enemy_states"
     },
     {
@@ -460,7 +460,7 @@
       "source_location": "L365",
       "_origin": "ast",
       "id": "src_config_emoji",
-      "community": 12,
+      "community": 1,
       "norm_label": "emoji"
     },
     {
@@ -470,7 +470,7 @@
       "source_location": "L371",
       "_origin": "ast",
       "id": "src_config_combat",
-      "community": 12,
+      "community": 1,
       "norm_label": "combat"
     },
     {
@@ -480,7 +480,7 @@
       "source_location": "L385",
       "_origin": "ast",
       "id": "src_config_wyvern_orders",
-      "community": 12,
+      "community": 1,
       "norm_label": "wyvern_orders"
     },
     {
@@ -490,7 +490,7 @@
       "source_location": "L398",
       "_origin": "ast",
       "id": "src_config_order_effects",
-      "community": 12,
+      "community": 1,
       "norm_label": "order_effects"
     },
     {
@@ -500,7 +500,7 @@
       "source_location": "L421",
       "_origin": "ast",
       "id": "src_config_demo_enemy_spawns",
-      "community": 12,
+      "community": 1,
       "norm_label": "demo_enemy_spawns"
     },
     {
@@ -510,7 +510,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_data_atlas",
-      "community": 6,
+      "community": 131,
       "norm_label": "atlas.js"
     },
     {
@@ -520,7 +520,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_data_atlas_regions",
-      "community": 6,
+      "community": 131,
       "norm_label": "regions"
     },
     {
@@ -530,7 +530,7 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "src_data_atlas_region_blobs",
-      "community": 6,
+      "community": 131,
       "norm_label": "region_blobs"
     },
     {
@@ -540,7 +540,7 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "src_data_atlas_atoll_ring",
-      "community": 6,
+      "community": 131,
       "norm_label": "atoll_ring"
     },
     {
@@ -560,7 +560,7 @@
       "source_location": "L290",
       "_origin": "ast",
       "id": "src_data_atlas_getregion",
-      "community": 6,
+      "community": 141,
       "norm_label": "getregion()"
     },
     {
@@ -570,7 +570,7 @@
       "source_location": "L294",
       "_origin": "ast",
       "id": "src_data_atlas_getpoi",
-      "community": 6,
+      "community": 131,
       "norm_label": "getpoi()"
     },
     {
@@ -580,7 +580,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_data_biomes",
-      "community": 2,
+      "community": 129,
       "norm_label": "biomes.js"
     },
     {
@@ -590,7 +590,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_data_biomes_biomes",
-      "community": 2,
+      "community": 129,
       "norm_label": "biomes"
     },
     {
@@ -600,7 +600,7 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "src_data_biomes_biome_keys",
-      "community": 2,
+      "community": 129,
       "norm_label": "biome_keys"
     },
     {
@@ -680,7 +680,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_data_species",
-      "community": 12,
+      "community": 1,
       "norm_label": "species.js"
     },
     {
@@ -690,7 +690,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_data_species_species",
-      "community": 12,
+      "community": 1,
       "norm_label": "species"
     },
     {
@@ -700,7 +700,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_data_wyverns",
-      "community": 12,
+      "community": 137,
       "norm_label": "wyverns.js"
     },
     {
@@ -710,7 +710,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_data_wyverns_demo_wyverns",
-      "community": 12,
+      "community": 137,
       "norm_label": "demo_wyverns"
     },
     {
@@ -720,7 +720,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_data_wyverns_getdemowyvern",
-      "community": 12,
+      "community": 137,
       "norm_label": "getdemowyvern()"
     },
     {
@@ -730,7 +730,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_data_wyverns_wyvernanimationkey",
-      "community": 137,
+      "community": 0,
       "norm_label": "wyvernanimationkey()"
     },
     {
@@ -740,7 +740,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_data_wyverns_wyvernatlasdatakey",
-      "community": 12,
+      "community": 137,
       "norm_label": "wyvernatlasdatakey()"
     },
     {
@@ -750,7 +750,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_entities_enemy",
-      "community": 12,
+      "community": 1,
       "norm_label": "enemy.js"
     },
     {
@@ -810,7 +810,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_entities_wyvern",
-      "community": 12,
+      "community": 1,
       "norm_label": "wyvern.js"
     },
     {
@@ -837,7 +837,7 @@
       "label": ".setState()",
       "file_type": "code",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L69",
+      "source_location": "L72",
       "_origin": "ast",
       "id": "src_entities_wyvern_wyvern_setstate",
       "community": 138,
@@ -847,7 +847,7 @@
       "label": ".setOrder()",
       "file_type": "code",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L80",
+      "source_location": "L85",
       "_origin": "ast",
       "id": "src_entities_wyvern_wyvern_setorder",
       "community": 138,
@@ -857,7 +857,7 @@
       "label": ".update()",
       "file_type": "code",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L86",
+      "source_location": "L91",
       "_origin": "ast",
       "id": "src_entities_wyvern_wyvern_update",
       "community": 138,
@@ -867,7 +867,7 @@
       "label": ".updateFlightPose()",
       "file_type": "code",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L149",
+      "source_location": "L154",
       "_origin": "ast",
       "id": "src_entities_wyvern_wyvern_updateflightpose",
       "community": 138,
@@ -877,7 +877,7 @@
       "label": ".takeHit()",
       "file_type": "code",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L167",
+      "source_location": "L172",
       "_origin": "ast",
       "id": "src_entities_wyvern_wyvern_takehit",
       "community": 138,
@@ -910,7 +910,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_input_keyboardactions_keyboardaction",
-      "community": 129,
+      "community": 1,
       "norm_label": "keyboardaction"
     },
     {
@@ -960,7 +960,7 @@
       "source_location": "L132",
       "_origin": "ast",
       "id": "src_input_keyboardactions_isactiondown",
-      "community": 3,
+      "community": 138,
       "norm_label": "isactiondown()"
     },
     {
@@ -1000,7 +1000,7 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "src_input_keyboardactions_onkeydown",
-      "community": 138,
+      "community": 5,
       "norm_label": "onkeydown()"
     },
     {
@@ -1010,7 +1010,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_main",
-      "community": 12,
+      "community": 179,
       "norm_label": "main.js"
     },
     {
@@ -1020,7 +1020,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_main_config",
-      "community": 12,
+      "community": 179,
       "norm_label": "config"
     },
     {
@@ -1030,7 +1030,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_main_game",
-      "community": 12,
+      "community": 179,
       "norm_label": "game"
     },
     {
@@ -1040,7 +1040,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_scenes_atlasscene",
-      "community": 6,
+      "community": 131,
       "norm_label": "atlasscene.js"
     },
     {
@@ -1270,7 +1270,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_scenes_basescene",
-      "community": 129,
+      "community": 5,
       "norm_label": "basescene.js"
     },
     {
@@ -1280,7 +1280,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_scenes_basescene_sanctuary_session",
-      "community": 129,
+      "community": 5,
       "norm_label": "sanctuary_session"
     },
     {
@@ -1300,7 +1300,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_scenes_basescene_action_motions",
-      "community": 129,
+      "community": 5,
       "norm_label": "action_motions"
     },
     {
@@ -1310,7 +1310,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_scenes_basescene_clamp",
-      "community": 129,
+      "community": 5,
       "norm_label": "clamp()"
     },
     {
@@ -1360,7 +1360,7 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "src_scenes_basescene_basescene_update",
-      "community": 129,
+      "community": 5,
       "norm_label": ".update()"
     },
     {
@@ -1490,7 +1490,7 @@
       "source_location": "L529",
       "_origin": "ast",
       "id": "src_scenes_basescene_basescene_applycameraprojection",
-      "community": 129,
+      "community": 5,
       "norm_label": ".applycameraprojection()"
     },
     {
@@ -1720,7 +1720,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_scenes_bootscene",
-      "community": 12,
+      "community": 179,
       "norm_label": "bootscene.js"
     },
     {
@@ -1730,7 +1730,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_scenes_bootscene_bootscene",
-      "community": 12,
+      "community": 179,
       "norm_label": "bootscene"
     },
     {
@@ -1740,7 +1740,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_scenes_bootscene_bootscene_constructor",
-      "community": 12,
+      "community": 179,
       "norm_label": ".constructor()"
     },
     {
@@ -1750,7 +1750,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_scenes_bootscene_bootscene_create",
-      "community": 12,
+      "community": 179,
       "norm_label": ".create()"
     },
     {
@@ -1760,7 +1760,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_scenes_missionscene",
-      "community": 12,
+      "community": 1,
       "norm_label": "missionscene.js"
     },
     {
@@ -1770,7 +1770,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_scenes_missionscene_wyvern_start",
-      "community": 12,
+      "community": 1,
       "norm_label": "wyvern_start"
     },
     {
@@ -1820,7 +1820,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_scenes_missionscene_missionscene_buildisobackground",
-      "community": 12,
+      "community": 0,
       "norm_label": ".buildisobackground()"
     },
     {
@@ -1860,7 +1860,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "src_scenes_missionscene_missionscene_adddecor",
-      "community": 12,
+      "community": 0,
       "norm_label": ".adddecor()"
     },
     {
@@ -2000,7 +2000,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_scenes_preloadscene",
-      "community": 12,
+      "community": 1,
       "norm_label": "preloadscene.js"
     },
     {
@@ -2010,7 +2010,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_looping_states",
-      "community": 12,
+      "community": 1,
       "norm_label": "looping_states"
     },
     {
@@ -2020,7 +2020,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene",
-      "community": 12,
+      "community": 137,
       "norm_label": "preloadscene"
     },
     {
@@ -2030,7 +2030,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_constructor",
-      "community": 12,
+      "community": 137,
       "norm_label": ".constructor()"
     },
     {
@@ -2040,7 +2040,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_preload",
-      "community": 12,
+      "community": 137,
       "norm_label": ".preload()"
     },
     {
@@ -2050,7 +2050,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_create",
-      "community": 12,
+      "community": 137,
       "norm_label": ".create()"
     },
     {
@@ -2060,7 +2060,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_validatewyvernassets",
-      "community": 12,
+      "community": 137,
       "norm_label": ".validatewyvernassets()"
     },
     {
@@ -2070,7 +2070,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_createemojitexture",
-      "community": 12,
+      "community": 137,
       "norm_label": ".createemojitexture()"
     },
     {
@@ -2080,7 +2080,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_createplaceholderwyverns",
-      "community": 12,
+      "community": 137,
       "norm_label": ".createplaceholderwyverns()"
     },
     {
@@ -2090,7 +2090,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_createplaceholderenemy",
-      "community": 12,
+      "community": 137,
       "norm_label": ".createplaceholderenemy()"
     },
     {
@@ -2100,7 +2100,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_createspeciestextures",
-      "community": 12,
+      "community": 137,
       "norm_label": ".createspeciestextures()"
     },
     {
@@ -2110,7 +2110,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_createwyvernanimations",
-      "community": 12,
+      "community": 137,
       "norm_label": ".createwyvernanimations()"
     },
     {
@@ -2120,7 +2120,7 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_createwyvernanimation",
-      "community": 12,
+      "community": 137,
       "norm_label": ".createwyvernanimation()"
     },
     {
@@ -2130,7 +2130,7 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "src_scenes_preloadscene_preloadscene_createenemyanimations",
-      "community": 12,
+      "community": 137,
       "norm_label": ".createenemyanimations()"
     },
     {
@@ -2140,7 +2140,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_scenes_vaultscene",
-      "community": 129,
+      "community": 141,
       "norm_label": "vaultscene.js"
     },
     {
@@ -2200,7 +2200,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "src_scenes_vaultscene_vaultscene_buildworld",
-      "community": 129,
+      "community": 15,
       "norm_label": ".buildworld()"
     },
     {
@@ -2250,7 +2250,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_systems_atlasworld",
-      "community": 6,
+      "community": 131,
       "norm_label": "atlasworld.js"
     },
     {
@@ -2260,7 +2260,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_systems_atlasworld_relief",
-      "community": 6,
+      "community": 131,
       "norm_label": "relief()"
     },
     {
@@ -2270,7 +2270,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_systems_atlasworld_height_curves",
-      "community": 6,
+      "community": 131,
       "norm_label": "height_curves"
     },
     {
@@ -2280,7 +2280,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_systems_atlasworld_buildatlasworld",
-      "community": 6,
+      "community": 131,
       "norm_label": "buildatlasworld()"
     },
     {
@@ -2290,7 +2290,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_systems_atlasworld_buildcell",
-      "community": 6,
+      "community": 131,
       "norm_label": "buildcell()"
     },
     {
@@ -2300,7 +2300,7 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "src_systems_atlasworld_rankblobs",
-      "community": 6,
+      "community": 131,
       "norm_label": "rankblobs()"
     },
     {
@@ -2310,7 +2310,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "src_systems_atlasworld_issea",
-      "community": 6,
+      "community": 131,
       "norm_label": "issea()"
     },
     {
@@ -2320,7 +2320,7 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "src_systems_atlasworld_atollcell",
-      "community": 6,
+      "community": 131,
       "norm_label": "atollcell()"
     },
     {
@@ -2330,7 +2330,7 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "src_systems_atlasworld_rolldecor",
-      "community": 6,
+      "community": 131,
       "norm_label": "rolldecor()"
     },
     {
@@ -2340,7 +2340,7 @@
       "source_location": "L189",
       "_origin": "ast",
       "id": "src_systems_atlasworld_decoroffset",
-      "community": 6,
+      "community": 131,
       "norm_label": "decoroffset()"
     },
     {
@@ -2350,7 +2350,7 @@
       "source_location": "L198",
       "_origin": "ast",
       "id": "src_systems_atlasworld_worldtocell",
-      "community": 6,
+      "community": 131,
       "norm_label": "worldtocell()"
     },
     {
@@ -2370,7 +2370,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_systems_decorart_decor_box",
-      "community": 12,
+      "community": 0,
       "norm_label": "decor_box"
     },
     {
@@ -3030,7 +3030,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_systems_iso",
-      "community": 129,
+      "community": 1,
       "norm_label": "iso.js"
     },
     {
@@ -3040,7 +3040,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_systems_iso_gridtoscreen",
-      "community": 319,
+      "community": 0,
       "norm_label": "gridtoscreen()"
     },
     {
@@ -3050,7 +3050,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_systems_iso_screentogrid",
-      "community": 12,
+      "community": 1,
       "norm_label": "screentogrid()"
     },
     {
@@ -3060,7 +3060,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_systems_iso_depthof",
-      "community": 129,
+      "community": 1,
       "norm_label": "depthof()"
     },
     {
@@ -3070,7 +3070,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_systems_iso_depthtieof",
-      "community": 129,
+      "community": 1,
       "norm_label": "depthtieof()"
     },
     {
@@ -3080,7 +3080,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_systems_iso_sortbydepth",
-      "community": 129,
+      "community": 1,
       "norm_label": "sortbydepth()"
     },
     {
@@ -3090,7 +3090,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_systems_noise",
-      "community": 2,
+      "community": 129,
       "norm_label": "noise.js"
     },
     {
@@ -3100,7 +3100,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_systems_noise_hashstring",
-      "community": 2,
+      "community": 129,
       "norm_label": "hashstring()"
     },
     {
@@ -3120,7 +3120,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_systems_noise_clamp",
-      "community": 2,
+      "community": 131,
       "norm_label": "clamp()"
     },
     {
@@ -3130,7 +3130,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_systems_noise_smoothstep",
-      "community": 2,
+      "community": 129,
       "norm_label": "smoothstep()"
     },
     {
@@ -3140,7 +3140,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_systems_noise_createnoise",
-      "community": 2,
+      "community": 129,
       "norm_label": "createnoise()"
     },
     {
@@ -3170,7 +3170,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_systems_roster_getroster",
-      "community": 137,
+      "community": 5,
       "norm_label": "getroster()"
     },
     {
@@ -3430,7 +3430,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuary_camera_modes",
-      "community": 142,
+      "community": 13,
       "norm_label": "sanctuary_camera_modes"
     },
     {
@@ -3450,7 +3450,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_clamp",
-      "community": 133,
+      "community": 146,
       "norm_label": "clamp()"
     },
     {
@@ -3520,7 +3520,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_validbounds",
-      "community": 320,
+      "community": 133,
       "norm_label": "validbounds()"
     },
     {
@@ -3530,7 +3530,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_copybounds",
-      "community": 320,
+      "community": 133,
       "norm_label": "copybounds()"
     },
     {
@@ -3540,7 +3540,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_pointerbuttondown",
-      "community": 3,
+      "community": 142,
       "norm_label": "pointerbuttondown()"
     },
     {
@@ -3570,7 +3570,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_constructor",
-      "community": 320,
+      "community": 3,
       "norm_label": ".constructor()"
     },
     {
@@ -3690,7 +3690,7 @@
       "source_location": "L278",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_bindinput",
-      "community": 3,
+      "community": 142,
       "norm_label": "._bindinput()"
     },
     {
@@ -3700,7 +3700,7 @@
       "source_location": "L303",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_onpointerdown",
-      "community": 3,
+      "community": 142,
       "norm_label": "._onpointerdown()"
     },
     {
@@ -3710,7 +3710,7 @@
       "source_location": "L317",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_onpointermove",
-      "community": 3,
+      "community": 142,
       "norm_label": "._onpointermove()"
     },
     {
@@ -3720,7 +3720,7 @@
       "source_location": "L325",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_onpointerup",
-      "community": 3,
+      "community": 142,
       "norm_label": "._onpointerup()"
     },
     {
@@ -3740,7 +3740,7 @@
       "source_location": "L345",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_onwheel",
-      "community": 146,
+      "community": 133,
       "norm_label": "._onwheel()"
     },
     {
@@ -3760,7 +3760,7 @@
       "source_location": "L371",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_matchesgesturepointer",
-      "community": 3,
+      "community": 142,
       "norm_label": "._matchesgesturepointer()"
     },
     {
@@ -3770,7 +3770,7 @@
       "source_location": "L377",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_beginpan",
-      "community": 3,
+      "community": 142,
       "norm_label": "._beginpan()"
     },
     {
@@ -3780,7 +3780,7 @@
       "source_location": "L392",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_measurepan",
-      "community": 3,
+      "community": 142,
       "norm_label": "._measurepan()"
     },
     {
@@ -3790,7 +3790,7 @@
       "source_location": "L400",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_dragpan",
-      "community": 3,
+      "community": 142,
       "norm_label": "._dragpan()"
     },
     {
@@ -3800,7 +3800,7 @@
       "source_location": "L412",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_beginorbit",
-      "community": 3,
+      "community": 142,
       "norm_label": "._beginorbit()"
     },
     {
@@ -3810,7 +3810,7 @@
       "source_location": "L424",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_measureorbit",
-      "community": 3,
+      "community": 142,
       "norm_label": "._measureorbit()"
     },
     {
@@ -3820,7 +3820,7 @@
       "source_location": "L432",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_dragorbit",
-      "community": 3,
+      "community": 142,
       "norm_label": "._dragorbit()"
     },
     {
@@ -3860,7 +3860,7 @@
       "source_location": "L559",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_setyawdeg",
-      "community": 3,
+      "community": 133,
       "norm_label": ".setyawdeg()"
     },
     {
@@ -3870,7 +3870,7 @@
       "source_location": "L563",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_setelevationstep",
-      "community": 3,
+      "community": 133,
       "norm_label": ".setelevationstep()"
     },
     {
@@ -3880,7 +3880,7 @@
       "source_location": "L567",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_stepyaw",
-      "community": 3,
+      "community": 133,
       "norm_label": ".stepyaw()"
     },
     {
@@ -3890,7 +3890,7 @@
       "source_location": "L573",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_stepelevation",
-      "community": 3,
+      "community": 133,
       "norm_label": ".stepelevation()"
     },
     {
@@ -3900,7 +3900,7 @@
       "source_location": "L584",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_refit",
-      "community": 320,
+      "community": 3,
       "norm_label": ".refit()"
     },
     {
@@ -3910,7 +3910,7 @@
       "source_location": "L620",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_setbounds",
-      "community": 320,
+      "community": 3,
       "norm_label": ".setbounds()"
     },
     {
@@ -3920,7 +3920,7 @@
       "source_location": "L624",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_setpanelcollapsed",
-      "community": 320,
+      "community": 3,
       "norm_label": ".setpanelcollapsed()"
     },
     {
@@ -3930,7 +3930,7 @@
       "source_location": "L628",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_panelbias",
-      "community": 320,
+      "community": 3,
       "norm_label": "._panelbias()"
     },
     {
@@ -3940,7 +3940,7 @@
       "source_location": "L632",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_applycamerabounds",
-      "community": 320,
+      "community": 3,
       "norm_label": "._applycamerabounds()"
     },
     {
@@ -4000,7 +4000,7 @@
       "source_location": "L757",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_sanctuarycameracontroller_togglefollow",
-      "community": 3,
+      "community": 142,
       "norm_label": ".togglefollow()"
     },
     {
@@ -4070,7 +4070,7 @@
       "source_location": "L860",
       "_origin": "ast",
       "id": "src_systems_sanctuarycamera_createsanctuarycamera",
-      "community": 142,
+      "community": 5,
       "norm_label": "createsanctuarycamera()"
     },
     {
@@ -4340,7 +4340,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_systems_sanctuarygroundplane",
-      "community": 179,
+      "community": 0,
       "norm_label": "sanctuarygroundplane.js"
     },
     {
@@ -4350,7 +4350,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_systems_sanctuarygroundplane_finite",
-      "community": 179,
+      "community": 0,
       "norm_label": "finite()"
     },
     {
@@ -4360,7 +4360,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_systems_sanctuarygroundplane_withouttinynoise",
-      "community": 179,
+      "community": 0,
       "norm_label": "withouttinynoise()"
     },
     {
@@ -4370,7 +4370,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_systems_sanctuarygroundplane_groundplanetransform",
-      "community": 179,
+      "community": 0,
       "norm_label": "groundplanetransform()"
     },
     {
@@ -4380,7 +4380,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_systems_sanctuarygroundplane_applygroundplanetransform",
-      "community": 179,
+      "community": 0,
       "norm_label": "applygroundplanetransform()"
     },
     {
@@ -4390,7 +4390,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions",
-      "community": 1,
+      "community": 4,
       "norm_label": "sanctuaryinteractions.js"
     },
     {
@@ -4400,7 +4400,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_default_view",
-      "community": 1,
+      "community": 4,
       "norm_label": "default_view"
     },
     {
@@ -4410,7 +4410,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_default_tuning",
-      "community": 1,
+      "community": 4,
       "norm_label": "default_tuning"
     },
     {
@@ -4420,7 +4420,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_marker",
-      "community": 1,
+      "community": 4,
       "norm_label": "marker"
     },
     {
@@ -4440,7 +4440,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_finitepoint",
-      "community": 1,
+      "community": 4,
       "norm_label": "finitepoint()"
     },
     {
@@ -4450,7 +4450,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_finitelogicalpoint",
-      "community": 1,
+      "community": 4,
       "norm_label": "finitelogicalpoint()"
     },
     {
@@ -4460,7 +4460,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_logicalfromdefaultpoint",
-      "community": 1,
+      "community": 4,
       "norm_label": "logicalfromdefaultpoint()"
     },
     {
@@ -4470,7 +4470,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_logicalfromvalue",
-      "community": 1,
+      "community": 4,
       "norm_label": "logicalfromvalue()"
     },
     {
@@ -4490,7 +4490,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_logicalwithdefaultoffset",
-      "community": 1,
+      "community": 4,
       "norm_label": "logicalwithdefaultoffset()"
     },
     {
@@ -4500,7 +4500,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_invokefootprint",
-      "community": 1,
+      "community": 4,
       "norm_label": "invokefootprint()"
     },
     {
@@ -4510,7 +4510,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_targetgroundfootprint",
-      "community": 1,
+      "community": 4,
       "norm_label": "targetgroundfootprint()"
     },
     {
@@ -4520,7 +4520,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_targetlogicalfootprint",
-      "community": 1,
+      "community": 4,
       "norm_label": "targetlogicalfootprint()"
     },
     {
@@ -4530,7 +4530,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_actorgroundfootprint",
-      "community": 1,
+      "community": 4,
       "norm_label": "actorgroundfootprint()"
     },
     {
@@ -4540,7 +4540,7 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_actorlogicalfootprint",
-      "community": 1,
+      "community": 4,
       "norm_label": "actorlogicalfootprint()"
     },
     {
@@ -4550,7 +4550,7 @@
       "source_location": "L192",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_interactiongrounddepth",
-      "community": 1,
+      "community": 4,
       "norm_label": "interactiongrounddepth()"
     },
     {
@@ -4600,7 +4600,7 @@
       "source_location": "L235",
       "_origin": "ast",
       "id": "src_systems_sanctuaryinteractions_createsanctuaryinteractions",
-      "community": 1,
+      "community": 4,
       "norm_label": "createsanctuaryinteractions()"
     },
     {
@@ -5540,7 +5540,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection",
-      "community": 131,
+      "community": 0,
       "norm_label": "sanctuaryprojection.js"
     },
     {
@@ -5550,7 +5550,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_view_directions",
-      "community": 131,
+      "community": 0,
       "norm_label": "view_directions"
     },
     {
@@ -5560,7 +5560,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_fallback_rig",
-      "community": 131,
+      "community": 0,
       "norm_label": "fallback_rig"
     },
     {
@@ -5570,7 +5570,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_finite",
-      "community": 131,
+      "community": 0,
       "norm_label": "finite()"
     },
     {
@@ -5580,7 +5580,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_clamp",
-      "community": 131,
+      "community": 0,
       "norm_label": "clamp()"
     },
     {
@@ -5590,7 +5590,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_withoutnegativezero",
-      "community": 131,
+      "community": 0,
       "norm_label": "withoutnegativezero()"
     },
     {
@@ -5600,7 +5600,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_requirefinite",
-      "community": 131,
+      "community": 0,
       "norm_label": "requirefinite()"
     },
     {
@@ -5610,7 +5610,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_sortedrange",
-      "community": 131,
+      "community": 0,
       "norm_label": "sortedrange()"
     },
     {
@@ -5620,7 +5620,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_rigtuning",
-      "community": 131,
+      "community": 0,
       "norm_label": "rigtuning()"
     },
     {
@@ -5630,7 +5630,7 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_snaptostep",
-      "community": 131,
+      "community": 0,
       "norm_label": "snaptostep()"
     },
     {
@@ -5650,7 +5650,7 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_pitchforstep",
-      "community": 131,
+      "community": 0,
       "norm_label": "pitchforstep()"
     },
     {
@@ -5660,7 +5660,7 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_endpointgroundbasis",
-      "community": 131,
+      "community": 0,
       "norm_label": "endpointgroundbasis()"
     },
     {
@@ -5670,7 +5670,7 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_buildbasis",
-      "community": 131,
+      "community": 0,
       "norm_label": "buildbasis()"
     },
     {
@@ -5680,7 +5680,7 @@
       "source_location": "L228",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_projectionbasis",
-      "community": 141,
+      "community": 0,
       "norm_label": "projectionbasis()"
     },
     {
@@ -5690,7 +5690,7 @@
       "source_location": "L239",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_clampviewfree",
-      "community": 131,
+      "community": 0,
       "norm_label": "clampviewfree()"
     },
     {
@@ -5700,7 +5700,7 @@
       "source_location": "L254",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_projectionbasisfree",
-      "community": 131,
+      "community": 0,
       "norm_label": "projectionbasisfree()"
     },
     {
@@ -5710,7 +5710,7 @@
       "source_location": "L259",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_projectvectorfree",
-      "community": 131,
+      "community": 0,
       "norm_label": "projectvectorfree()"
     },
     {
@@ -5720,7 +5720,7 @@
       "source_location": "L270",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_unprojectvectorfree",
-      "community": 131,
+      "community": 0,
       "norm_label": "unprojectvectorfree()"
     },
     {
@@ -5730,7 +5730,7 @@
       "source_location": "L281",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_viewdirectionforworldvectorfree",
-      "community": 131,
+      "community": 0,
       "norm_label": "viewdirectionforworldvectorfree()"
     },
     {
@@ -5740,7 +5740,7 @@
       "source_location": "L297",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_resolveheightandview",
-      "community": 141,
+      "community": 0,
       "norm_label": "resolveheightandview()"
     },
     {
@@ -5750,7 +5750,7 @@
       "source_location": "L308",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_projectgrid",
-      "community": 141,
+      "community": 0,
       "norm_label": "projectgrid()"
     },
     {
@@ -5760,7 +5760,7 @@
       "source_location": "L340",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_projectfootprint",
-      "community": 1,
+      "community": 0,
       "norm_label": "projectfootprint()"
     },
     {
@@ -5770,7 +5770,7 @@
       "source_location": "L351",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_projectvector",
-      "community": 179,
+      "community": 0,
       "norm_label": "projectvector()"
     },
     {
@@ -5780,7 +5780,7 @@
       "source_location": "L362",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_unprojectvector",
-      "community": 141,
+      "community": 0,
       "norm_label": "unprojectvector()"
     },
     {
@@ -5790,7 +5790,7 @@
       "source_location": "L377",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_unprojectatheight",
-      "community": 141,
+      "community": 0,
       "norm_label": "unprojectatheight()"
     },
     {
@@ -5800,7 +5800,7 @@
       "source_location": "L392",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_unprojectground",
-      "community": 141,
+      "community": 4,
       "norm_label": "unprojectground()"
     },
     {
@@ -5810,7 +5810,7 @@
       "source_location": "L401",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_projectcellquad",
-      "community": 141,
+      "community": 0,
       "norm_label": "projectcellquad()"
     },
     {
@@ -5820,7 +5820,7 @@
       "source_location": "L421",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_cellsfromgrid",
-      "community": 131,
+      "community": 0,
       "norm_label": "cellsfromgrid()"
     },
     {
@@ -5830,7 +5830,7 @@
       "source_location": "L440",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_normalizecells",
-      "community": 131,
+      "community": 0,
       "norm_label": "normalizecells()"
     },
     {
@@ -5840,7 +5840,7 @@
       "source_location": "L463",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_projectbounds",
-      "community": 137,
+      "community": 0,
       "norm_label": "projectbounds()"
     },
     {
@@ -5850,7 +5850,7 @@
       "source_location": "L501",
       "_origin": "ast",
       "id": "src_systems_sanctuaryprojection_viewdirectionforworldvector",
-      "community": 131,
+      "community": 0,
       "norm_label": "viewdirectionforworldvector()"
     },
     {
@@ -5870,7 +5870,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender",
-      "community": 137,
+      "community": 0,
       "norm_label": "sanctuaryrender.js"
     },
     {
@@ -5880,7 +5880,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_layer_residents",
-      "community": 137,
+      "community": 0,
       "norm_label": "layer_residents"
     },
     {
@@ -5890,7 +5890,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_resident_ground_base",
-      "community": 137,
+      "community": 0,
       "norm_label": "resident_ground_base"
     },
     {
@@ -5900,7 +5900,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_finite",
-      "community": 137,
+      "community": 0,
       "norm_label": "finite()"
     },
     {
@@ -5910,7 +5910,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_sanctuaryworldshadowgeometry",
-      "community": 137,
+      "community": 0,
       "norm_label": "sanctuaryworldshadowgeometry()"
     },
     {
@@ -5920,7 +5920,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_applysanctuaryworldshadow",
-      "community": 137,
+      "community": 0,
       "norm_label": "applysanctuaryworldshadow()"
     },
     {
@@ -5930,7 +5930,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_buildsanctuaryview",
-      "community": 137,
+      "community": 0,
       "norm_label": "buildsanctuaryview()"
     },
     {
@@ -5940,7 +5940,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_sanctuarybounds",
-      "community": 137,
+      "community": 0,
       "norm_label": "sanctuarybounds()"
     },
     {
@@ -5950,7 +5950,7 @@
       "source_location": "L180",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_coversanctuarycamera",
-      "community": 129,
+      "community": 5,
       "norm_label": "coversanctuarycamera()"
     },
     {
@@ -5980,7 +5980,7 @@
       "source_location": "L329",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_reprojectsanctuaryview",
-      "community": 137,
+      "community": 0,
       "norm_label": "reprojectsanctuaryview()"
     },
     {
@@ -5990,7 +5990,7 @@
       "source_location": "L401",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_captureresidentgroundbase",
-      "community": 137,
+      "community": 0,
       "norm_label": "captureresidentgroundbase()"
     },
     {
@@ -6000,7 +6000,7 @@
       "source_location": "L422",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_reprojectsanctuaryresidentaffordances",
-      "community": 137,
+      "community": 0,
       "norm_label": "reprojectsanctuaryresidentaffordances()"
     },
     {
@@ -6010,44 +6010,44 @@
       "source_location": "L455",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_spawnsanctuaryresidents",
-      "community": 137,
+      "community": 0,
       "norm_label": "spawnsanctuaryresidents()"
     },
     {
       "label": "updateSanctuaryResidentReadability()",
       "file_type": "code",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L639",
+      "source_location": "L641",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_updatesanctuaryresidentreadability",
-      "community": 129,
+      "community": 5,
       "norm_label": "updatesanctuaryresidentreadability()"
     },
     {
       "label": "updateSanctuaryOccluders()",
       "file_type": "code",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L663",
+      "source_location": "L665",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_updatesanctuaryoccluders",
-      "community": 129,
+      "community": 5,
       "norm_label": "updatesanctuaryoccluders()"
     },
     {
       "label": "clearSanctuaryEffects()",
       "file_type": "code",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L680",
+      "source_location": "L682",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_clearsanctuaryeffects",
-      "community": 129,
+      "community": 5,
       "norm_label": "clearsanctuaryeffects()"
     },
     {
       "label": "trackSanctuaryEffect()",
       "file_type": "code",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L687",
+      "source_location": "L689",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_tracksanctuaryeffect",
       "community": 5,
@@ -6057,7 +6057,7 @@
       "label": "playSanctuaryEffect()",
       "file_type": "code",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L696",
+      "source_location": "L698",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_playsanctuaryeffect",
       "community": 5,
@@ -6067,10 +6067,10 @@
       "label": "animateSanctuaryProps()",
       "file_type": "code",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L748",
+      "source_location": "L750",
       "_origin": "ast",
       "id": "src_systems_sanctuaryrender_animatesanctuaryprops",
-      "community": 129,
+      "community": 5,
       "norm_label": "animatesanctuaryprops()"
     },
     {
@@ -6080,7 +6080,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_systems_terrain",
-      "community": 2,
+      "community": 129,
       "norm_label": "terrain.js"
     },
     {
@@ -6090,7 +6090,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_systems_terrain_pickbiome",
-      "community": 2,
+      "community": 129,
       "norm_label": "pickbiome()"
     },
     {
@@ -6100,7 +6100,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_systems_terrain_buildterrain",
-      "community": 2,
+      "community": 129,
       "norm_label": "buildterrain()"
     },
     {
@@ -6110,7 +6110,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "src_systems_terrain_decoroffset",
-      "community": 2,
+      "community": 129,
       "norm_label": "decoroffset()"
     },
     {
@@ -6210,7 +6210,7 @@
       "source_location": "L281",
       "_origin": "ast",
       "id": "src_systems_texturebake_ensuresanctuarybackdroptexture",
-      "community": 137,
+      "community": 0,
       "norm_label": "ensuresanctuarybackdroptexture()"
     },
     {
@@ -6320,7 +6320,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "src_systems_tileart_signeddoublearea",
-      "community": 0,
+      "community": 2,
       "norm_label": "signeddoublearea()"
     },
     {
@@ -6330,7 +6330,7 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "src_systems_tileart_projectedshapekey",
-      "community": 0,
+      "community": 2,
       "norm_label": "projectedshapekey()"
     },
     {
@@ -6340,7 +6340,7 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "src_systems_tileart_projectedtilegeometry",
-      "community": 0,
+      "community": 2,
       "norm_label": "projectedtilegeometry()"
     },
     {
@@ -6400,7 +6400,7 @@
       "source_location": "L450",
       "_origin": "ast",
       "id": "src_systems_tileart_tile_overlays",
-      "community": 0,
+      "community": 2,
       "norm_label": "tile_overlays"
     },
     {
@@ -6580,7 +6580,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_systems_wyvernpresentation",
-      "community": 12,
+      "community": 1,
       "norm_label": "wyvernpresentation.js"
     },
     {
@@ -6590,7 +6590,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_systems_wyvernpresentation_wyvernaccentcolor",
-      "community": 12,
+      "community": 1,
       "norm_label": "wyvernaccentcolor()"
     },
     {
@@ -6600,17 +6600,17 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_systems_wyvernpresentation_resolvewyvernvisual",
-      "community": 12,
+      "community": 1,
       "norm_label": "resolvewyvernvisual()"
     },
     {
       "label": "scaleWyvernVisual()",
       "file_type": "code",
       "source_file": "src/systems/wyvernPresentation.js",
-      "source_location": "L32",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "src_systems_wyvernpresentation_scalewyvernvisual",
-      "community": 12,
+      "community": 1,
       "norm_label": "scalewyvernvisual()"
     },
     {
@@ -6620,7 +6620,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_atlaspanel",
-      "community": 6,
+      "community": 141,
       "norm_label": "atlaspanel.js"
     },
     {
@@ -6630,7 +6630,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_atlaspanel_kind_glyphs",
-      "community": 6,
+      "community": 141,
       "norm_label": "kind_glyphs"
     },
     {
@@ -6640,7 +6640,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_ui_atlaspanel_buildatlasoverlay",
-      "community": 6,
+      "community": 141,
       "norm_label": "buildatlasoverlay()"
     },
     {
@@ -6650,7 +6650,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "src_ui_atlaspanel_renderregion",
-      "community": 6,
+      "community": 141,
       "norm_label": "renderregion()"
     },
     {
@@ -6660,7 +6660,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "src_ui_atlaspanel_renderpoirow",
-      "community": 6,
+      "community": 141,
       "norm_label": "renderpoirow()"
     },
     {
@@ -6670,7 +6670,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "src_ui_atlaspanel_renderpoicard",
-      "community": 6,
+      "community": 141,
       "norm_label": "renderpoicard()"
     },
     {
@@ -6690,7 +6690,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_roostpanel",
-      "community": 6,
+      "community": 5,
       "norm_label": "roostpanel.js"
     },
     {
@@ -6700,7 +6700,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_roostpanel_camerarigmarkup",
-      "community": 6,
+      "community": 5,
       "norm_label": "camerarigmarkup()"
     },
     {
@@ -6710,7 +6710,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_ui_roostpanel_applycameratransitionlock",
-      "community": 6,
+      "community": 5,
       "norm_label": "applycameratransitionlock()"
     },
     {
@@ -6720,7 +6720,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "src_ui_roostpanel_buildroostoverlay",
-      "community": 6,
+      "community": 5,
       "norm_label": "buildroostoverlay()"
     },
     {
@@ -6730,7 +6730,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "src_ui_roostpanel_rendercard",
-      "community": 6,
+      "community": 5,
       "norm_label": "rendercard()"
     },
     {
@@ -6740,7 +6740,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_testpanel",
-      "community": 129,
+      "community": 5,
       "norm_label": "testpanel.js"
     },
     {
@@ -6750,7 +6750,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "src_ui_testpanel_createdragontestpanel",
-      "community": 129,
+      "community": 5,
       "norm_label": "createdragontestpanel()"
     },
     {
@@ -6760,7 +6760,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_uikit",
-      "community": 6,
+      "community": 141,
       "norm_label": "uikit.js"
     },
     {
@@ -6770,7 +6770,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_uikit_createnavisland",
-      "community": 6,
+      "community": 141,
       "norm_label": "createnavisland()"
     },
     {
@@ -6780,7 +6780,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_uikit_test",
-      "community": 6,
+      "community": 141,
       "norm_label": "uikit.test.js"
     },
     {
@@ -6790,7 +6790,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_vaultpanel",
-      "community": 6,
+      "community": 141,
       "norm_label": "vaultpanel.js"
     },
     {
@@ -6800,7 +6800,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_ui_vaultpanel_buildvaultoverlay",
-      "community": 6,
+      "community": 141,
       "norm_label": "buildvaultoverlay()"
     },
     {
@@ -6810,7 +6810,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_basescenelifecycle_test",
-      "community": 1,
+      "community": 4,
       "norm_label": "basescenelifecycle.test.js"
     },
     {
@@ -6820,7 +6820,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_basescenelifecycle_test_constructor",
-      "community": 1,
+      "community": 4,
       "norm_label": "constructor()"
     },
     {
@@ -6860,7 +6860,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test",
-      "community": 142,
+      "community": 13,
       "norm_label": "sanctuarycamera.test.js"
     },
     {
@@ -6870,7 +6870,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test_world_bounds",
-      "community": 142,
+      "community": 13,
       "norm_label": "world_bounds"
     },
     {
@@ -6880,7 +6880,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test_mockkey",
-      "community": 142,
+      "community": 13,
       "norm_label": "mockkey"
     },
     {
@@ -6890,7 +6890,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test_mockkey_constructor",
-      "community": 142,
+      "community": 13,
       "norm_label": ".constructor()"
     },
     {
@@ -6900,7 +6900,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test_mockinput",
-      "community": 142,
+      "community": 13,
       "norm_label": "mockinput"
     },
     {
@@ -6910,7 +6910,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test_mockinput_constructor",
-      "community": 142,
+      "community": 13,
       "norm_label": ".constructor()"
     },
     {
@@ -7050,7 +7050,7 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test_makescene",
-      "community": 142,
+      "community": 13,
       "norm_label": "makescene()"
     },
     {
@@ -7060,7 +7060,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test_makepointer",
-      "community": 142,
+      "community": 13,
       "norm_label": "makepointer()"
     },
     {
@@ -7070,7 +7070,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test_createfixture",
-      "community": 142,
+      "community": 13,
       "norm_label": "createfixture()"
     },
     {
@@ -7080,7 +7080,7 @@
       "source_location": "L455",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test_setposition",
-      "community": 142,
+      "community": 13,
       "norm_label": "setposition()"
     },
     {
@@ -7090,7 +7090,7 @@
       "source_location": "L456",
       "_origin": "ast",
       "id": "tests_sanctuarycamera_test_setdisplaysize",
-      "community": 142,
+      "community": 13,
       "norm_label": "setdisplaysize()"
     },
     {
@@ -7110,7 +7110,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_sanctuarygroundplane_test",
-      "community": 179,
+      "community": 0,
       "norm_label": "sanctuarygroundplane.test.js"
     },
     {
@@ -7120,7 +7120,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_sanctuarygroundplane_test_yaws",
-      "community": 179,
+      "community": 0,
       "norm_label": "yaws"
     },
     {
@@ -7130,7 +7130,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_sanctuarygroundplane_test_elevations",
-      "community": 179,
+      "community": 0,
       "norm_label": "elevations"
     },
     {
@@ -7140,7 +7140,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "tests_sanctuarygroundplane_test_setscale",
-      "community": 179,
+      "community": 0,
       "norm_label": "setscale()"
     },
     {
@@ -7150,7 +7150,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "tests_sanctuarygroundplane_test_setrotation",
-      "community": 179,
+      "community": 0,
       "norm_label": "setrotation()"
     },
     {
@@ -7160,7 +7160,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_sanctuaryinteractions_test",
-      "community": 1,
+      "community": 4,
       "norm_label": "sanctuaryinteractions.test.js"
     },
     {
@@ -7170,7 +7170,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_sanctuaryinteractions_test_emitter",
-      "community": 1,
+      "community": 4,
       "norm_label": "emitter()"
     },
     {
@@ -7180,7 +7180,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "tests_sanctuaryinteractions_test_displayobject",
-      "community": 1,
+      "community": 4,
       "norm_label": "displayobject()"
     },
     {
@@ -7190,7 +7190,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "tests_sanctuaryinteractions_test_makescene",
-      "community": 1,
+      "community": 4,
       "norm_label": "makescene()"
     },
     {
@@ -7210,7 +7210,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_sanctuarymovement_test",
-      "community": 319,
+      "community": 7,
       "norm_label": "sanctuarymovement.test.js"
     },
     {
@@ -7220,7 +7220,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_sanctuarymovement_test_cell",
-      "community": 319,
+      "community": 7,
       "norm_label": "cell()"
     },
     {
@@ -7230,7 +7230,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "tests_sanctuarymovement_test_display",
-      "community": 319,
+      "community": 7,
       "norm_label": "display()"
     },
     {
@@ -7240,7 +7240,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "tests_sanctuarymovement_test_footprint",
-      "community": 319,
+      "community": 7,
       "norm_label": "footprint()"
     },
     {
@@ -7250,7 +7250,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "tests_sanctuarymovement_test_residentat",
-      "community": 319,
+      "community": 7,
       "norm_label": "residentat()"
     },
     {
@@ -7260,7 +7260,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "tests_sanctuarymovement_test_scenewith",
-      "community": 319,
+      "community": 7,
       "norm_label": "scenewith()"
     },
     {
@@ -7270,7 +7270,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "tests_sanctuarymovement_test_opentiles",
-      "community": 319,
+      "community": 7,
       "norm_label": "opentiles()"
     },
     {
@@ -7280,7 +7280,7 @@
       "source_location": "L661",
       "_origin": "ast",
       "id": "tests_sanctuarymovement_test_flyer",
-      "community": 319,
+      "community": 7,
       "norm_label": "flyer()"
     },
     {
@@ -7290,7 +7290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_sanctuarypicker_test",
-      "community": 141,
+      "community": 129,
       "norm_label": "sanctuarypicker.test.js"
     },
     {
@@ -7300,7 +7300,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_sanctuarypicker_test_pointertocell",
-      "community": 141,
+      "community": 129,
       "norm_label": "pointertocell()"
     },
     {
@@ -7310,7 +7310,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_sanctuaryprojection_test",
-      "community": 141,
+      "community": 0,
       "norm_label": "sanctuaryprojection.test.js"
     },
     {
@@ -7320,7 +7320,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "tests_sanctuaryprojection_test_yaw_steps",
-      "community": 141,
+      "community": 0,
       "norm_label": "yaw_steps"
     },
     {
@@ -7330,7 +7330,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "tests_sanctuaryprojection_test_elevation_steps",
-      "community": 141,
+      "community": 0,
       "norm_label": "elevation_steps"
     },
     {
@@ -7340,7 +7340,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "tests_sanctuaryprojection_test_views",
-      "community": 141,
+      "community": 0,
       "norm_label": "views"
     },
     {
@@ -7350,7 +7350,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "tests_sanctuaryprojection_test_expectpointclose",
-      "community": 141,
+      "community": 0,
       "norm_label": "expectpointclose()"
     },
     {
@@ -7360,7 +7360,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_sanctuaryprojection_test_expectgridclose",
-      "community": 141,
+      "community": 0,
       "norm_label": "expectgridclose()"
     },
     {
@@ -7370,7 +7370,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_sanctuaryrendergroundplane_test",
-      "community": 137,
+      "community": 0,
       "norm_label": "sanctuaryrendergroundplane.test.js"
     },
     {
@@ -7380,7 +7380,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_sanctuaryrendergroundplane_test_display",
-      "community": 137,
+      "community": 0,
       "norm_label": "display()"
     },
     {
@@ -7510,27 +7510,37 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_wyvernpresentation_test",
-      "community": 12,
+      "community": 1,
       "norm_label": "wyvernpresentation.test.js"
+    },
+    {
+      "label": "atlasFrame",
+      "file_type": "code",
+      "source_file": "tests/wyvernPresentation.test.js",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "tests_wyvernpresentation_test_atlasframe",
+      "community": 1,
+      "norm_label": "atlasframe"
     },
     {
       "label": "baseFrame",
       "file_type": "code",
       "source_file": "tests/wyvernPresentation.test.js",
-      "source_location": "L8",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "tests_wyvernpresentation_test_baseframe",
-      "community": 12,
+      "community": 1,
       "norm_label": "baseframe"
     },
     {
       "label": "textureWith()",
       "file_type": "code",
       "source_file": "tests/wyvernPresentation.test.js",
-      "source_location": "L14",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "tests_wyvernpresentation_test_texturewith",
-      "community": 12,
+      "community": 1,
       "norm_label": "texturewith()"
     },
     {
@@ -18877,7 +18887,7 @@
       "label": "Contribution log",
       "file_type": "document",
       "source_file": "AI_CONTRIBUTIONS.md",
-      "source_location": "L33",
+      "source_location": "L32",
       "_origin": "ast",
       "id": "ai_contributions_contribution_log",
       "community": 201,
@@ -18887,7 +18897,7 @@
       "label": "How another model adds itself",
       "file_type": "document",
       "source_file": "AI_CONTRIBUTIONS.md",
-      "source_location": "L89",
+      "source_location": "L87",
       "_origin": "ast",
       "id": "ai_contributions_how_another_model_adds_itself",
       "community": 201,
@@ -20800,7 +20810,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_systems_atlasworld_atlas_base_height",
-      "community": 6,
+      "community": 131,
       "norm_label": "atlas_base_height"
     },
     {
@@ -24569,6 +24579,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/wyvernPresentation.test.js",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "tests_wyvernpresentation_test",
+      "target": "src_config",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -25104,6 +25125,17 @@
       "source_location": "L5",
       "weight": 1.0,
       "source": "src_systems_sanctuarymovement",
+      "target": "src_config_wyvern_states",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/wyvernPresentation.test.js",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "tests_wyvernpresentation_test",
       "target": "src_config_wyvern_states",
       "confidence_score": 1.0
     },
@@ -26205,7 +26237,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L72",
+      "source_location": "L75",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern_setstate",
       "target": "src_data_wyverns_wyvernanimationkey"
@@ -26271,7 +26303,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L544",
+      "source_location": "L546",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender_spawnsanctuaryresidents",
       "target": "src_data_wyverns_wyvernanimationkey"
@@ -26504,7 +26536,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L80",
+      "source_location": "L85",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern",
       "target": "src_entities_wyvern_wyvern_setorder",
@@ -26514,7 +26546,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L69",
+      "source_location": "L72",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern",
       "target": "src_entities_wyvern_wyvern_setstate",
@@ -26524,7 +26556,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L167",
+      "source_location": "L172",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern",
       "target": "src_entities_wyvern_wyvern_takehit",
@@ -26534,7 +26566,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L86",
+      "source_location": "L91",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern",
       "target": "src_entities_wyvern_wyvern_update",
@@ -26544,7 +26576,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L149",
+      "source_location": "L154",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern",
       "target": "src_entities_wyvern_wyvern_updateflightpose",
@@ -26566,7 +26598,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L61",
+      "source_location": "L64",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern_constructor",
       "target": "src_entities_wyvern_wyvern_setstate",
@@ -26578,7 +26610,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L51",
+      "source_location": "L54",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern_constructor",
       "target": "src_input_keyboardactions_addactionkeys"
@@ -26598,8 +26630,19 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L170",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "src_entities_wyvern_wyvern_constructor",
+      "target": "src_systems_wyvernpresentation_scalewyvernvisual"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/entities/Wyvern.js",
+      "source_location": "L175",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern_takehit",
       "target": "src_entities_wyvern_wyvern_setstate",
@@ -26610,7 +26653,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L108",
+      "source_location": "L113",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern_update",
       "target": "src_entities_wyvern_wyvern_setstate",
@@ -26621,7 +26664,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L97",
+      "source_location": "L102",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern_update",
       "target": "src_entities_wyvern_wyvern_updateflightpose",
@@ -26633,7 +26676,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L117",
+      "source_location": "L122",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern_update",
       "target": "src_input_keyboardactions_isactiondown"
@@ -26644,7 +26687,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/entities/Wyvern.js",
-      "source_location": "L106",
+      "source_location": "L111",
       "weight": 1.0,
       "source": "src_entities_wyvern_wyvern_update",
       "target": "src_input_keyboardactions_isactionjustdown"
@@ -38667,7 +38710,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L709",
+      "source_location": "L711",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender_playsanctuaryeffect",
       "target": "src_systems_sanctuarygroundplane_applygroundplanetransform"
@@ -39470,7 +39513,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L707",
+      "source_location": "L709",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender_playsanctuaryeffect",
       "target": "src_systems_sanctuaryinteractions_interactiongrounddepth"
@@ -44251,7 +44294,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L748",
+      "source_location": "L750",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender",
       "target": "src_systems_sanctuaryrender_animatesanctuaryprops",
@@ -44291,7 +44334,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L680",
+      "source_location": "L682",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender",
       "target": "src_systems_sanctuaryrender_clearsanctuaryeffects",
@@ -44351,7 +44394,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L696",
+      "source_location": "L698",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender",
       "target": "src_systems_sanctuaryrender_playsanctuaryeffect",
@@ -44421,7 +44464,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L687",
+      "source_location": "L689",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender",
       "target": "src_systems_sanctuaryrender_tracksanctuaryeffect",
@@ -44431,7 +44474,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L663",
+      "source_location": "L665",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender",
       "target": "src_systems_sanctuaryrender_updatesanctuaryoccluders",
@@ -44441,7 +44484,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L639",
+      "source_location": "L641",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender",
       "target": "src_systems_sanctuaryrender_updatesanctuaryresidentreadability",
@@ -44815,7 +44858,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L623",
+      "source_location": "L625",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender_spawnsanctuaryresidents",
       "target": "src_systems_sanctuaryrender_reprojectsanctuaryresidentaffordances",
@@ -44849,6 +44892,17 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/systems/sanctuaryRender.js",
+      "source_location": "L543",
+      "weight": 1.0,
+      "source": "src_systems_sanctuaryrender_spawnsanctuaryresidents",
+      "target": "src_systems_wyvernpresentation_scalewyvernvisual"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/systems/sanctuaryRender.js",
       "source_location": "L509",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender_spawnsanctuaryresidents",
@@ -44859,7 +44913,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/systems/sanctuaryRender.js",
-      "source_location": "L710",
+      "source_location": "L712",
       "weight": 1.0,
       "source": "src_systems_sanctuaryrender_playsanctuaryeffect",
       "target": "src_systems_sanctuaryrender_tracksanctuaryeffect",
@@ -46055,7 +46109,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/systems/wyvernPresentation.js",
-      "source_location": "L32",
+      "source_location": "L35",
       "weight": 1.0,
       "source": "src_systems_wyvernpresentation",
       "target": "src_systems_wyvernpresentation_scalewyvernvisual",
@@ -47204,7 +47258,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/wyvernPresentation.test.js",
-      "source_location": "L8",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "tests_wyvernpresentation_test",
+      "target": "tests_wyvernpresentation_test_atlasframe",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/wyvernPresentation.test.js",
+      "source_location": "L14",
       "weight": 1.0,
       "source": "tests_wyvernpresentation_test",
       "target": "tests_wyvernpresentation_test_baseframe",
@@ -47214,7 +47278,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/wyvernPresentation.test.js",
-      "source_location": "L14",
+      "source_location": "L20",
       "weight": 1.0,
       "source": "tests_wyvernpresentation_test",
       "target": "tests_wyvernpresentation_test_texturewith",
@@ -58239,7 +58303,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_CONTRIBUTIONS.md",
-      "source_location": "L33",
+      "source_location": "L32",
       "weight": 1.0,
       "source": "ai_contributions_ai_contribution_registry",
       "target": "ai_contributions_contribution_log",
@@ -58259,7 +58323,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_CONTRIBUTIONS.md",
-      "source_location": "L89",
+      "source_location": "L87",
       "weight": 1.0,
       "source": "ai_contributions_ai_contribution_registry",
       "target": "ai_contributions_how_another_model_adds_itself",

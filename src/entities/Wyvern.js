@@ -23,9 +23,6 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
     this.profile = profile;
     this.assetKey = profile.assetKey;
     this.visual = visual;
-    this.atlasScale = visual.usesAtlas
-      ? scaleWyvernVisual(visual, WYVERN_ART.missionHeight)
-      : null;
     this.hp = profile.hp ?? 100;
     this.stateName = null;
     this.locked = false; // true during one-shot states (attack/hurt/death)
@@ -73,9 +70,7 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
     if (this.stateName === next) return this;
     this.stateName = next;
     const animationKey = wyvernAnimationKey(this.assetKey, next);
-    const scale = this.visual.usesAtlas && this.atlasScale
-      ? this.atlasScale
-      : WYVERN_ART.placeholderMissionScale;
+    const scale = WYVERN_ART.placeholderMissionScale;
     this.setScale(scale);
     this.play(animationKey, true);
     return this;

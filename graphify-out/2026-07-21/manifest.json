@@ -60,9 +60,9 @@
     "semantic_hash": "7892d8df3c9a6604b81d6394ba465091"
   },
   "src/entities/Wyvern.js": {
-    "mtime": 1784622961.55587,
-    "ast_hash": "a2905dc80dbcf1f7a99196bbc2b16721",
-    "semantic_hash": ""
+    "mtime": 1784609445.1907196,
+    "ast_hash": "a9b496284d17f2296b30ba03b88bcbb2",
+    "semantic_hash": "a9b496284d17f2296b30ba03b88bcbb2"
   },
   "src/input/keyboardActions.ts": {
     "mtime": 1784609496.9251246,
@@ -180,9 +180,9 @@
     "semantic_hash": "facfba5d68ed670a81204b27a0120282"
   },
   "src/systems/sanctuaryRender.js": {
-    "mtime": 1784622968.6616104,
-    "ast_hash": "89606f71ba84f2871d6b7d9945b05b7e",
-    "semantic_hash": ""
+    "mtime": 1784576471.9209602,
+    "ast_hash": "c1c35b561cf1cfafb866270312df2d23",
+    "semantic_hash": "c1c35b561cf1cfafb866270312df2d23"
   },
   "src/systems/terrain.js": {
     "mtime": 1784207453.1280308,
@@ -205,9 +205,9 @@
     "semantic_hash": "c8dbd0dada9c82f48d5e8c7823ae67ea"
   },
   "src/systems/wyvernPresentation.js": {
-    "mtime": 1784622940.521206,
-    "ast_hash": "e13c18d4a1b3f7e0b62b267d5c6d8f8b",
-    "semantic_hash": ""
+    "mtime": 1784365249.6487572,
+    "ast_hash": "955545d1ed50aca6a65131698cd3e5dd",
+    "semantic_hash": "955545d1ed50aca6a65131698cd3e5dd"
   },
   "src/ui/atlasPanel.js": {
     "mtime": 1784376380.3816066,
@@ -305,9 +305,9 @@
     "semantic_hash": "0bde8babd5e076a3c4ffa110307a5123"
   },
   "tests/wyvernPresentation.test.js": {
-    "mtime": 1784622983.735091,
-    "ast_hash": "0ba1e4dc60c4e5cd0f076685719b886f",
-    "semantic_hash": ""
+    "mtime": 1784579769.086232,
+    "ast_hash": "2a8574f776377ea2b7fa15dbbe95eb5c",
+    "semantic_hash": "2a8574f776377ea2b7fa15dbbe95eb5c"
   },
   "tools/prep-drogon.mjs": {
     "mtime": 1784606628.0973356,
@@ -480,9 +480,9 @@
     "semantic_hash": "8ab729d925ffa1e047588155fa8d49e9"
   },
   "AI_CONTRIBUTIONS.md": {
-    "mtime": 1784622739.3920736,
-    "ast_hash": "5b6b28938b603405a9992ae87cede92e",
-    "semantic_hash": ""
+    "mtime": 1784608453.7242172,
+    "ast_hash": "5bf76524fab4ac8058cc2f61f86393e6",
+    "semantic_hash": "5bf76524fab4ac8058cc2f61f86393e6"
   },
   "CLAUDE.md": {
     "mtime": 1784550283.3148694,

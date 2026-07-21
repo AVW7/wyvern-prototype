@@ -539,9 +539,7 @@ export function spawnSanctuaryResidents(scene, layer, view, zoom, options = {}) 
       layer.add(shadow);
 
       sprite.setOrigin(visual.origin.x, visual.origin.y);
-      sprite.setScale(visual.usesAtlas
-        ? scaleWyvernVisual(visual, WYVERN_ART.sanctuaryHeight)
-        : WYVERN_ART.sanctuaryHeight / Math.max(visual.referenceHeight, 1));
+      sprite.setScale(WYVERN_ART.sanctuaryHeight / Math.max(visual.referenceHeight, 1));
 
       const idleKey = wyvernAnimationKey(animal, 'idle');
       if (scene.anims.exists(idleKey)) sprite.play(idleKey);

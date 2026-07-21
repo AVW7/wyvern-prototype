@@ -5,9 +5,9 @@ visible without treating any model as the sole author.
 
 ## Count
 
-- Distinct contributing model entries: 10
+- Distinct contributing model entries: 11
 - Providers represented: 3
-- Contribution records: 48
+- Contribution records: 50
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -28,6 +28,7 @@ AI-008, Review R-005) and is counted above.
 | AI-008 | Gemini 3.1 Pro (Low) | Google | 2026-07-18 | Reviewed the Sanctuary Rotatable Camera plan (Review R-005), advocating for scope reduction through sprite mirroring and pre-baked tiles. |
 | AI-009 | Gemini 3.5 Flash (Low) | Google | 2026-07-20 | Set up graphify tool, processed the code structure, analyzed camera/session architecture, and updated agent entry documentation. |
 | AI-010 | Gemini 3.5 Flash (Medium) | Google | 2026-07-20 | Added threejs-loaders skill to workspace customizations directory. |
+| AI-011 | Gemini (exact model unknown) | Google | 2026-07-21 | Removed obsolete 2D sprite animations and related validation/tests to finalize transition to 3D environment. |
 
 ## Contribution log
 
@@ -83,6 +84,8 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-046 | 2026-07-20 | AI-009 | Built a floating debug/test UI panel overlay for the 3D wyvern to tune scale, anim speed, altitude, lighting intensities, wireframe mode, and trigger actions. | `src/systems/sanctuary3D.js`, `src/scenes/BaseScene.js`, `src/systems/sanctuaryMovement.js`, `src/ui/testPanel.js`, `src/ui/ui.css` | `npm run check` full gate pass (all 14 test files / 164 tests passed, built successfully) |
 | C-047 | 2026-07-20 | AI-003 | Converted the Vault scene to a 3D Three.js diorama, removed all legacy 2D sprite rendering code, and removed all wyverns, profiles, rosters, actions, and tuning panels (as they are only for outside), rendering the empty chamber with exit raycasting and simplified travel controls. | `src/scenes/VaultScene.js`, `src/systems/sanctuary3D.js`, `src/ui/vaultPanel.js`, `tests/wyvernPresentation.test.js` | `npm run check` full gate pass (all 14 test files / 163 tests passed, built successfully) |
 | C-048 | 2026-07-21 | AI-005 | Milestone 3 of the 3D dragon plan: rebuilt the animation clip table (4 → 16 clips from the source's 52) and added a pure motion state machine so the dragon is steered rather than snapped — rate-limited heading, turn-in-place clips, speed-matched walk playback, takeoff/landing, banking and pitch, and one-shot actions that stop looping. Terrain look/materials pass: tone mapping, per-tile colour jitter and baked neighbour occlusion, procedural face textures, island skirt, animated lagoon surface, breathing lava with real light, distance fog. Fixed exterior billboard props rendering as Phaser's missing-texture placeholder (wrong texture-key namespace) and a rebuild leaking a second `sanctuary3D` instance and debug panel. | `src/systems/dragonMotion.js` (new), `src/systems/tileTexture3D.js` (new), `tests/dragonMotion.test.js` (new), `tests/tileTexture3D.test.js` (new), `src/systems/sanctuary3D.js`, `src/systems/sanctuaryMovement.js`, `src/scenes/BaseScene.js`, `src/ui/testPanel.js`, `src/config.js`, `tools/prep-drogon.mjs`, `assets/models/dragon/drogon-sanctuary.glb` | `npm run check` full gate pass (16 test files / 202 tests). Browser pass on Base confirmed walk, damped turning, takeoff/climb/landing, Dracarys particles, restored props and the terrain shading; the remaining matrix rows (clip picker rebinding, Vault/Atlas/Mission round trip) are unverified — the session had no exclusive dev server. |
+| C-049 | 2026-07-21 | AI-011 | Removed obsolete 2D sprite animations, deleted asset files in `assets/sprites/wyverns`, removed `atlas` configuration from `src/data/wyverns.js`, and deleted the obsolete validation script `scripts/validate-wyvern-atlases.mjs`, validation tests `tests/wyvernAtlas.test.js`, and system module `src/systems/wyvernAtlas.js`. Simplified the `PreloadScene` to skip 2D atlas loading and validation while preserving clean fallbacks for remaining 2D sprite elements. | `package.json`, `src/data/wyverns.js`, `src/scenes/PreloadScene.js`, `assets/sprites/wyverns/`, `scripts/validate-wyvern-atlases.mjs`, `tests/wyvernAtlas.test.js`, `src/systems/wyvernAtlas.js` | `npm run check` full gate pass (all 15 test files / 197 tests passed, built successfully) |
+| C-050 | 2026-07-21 | AI-011 | Cleaned up leftover `usesAtlas` references across core codebase files: simplified `resolveWyvernVisual` and `scaleWyvernVisual` in `src/systems/wyvernPresentation.js`, removed `usesAtlas` conditional branches in `src/entities/Wyvern.js`, simplified `sprite.setScale` in `src/systems/sanctuaryRender.js`, and updated presentation tests in `tests/wyvernPresentation.test.js`. | `src/systems/wyvernPresentation.js`, `src/entities/Wyvern.js`, `src/systems/sanctuaryRender.js`, `tests/wyvernPresentation.test.js` | `npm run check` full gate pass (all 15 test files / 196 tests passed, built successfully) |
 
 ## How another model adds itself
 

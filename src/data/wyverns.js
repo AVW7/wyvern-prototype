@@ -19,17 +19,6 @@ export const DEMO_WYVERNS = [
     accent: '#d97706',
     stats: { guard: 5, attack: 3, speed: 2 },
     missionTags: ['Defense', 'Escort', 'Rescue'],
-    atlas: {
-      image: 'assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/wyvern_required_atlas.png',
-      data: 'assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/wyvern_required_atlas.json',
-      initialFrame: 'idle_0',
-      // Load after portable atlases: this page is taller than 4096 px and may
-      // fail on constrained renderers, but must not starve valid profiles.
-      loadPriority: 20,
-      // Optional per-atlas pivot override. Exported sourceSize and
-      // spriteSourceSize still need to remain stable between frames.
-      origin: { x: 0.5, y: 0.88 },
-    },
   },
 ];
 

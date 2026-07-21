@@ -1,11 +1,11 @@
 # Graph Report - wyvern-prototype  (2026-07-21)
 
 ## Corpus Check
-- 108 files · ~674,627 words
+- 108 files · ~674,670 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2309 nodes · 3568 edges · 321 communities (134 shown, 187 thin omitted)
+- 2310 nodes · 3573 edges · 319 communities (132 shown, 187 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 51 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
@@ -331,8 +331,6 @@
 - WireframeGeometry
 - Wyvern
 - Mega Wyvern License
-- sanctuaryMovement.test.js
-- .refit
 
 ## God Nodes (most connected - your core abstractions)
 1. `SanctuaryCameraController` - 51 edges
@@ -347,53 +345,49 @@
 10. `projectFootprint()` - 26 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `createSanctuaryWanderers()` --indirect_call--> `footprint()`  [INFERRED]
-  src/systems/sanctuaryMovement.js → tests/sanctuaryMovement.test.js
+- `pointerToCell()` --calls--> `unprojectGround()`  [EXTRACTED]
+  tests/sanctuaryPicker.test.js → src/systems/sanctuaryProjection.js
 - `Subzero Wyvern Character` --conceptually_related_to--> `Drogon Dragon Body Texture`  [INFERRED]
   assets/sprites/wyverns/Subzero/se_idle_0.png → wyvernassets-3d testing/drogon-game-of-thrones-dragon/textures/T_DaenerysDragon_Body_D.png
 - `Subzero Wyvern Character` --conceptually_related_to--> `Mega Wyvern Base Color Texture`  [INFERRED]
   assets/sprites/wyverns/Subzero/se_idle_0.png → wyvernassets-3d testing/mega_wyvern 2/textures/Dragon_Boss_05_baseColor.png
-- `flyer()` --calls--> `createSanctuaryMovement()`  [EXTRACTED]
-  tests/sanctuaryMovement.test.js → src/systems/sanctuaryMovement.js
-- `tileGeometry()` --calls--> `projectionBasis()`  [EXTRACTED]
-  tests/sanctuaryTextureBake.test.js → src/systems/sanctuaryProjection.js
+- `footprint()` --calls--> `gridToScreen()`  [EXTRACTED]
+  tests/sanctuaryMovement.test.js → src/systems/iso.js
+- `createFixture()` --calls--> `createSanctuaryCamera()`  [EXTRACTED]
+  tests/sanctuaryCamera.test.js → src/systems/sanctuaryCamera.js
 
 ## Import Cycles
 - None detected.
 
-## Communities (321 total, 187 thin omitted)
+## Communities (319 total, 187 thin omitted)
 
 ### Community 0 - "Isometric Coordinate Systems & Ground Plane Configuration"
-Cohesion: 0.15
-Nodes (23): decorTextureKey(), drawDecor(), EXTERIOR_SANCTUARY_DECOR_TYPES, normalizeView(), viewKey(), placeDecor(), placeSanctuaryTiles(), ensureDecorTexture() (+15 more)
+Cohesion: 0.07
+Nodes (73): GAME, wyvernAnimationKey(), DECOR_BOX, decorTextureKey(), drawDecor(), gridToScreen(), EXTERIOR_SANCTUARY_DECOR_TYPES, applyGroundPlaneTransform() (+65 more)
 
 ### Community 1 - "Wyvern Roster Configurations & Atlas Validation"
-Cohesion: 0.20
-Nodes (19): actorGroundFootprint(), actorLogicalFootprint(), createSanctuaryInteractions(), DEFAULT_TUNING, DEFAULT_VIEW, finiteLogicalPoint(), finitePoint(), interactionGroundDepth() (+11 more)
+Cohesion: 0.13
+Nodes (22): COMBAT, DEMO_ENEMY_SPAWNS, EMOJI, ENEMY_STATES, ISO, ORDER_EFFECTS, WYVERN_ART, WYVERN_ORDERS (+14 more)
 
 ### Community 2 - "Procedural Isometric Tile Art Drawing"
 Cohesion: 0.06
-Nodes (104): BIOME_KEYS, BIOMES, DECOR_DRAWERS, drawArena(), drawBarredDoor(), drawBasaltSpires(), drawBones(), drawButte() (+96 more)
-
-### Community 3 - "Sanctuary Camera Control & Input Bindings"
-Cohesion: 0.11
-Nodes (3): isActionDown(), pointerButtonDown(), SanctuaryCameraController
+Nodes (100): DECOR_DRAWERS, drawArena(), drawBarredDoor(), drawBasaltSpires(), drawBones(), drawButte(), drawCactus(), drawCherry() (+92 more)
 
 ### Community 4 - "Sanctuary Interaction Systems & Target Footprints"
-Cohesion: 0.12
-Nodes (8): clamp(), defaultPointFromLogical(), displayObjectAlive(), distanceBetween(), pointerId(), primaryPointerDown(), SanctuaryInteractionController, pointer()
+Cohesion: 0.08
+Nodes (27): actorGroundFootprint(), actorLogicalFootprint(), clamp(), createSanctuaryInteractions(), DEFAULT_TUNING, DEFAULT_VIEW, defaultPointFromLogical(), displayObjectAlive() (+19 more)
 
 ### Community 5 - "Base Game Scene Orchestration"
-Cohesion: 0.12
-Nodes (11): BaseScene, CAMERA_MODES, targetFootprint(), addAnimal(), gainXp(), getAnimal(), raiseBond(), recruitAnimal() (+3 more)
+Cohesion: 0.08
+Nodes (27): onKeydown(), ACTION_MOTIONS, BaseScene, CAMERA_MODES, clamp(), SANCTUARY_SESSION, targetFootprint(), addAnimal() (+19 more)
 
 ### Community 6 - "World Map Biomes Generation & POIs Roster"
-Cohesion: 0.07
-Nodes (31): ATLAS, ATOLL_RING, getPoi(), getRegion(), POIS, REGION_BLOBS, REGIONS, AtlasScene (+23 more)
+Cohesion: 0.18
+Nodes (3): POIS, AtlasScene, setAtlasTooltip()
 
 ### Community 7 - "Sanctuary Resident Pathfinding & Wander Movement"
-Cohesion: 0.08
-Nodes (47): keyNameList(), ACTOR_DEPTH_OFFSETS, animationExists(), beginWanderPause(), canOccupy(), canOccupyLogical(), capturePresentation(), clamp() (+39 more)
+Cohesion: 0.07
+Nodes (54): keyNameList(), ACTOR_DEPTH_OFFSETS, animationExists(), beginWanderPause(), canOccupy(), canOccupyLogical(), capturePresentation(), clamp() (+46 more)
 
 ### Community 8 - "Wyvern Sprite Sets & Animation Atlas"
 Cohesion: 0.07
@@ -401,15 +395,19 @@ Nodes (47): Cinderlash Idle Animation, Cinderlash Special Animation, Cinderlash 
 
 ### Community 9 - "Sanctuary Resident 3D Dragon Motion System"
 Cohesion: 0.07
-Nodes (27): createDragonMotion(), DEFAULTS, shortestAngle(), gridToWorld3D(), tileCenterY(), worldToGridCol(), worldToGridRow(), createSanctuary3D() (+19 more)
+Nodes (28): SANCTUARY, createDragonMotion(), DEFAULTS, shortestAngle(), gridToWorld3D(), tileCenterY(), worldToGridCol(), worldToGridRow() (+20 more)
 
 ### Community 11 - "Package Configuration & Tooling Dependencies"
 Cohesion: 0.07
 Nodes (27): jsdom, dependencies, phaser, three, devDependencies, jsdom, typescript, vite (+19 more)
 
 ### Community 12 - "Mission Combat Loop & Enemy Spawners"
-Cohesion: 0.05
-Nodes (26): COMBAT, DEMO_ENEMY_SPAWNS, EMOJI, ENEMY_STATES, ORDER_EFFECTS, WYVERN_ART, WYVERN_ORDERS, WYVERN_STATES (+18 more)
+Cohesion: 0.14
+Nodes (3): Enemy, MissionScene, ensureBackdropTexture()
+
+### Community 13 - "Sanctuary Camera Testing & Fixtures"
+Cohesion: 0.11
+Nodes (7): SANCTUARY_CAMERA_MODES, createFixture(), makeScene(), MockCamera, MockInput, MockKey, WORLD_BOUNDS
 
 ### Community 14 - "Procedural 3D Sanctuary Decor Geometry"
 Cohesion: 0.04
@@ -508,24 +506,24 @@ Cohesion: 0.09
 Nodes (22): Build Targets, Debug Features, Entity Lifecycle, Game Loop Architecture, GameBase Template Repository, Getting Started, Haxe, Heaps (Heaps.io) (+14 more)
 
 ### Community 129 - "sanctuary.js"
-Cohesion: 0.12
-Nodes (21): ISO, SANCTUARY, buildSanctuaryExterior(), buildSanctuaryInterior(), INTERACTIONS, makeBuilder(), RESIDENT_SPOTS, VAULT_PREVIEW_SPOT (+13 more)
+Cohesion: 0.16
+Nodes (15): TERRAIN, BIOME_KEYS, BIOMES, buildSanctuaryExterior(), buildSanctuaryInterior(), INTERACTIONS, makeBuilder(), RESIDENT_SPOTS (+7 more)
 
 ### Community 130 - "Other Control Mechanisms"
 Cohesion: 0.10
 Nodes (19): Best Practices, Best Practices, Best Practices, Code Examples, Code Examples, Code Examples, Desktop with Gamepad, Desktop with Mouse and Keyboard (+11 more)
 
 ### Community 131 - "AtlasScene.js"
-Cohesion: 0.23
-Nodes (20): buildBasis(), cellsFromGrid(), clamp(), clampViewFree(), endpointGroundBasis(), FALLBACK_RIG, finite(), normalizeCells() (+12 more)
+Cohesion: 0.18
+Nodes (17): ATLAS, ATOLL_RING, getPoi(), REGION_BLOBS, REGIONS, ATLAS_BASE_HEIGHT, atollCell(), buildAtlasWorld() (+9 more)
 
 ### Community 132 - "CLAUDE.md"
 Cohesion: 0.11
 Nodes (16): 3D dragon experiment (single resident), Architecture & flow, Conventions (follow these), Guardrails, Multi-AI project, Procedural terrain pipeline, Replacing placeholders (the common next steps), Rotatable sanctuary view (+8 more)
 
 ### Community 133 - "sanctuaryCamera.js"
-Cohesion: 0.35
-Nodes (8): cameraRigTuning(), clamp(), DEFAULT_CAMERA_RIG, finite(), isPromiseLike(), normalizeSanctuaryCameraView(), snapToStep(), viewsEqual()
+Cohesion: 0.20
+Nodes (9): cameraRigTuning(), copyBounds(), DEFAULT_CAMERA_RIG, finite(), isPromiseLike(), normalizeSanctuaryCameraView(), snapToStep(), validBounds() (+1 more)
 
 ### Community 134 - "Game Engine Skill"
 Cohesion: 0.12
@@ -540,12 +538,12 @@ Cohesion: 0.12
 Nodes (15): Acknowledgments, Basic Scene Setup, Contributing, Custom Shaders, How It Works, Installation, License, Loading 3D Models (+7 more)
 
 ### Community 137 - "PreloadScene"
-Cohesion: 0.22
-Nodes (15): wyvernAnimationKey(), getRoster(), projectBounds(), applySanctuaryWorldShadow(), buildSanctuaryView(), captureResidentGroundBase(), finite(), LAYER_RESIDENTS (+7 more)
+Cohesion: 0.23
+Nodes (3): DEMO_WYVERNS, getDemoWyvern(), PreloadScene
 
 ### Community 138 - "keyboardActions.ts"
-Cohesion: 0.17
-Nodes (8): Wyvern, ActionKeyBinding, addActionKeys(), BINDINGS, isActionJustDown(), KeyBinding, onActionDown(), onKeydown()
+Cohesion: 0.18
+Nodes (8): Wyvern, ActionKeyBinding, addActionKeys(), BINDINGS, isActionDown(), isActionJustDown(), KeyBinding, onActionDown()
 
 ### Community 139 - "Art and Visual Terms"
 Cohesion: 0.13
@@ -556,12 +554,8 @@ Cohesion: 0.13
 Nodes (15): Bug, Cross-Platform, Day One Patch, DLC (Downloadable Content), Early Access, Exploit, Free-to-Play (F2P), Games as a Service (GaaS) (+7 more)
 
 ### Community 141 - "VaultScene.js"
-Cohesion: 0.21
-Nodes (12): TERRAIN, projectCellQuad(), projectGrid(), projectionBasis(), resolveHeightAndView(), unprojectAtHeight(), unprojectGround(), unprojectVector() (+4 more)
-
-### Community 142 - "._bindInput"
-Cohesion: 0.16
-Nodes (8): GAME, createSanctuaryCamera(), SANCTUARY_CAMERA_MODES, createFixture(), makeScene(), MockInput, MockKey, WORLD_BOUNDS
+Cohesion: 0.29
+Nodes (8): getRegion(), buildAtlasOverlay(), KIND_GLYPHS, renderPoiCard(), renderPoiRow(), renderRegion(), createNavIsland(), buildVaultOverlay()
 
 ### Community 143 - "Mathematical / Algorithmic Concepts"
 Cohesion: 0.17
@@ -704,8 +698,8 @@ Cohesion: 0.29
 Nodes (7): Code Example, Connection Lifecycle, Key Events, Key Interfaces, WebRTC API, What It Is, Why It Matters for Games
 
 ### Community 179 - "main.js"
-Cohesion: 0.29
-Nodes (7): applyGroundPlaneTransform(), finite(), groundPlaneTransform(), withoutTinyNoise(), projectVector(), ELEVATIONS, YAWS
+Cohesion: 0.33
+Nodes (3): config, game, BootScene
 
 ### Community 180 - "Shared AI Development Context"
 Cohesion: 0.33
@@ -883,29 +877,25 @@ Nodes (3): Keyboard Controls, Reading Input in Update, Setting Up Input Keys
 Cohesion: 0.67
 Nodes (3): Loading the Hero Image, Spawning the Hero, The Main Character Sprite
 
-### Community 319 - "sanctuaryMovement.test.js"
-Cohesion: 0.42
-Nodes (8): gridToScreen(), cell(), display(), flyer(), footprint(), openTiles(), residentAt(), sceneWith()
-
 ## Knowledge Gaps
-- **1302 isolated node(s):** `name`, `version`, `private`, `type`, `dev` (+1297 more)
+- **1303 isolated node(s):** `name`, `version`, `private`, `type`, `dev` (+1298 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **187 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `SanctuaryCameraController` connect `Sanctuary Camera Control & Input Bindings` to `.refit`, `._resetFraming`, `Base Game Scene Orchestration`, `sanctuaryCamera.js`?**
+- **Why does `SanctuaryCameraController` connect `Sanctuary Camera Control & Input Bindings` to `._resetFraming`, `Base Game Scene Orchestration`, `sanctuaryCamera.js`, `._bindInput`?**
   _High betweenness centrality (0.010) - this node is a cross-community bridge._
-- **Why does `AtlasScene` connect `World Map Biomes Generation & POIs Roster` to `Mission Combat Loop & Enemy Spawners`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Why does `MockCamera` connect `Sanctuary Camera Testing & Fixtures` to `._bindInput`?**
+- **Why does `AtlasScene` connect `World Map Biomes Generation & POIs Roster` to `main.js`, `AtlasScene.js`?**
   _High betweenness centrality (0.005) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `private` to the rest of the system?**
-  _1302 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1303 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Isometric Coordinate Systems & Ground Plane Configuration` be split into smaller, more focused modules?**
-  _Cohesion score 0.14814814814814814 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06642246642246642 - nodes in this community are weakly interconnected._
+- **Should `Wyvern Roster Configurations & Atlas Validation` be split into smaller, more focused modules?**
+  _Cohesion score 0.1310483870967742 - nodes in this community are weakly interconnected._
 - **Should `Procedural Isometric Tile Art Drawing` be split into smaller, more focused modules?**
-  _Cohesion score 0.05775418275418275 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06366691560866318 - nodes in this community are weakly interconnected._
 - **Should `Sanctuary Camera Control & Input Bindings` be split into smaller, more focused modules?**
-  _Cohesion score 0.10984848484848485 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12857142857142856 - nodes in this community are weakly interconnected._
