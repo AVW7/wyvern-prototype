@@ -88,6 +88,14 @@ export const SANCTUARY = {
     flightResponseMs: 140,
     bobAmplitude: 2.5,
     maxDeltaMs: 50,
+    // Screen-pixel radius the actor collides with, against a 64px-wide tile
+    // diamond. Measured in Blender, the walking model's folded body is 28.9
+    // world units across (1.2 tiles) and its feet 8.7 (0.36 tiles); this sits
+    // between them, at roughly the torso half-width. The default was 3 — a
+    // point — which is why the body used to end up overlapping walls and props
+    // it had never collided with. Raising it further would stop the wyvern
+    // fitting down a one-tile corridor.
+    collisionRadius: 22,
     // Max height levels the wyvern climbs onto in one step. Gentle hills and
     // terraces (rise <= this) are walkable and ridden up; a taller rise reads
     // as a cliff/wall it's stopped by and must go around.
@@ -231,6 +239,21 @@ export const SANCTUARY = {
       // per-second chance it does once eligible.
       idleBreakAfterSec: 14,
       idleBreakChance: 0.12,
+    },
+    // Ground contact. See systems/terrainHeightField.js — the model's Y comes
+    // from a bilinear sample of a dilated height grid, not from the one cell
+    // its centre rounds to.
+    ground: {
+      // How fast the model rides onto a new ground height, and the only thing
+      // absorbing the step at a terrace edge — the surface there is genuinely
+      // discontinuous, so it is travelled over time rather than smoothed away.
+      // 9 settles a full level in about 100ms. Lower reads heavier; too low and
+      // the feet lag visibly behind the ground on a staircase.
+      settleHz: 9,
+      // Height levels per tile of slope at which the body reaches its full
+      // pitch. Walking up a one-level-per-tile ramp at gain 1 gives the whole
+      // pitchMaxDeg, which is too much, so this is deliberately shallow.
+      slopePitchGain: 0.45,
     },
     crossfadeMs: 250,
     // Flight height is now real, player-controlled altitude — see

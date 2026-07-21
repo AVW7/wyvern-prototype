@@ -5,6 +5,10 @@ import { GAME, SANCTUARY, TERRAIN } from '../config.js';
 import { BIOMES } from '../data/biomes.js';
 import { TILE_SIZE, HEIGHT_SCALE, gridToWorld3D, tileCenterY } from './grid3d.js';
 import { bankWeights, createDragonMotion } from './dragonMotion.js';
+import {
+  createHeightField, easeGroundHeight, sampleHeight, slopeAlong,
+} from './terrainHeightField.js';
+import { createHeightGrid } from './sanctuaryMovement.js';
 import { createNoise } from './noise.js';
 import { ensureDecorTexture } from './textureBake.js';
 import { neighbourOcclusion, tileFaceCanvases } from './tileTexture3D.js';
@@ -580,6 +584,9 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   // update() from the movement controller's step; kept so the debug panel can
   // read the same number the walk cycle's playback rate is matched against.
   let lastGroundSpeed = 0;
+  // Eased ground height per resident, so a step up is ridden rather than
+  // teleported. Keyed by animal id because every resident rides its own.
+  const groundHeights = new Map();
   let elapsedSec = 0;
 
   // Camera State
@@ -617,9 +624,14 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   // sink through raised terrain. Round to the owning cell, mirroring the
   // collision system's heightAt() so the model rides exactly the tile the
   // movement gate stands it on.
+  // Ground under a continuous position, smoothed and dilated — see
+  // systems/terrainHeightField.js for why rounding to one cell was wrong.
+  // Built from the same createHeightGrid() the collision gate uses, so the
+  // surface the model rides and the terrain it is allowed onto agree.
+  const heightField = createHeightField(createHeightGrid(tiles));
+
   function terrainHeightAt(footprint) {
-    const cell = tiles[Math.round(footprint.row)]?.[Math.round(footprint.col)];
-    return cell?.height || TERRAIN.baseHeight;
+    return sampleHeight(heightField, footprint.col, footprint.row);
   }
 
   // Group tiles by biome to construct InstancedMesh per biome.
@@ -960,9 +972,13 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       // bounding box, which blows up the scale.
       const { center, minY, finalScale } = cached.measurements;
 
-      cloned.position.x -= center.x;
-      cloned.position.z -= center.z;
-      cloned.position.y -= minY;
+      // Scaled, because `position` is in the parent's space and an object's own
+      // `scale` does not apply to it. Measuring the offsets on the unscaled
+      // scene and then subtracting them raw left the model about 3.6 world
+      // units — 15% of a tile — off its own shadow and selection ring.
+      cloned.position.x -= center.x * finalScale;
+      cloned.position.z -= center.z * finalScale;
+      cloned.position.y -= minY * finalScale;
 
       cloned.traverse((node) => {
         if (node.isMesh) {
@@ -1861,6 +1877,16 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
           altitude: movement?.getAltitude?.() ?? 0,
           targetAltitude: movement?.getTargetAltitude?.() ?? 0,
           action: actionMotion,
+          // Ground rise along the way it is heading, so the body pitches into
+          // a climb instead of sliding up it flat.
+          groundSlope: moveVector
+            ? slopeAlong(
+              heightField,
+              movement?.getLogicalFootprint?.()?.col ?? 0,
+              movement?.getLogicalFootprint?.()?.row ?? 0,
+              moveVector,
+            ) * (SANCTUARY.dragon3D?.ground?.slopePitchGain ?? 1)
+            : 0,
         });
 
         baseMotion = overrideMotion && !dragonMotion.pendingOneShot
@@ -2066,7 +2092,18 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         const visual = residentVisuals[r.animal.id];
         if (!visual) return;
 
-        const currentHeight = terrainHeightAt(r.footprint);
+        // Ride onto the sampled ground rather than snapping to it — a terrace
+        // edge and a climbStep rise both move the surface a whole level in one
+        // frame, and the body should travel that, not teleport.
+        const targetHeight = terrainHeightAt(r.footprint);
+        const currentHeight = easeGroundHeight(
+          groundHeights.get(r.animal.id),
+          targetHeight,
+          deltaSec,
+          SANCTUARY.dragon3D?.ground?.settleHz ?? 9,
+        );
+        groundHeights.set(r.animal.id, currentHeight);
+
         const surface = gridToWorld3D(r.footprint.col, r.footprint.row, currentHeight, cols, rows);
 
         // The group (with the grounded shadow + selection ring) always rides the

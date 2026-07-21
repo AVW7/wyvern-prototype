@@ -361,3 +361,57 @@ describe('createDragonMotion idle breaks', () => {
     expect(machine.idleSec).toBe(0);
   });
 });
+
+describe('ground slope pitch', () => {
+  const MOTION_CFG = SANCTUARY.dragon3D.motion;
+  const walking = { speed: 90, isFlying: false, altitude: 0, targetAltitude: 0 };
+
+  it('pitches the nose up walking uphill and down walking downhill', () => {
+    // Without this a climb reads as sliding up a ramp with the body held flat.
+    const up = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    const uphill = run(up, { ...walking, groundSlope: 1 }, 1200);
+    expect(uphill.pitch).toBeGreaterThan(0);
+
+    const down = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    const downhill = run(down, { ...walking, groundSlope: -1 }, 1200);
+    expect(downhill.pitch).toBeLessThan(0);
+  });
+
+  it('never exceeds the configured pitch limit even on a sheer slope', () => {
+    const machine = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    const steep = run(machine, { ...walking, groundSlope: 99 }, 2000);
+    expect(Math.abs(steep.pitch)).toBeLessThanOrEqual(MOTION_CFG.pitchMaxDeg * DEG + 1e-6);
+  });
+
+  it('stands level on a slope when it is not walking', () => {
+    // Otherwise a dragon parked on a hillside is stuck nose-up forever.
+    const machine = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    run(machine, { ...walking, groundSlope: 1 }, 1200);
+    const stopped = run(machine, { ...walking, speed: 0, groundSlope: 1 }, 2000);
+    expect(Math.abs(stopped.pitch)).toBeLessThan(1 * DEG);
+  });
+
+  it('ignores ground slope while airborne', () => {
+    // In the air the nose follows climb rate; the terrain below is irrelevant.
+    const machine = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    machine.update({ dtMs: 16, speed: 0, isFlying: true, altitude: 40, targetAltitude: 80 });
+    machine.oneShotFinished();
+    const flying = run(machine, {
+      speed: 90, isFlying: true, altitude: 80, targetAltitude: 80, groundSlope: 1,
+    }, 2000);
+    expect(Math.abs(flying.pitch)).toBeLessThan(1 * DEG);
+  });
+
+  it('eases into the slope rather than snapping to it', () => {
+    const machine = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    const first = machine.update({ dtMs: 16, ...walking, groundSlope: 1 });
+    const settled = run(machine, { ...walking, groundSlope: 1 }, 1500);
+    expect(first.pitch).toBeLessThan(settled.pitch);
+  });
+
+  it('treats a missing slope as flat', () => {
+    const machine = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    const pose = run(machine, walking, 800);
+    expect(pose.pitch).toBeCloseTo(0, 6);
+  });
+});

@@ -36,6 +36,10 @@ const DEFAULTS = {
   pitchMaxDeg: 18,
   pitchGain: 0.22,
   pitchResponseHz: 2.6,
+  // Degrees of nose-up per height-level-per-tile of ground slope, while
+  // walking. Without this a climb reads as sliding up a ramp with the body
+  // held flat.
+  slopePitchDeg: 26,
   takeoffAltitude: 24,
   landAltitude: 6,
   idleBreakAfterSec: 14,
@@ -145,6 +149,9 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
      * @param {number} input.altitude - current altitude, world units
      * @param {number} input.targetAltitude - altitude being eased toward
      * @param {string|null} input.action - 'attack' | 'dracarys' | 'special'
+     * @param {number} [input.groundSlope] - ground rise along the direction of
+     *   travel, in height levels per tile. Positive is uphill. Ignored while
+     *   airborne. See slopeAlong() in systems/terrainHeightField.js.
      * @returns {{base: string, baseTimeScale: number, oneShot: string|null,
      *   heading: number, roll: number, pitch: number, airborne: boolean}}
      */
@@ -156,6 +163,7 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       altitude = 0,
       targetAltitude = 0,
       action = null,
+      groundSlope = 0,
     } = {}) {
       const dt = clamp(finite(dtMs, 0), 0, 100) / 1000;
       this.oneShot = null;
@@ -289,13 +297,20 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       // climb and would peg the nose to its limit instantly.
       const verticalSpeed = dt > 0 ? (altitude - this.lastAltitude) / dt : 0;
       this.lastAltitude = altitude;
+      // Airborne, the nose follows climb rate. On the ground it follows the
+      // terrain instead — and only while actually walking, or a dragon parked
+      // on a slope would stand nose-up forever.
       const pitchTarget = this.airborne
         ? clamp(
           verticalSpeed * config.pitchGain,
           -config.pitchMaxDeg,
           config.pitchMaxDeg,
         ) * DEG
-        : 0;
+        : clamp(
+          (moving ? finite(groundSlope, 0) : 0) * config.slopePitchDeg,
+          -config.pitchMaxDeg,
+          config.pitchMaxDeg,
+        ) * DEG;
       this.roll += (bankTarget - this.roll)
         * (1 - Math.exp(-dt * config.bankResponseHz));
       this.pitch += (pitchTarget - this.pitch)

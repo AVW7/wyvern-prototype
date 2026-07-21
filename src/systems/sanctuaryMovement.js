@@ -26,6 +26,15 @@ const DEFAULT_MOVEMENT = Object.freeze({
   bobRate: 0.008,
   collisionRadius: 3,
   collisionStep: 5,
+  // Screen px from the final waypoint over which the walk eases off, and the
+  // slowest fraction of full speed it eases to.
+  arrivalRadius: 34,
+  arrivalMinScale: 0.35,
+  // Consecutive blocked frames tolerated while following a path before it is
+  // abandoned. One frame is not evidence of being stuck — moveWithCollision
+  // slides along an obstruction by retrying each axis, which reports no
+  // movement on the frame it first makes contact.
+  pathBlockedGraceFrames: 12,
   climbStep: 1, // height levels the actor climbs onto in one step (cliffs above this block)
   maxDeltaMs: 100,
   actionDurationMs: 650,
@@ -277,7 +286,13 @@ export function findPath(mask, heights, start, end, options = {}) {
       if (path.length > 0 && path[0].col === startCol && path[0].row === startRow) {
         path.shift();
       }
-      return path;
+      // Straighten before returning, so every caller — the click-to-walk
+      // handler, the wanderers, the debug panel's routes — gets a route rather
+      // than a cell-by-cell staircase.
+      return smoothPath(mask, heights, path, {
+        start: { col: startCol, row: startRow },
+        climbStep,
+      });
     }
 
     openSet.splice(currentIdx, 1);
@@ -344,6 +359,81 @@ export function findPath(mask, heights, start, end, options = {}) {
   }
 
   return null;
+}
+
+/**
+ * Is the straight line between two cells walkable end to end?
+ *
+ * Sampled rather than rasterised, at ten samples per tile. Cells are one unit
+ * across, so a step of 0.1 cannot pass over one entirely — only shave a corner
+ * by less than a tenth of a tile, which the collision radius covers anyway. A
+ * coarser step does miss cells: at three per tile a diagonal leg could clip the
+ * corner of a wall and still be reported clear. It reuses the same climb rule
+ * the search itself applies, so a shortcut can never skip a rise the actor
+ * could not walk.
+ */
+const LINE_SAMPLES_PER_TILE = 10;
+
+function lineOfWalk(mask, heights, from, to, climbStep) {
+  const deltaCol = to.col - from.col;
+  const deltaRow = to.row - from.row;
+  const steps = Math.ceil(
+    Math.max(Math.abs(deltaCol), Math.abs(deltaRow)) * LINE_SAMPLES_PER_TILE,
+  );
+  if (steps <= 0) return true;
+
+  let previous = from;
+  for (let i = 1; i <= steps; i += 1) {
+    const point = {
+      col: from.col + (deltaCol * i) / steps,
+      row: from.row + (deltaRow * i) / steps,
+    };
+    if (!canOccupy(mask, point.col, point.row)) return false;
+    if (!climbable(heights, climbStep, previous, point)) return false;
+    previous = point;
+  }
+  return true;
+}
+
+/**
+ * Drop waypoints that the actor can walk straight past.
+ *
+ * A* returns one node per grid cell, so following it raw means re-aiming at
+ * every cell — the actor staircases across open ground and its heading snaps
+ * at each step, which is what made walking to a clicked point read as a series
+ * of frames rather than a route. String-pulling keeps only the corners that
+ * are actually load-bearing.
+ *
+ * Pure, and exported so it can be tested without a scene.
+ *
+ * @param {boolean[][]} mask
+ * @param {number[][]} heights
+ * @param {Array<{col: number, row: number}>} path
+ * @param {object} [options]
+ * @param {{col: number, row: number}} [options.start] - where the actor is
+ *   standing. Included so the first leg can be straightened too.
+ * @param {number} [options.climbStep]
+ */
+export function smoothPath(mask, heights, path, { start = null, climbStep = 1 } = {}) {
+  if (!Array.isArray(path) || path.length < 2) return path;
+
+  const smoothed = [];
+  // The anchor is the last point the actor is committed to walking from.
+  let anchor = start && Number.isFinite(start.col) && Number.isFinite(start.row)
+    ? { col: Math.round(start.col), row: Math.round(start.row) }
+    : path[0];
+
+  for (let i = 0; i < path.length - 1; i += 1) {
+    // Keep this node only if skipping it would cut a corner through terrain
+    // the actor cannot cross.
+    if (!lineOfWalk(mask, heights, anchor, path[i + 1], climbStep)) {
+      smoothed.push(path[i]);
+      anchor = path[i];
+    }
+  }
+  // The destination is never dropped; it is the point that was asked for.
+  smoothed.push(path[path.length - 1]);
+  return smoothed;
 }
 
 function resolveInitialLogical(resident, mask, view = DEFAULT_VIEW) {
@@ -704,6 +794,9 @@ export function createSanctuaryMovement({
     altitude: 0,
     targetAltitude: 0,
     path: null,
+    // Consecutive frames the current path has failed to advance. Reset on any
+    // progress; a run of them abandons the route.
+    pathBlockedFrames: 0,
     get climbStep() {
       return this.isFlying ? Infinity : config.climbStep;
     },
@@ -759,6 +852,7 @@ export function createSanctuaryMovement({
 
     setPath(nextPath) {
       this.path = nextPath || null;
+      this.pathBlockedFrames = 0;
       return this;
     },
 
@@ -961,13 +1055,23 @@ export function createSanctuaryMovement({
 
           if (remaining <= tolerance) {
             this.path.shift();
+            this.pathBlockedFrames = 0;
             if (this.path.length === 0) {
               this.path = null;
             }
           } else {
+            // Ease off over the last stretch so arriving settles instead of
+            // stopping dead. The walk clip's playback rate already tracks
+            // ground speed (see walkClipSpeed in systems/dragonMotion.js), so
+            // slowing the approach slows the cycle with it for free.
+            const arrivalRadius = finite(config.arrivalRadius, DEFAULT_MOVEMENT.arrivalRadius);
+            const approach = isLastNode && arrivalRadius > 0
+              ? clamp(remaining / arrivalRadius, finite(config.arrivalMinScale, 0.35), 1)
+              : 1;
             const distance = Math.min(
               remaining,
-              Math.max(0, finite(config.speed, DEFAULT_MOVEMENT.speed)) * poseDelta / 1000,
+              Math.max(0, finite(config.speed, DEFAULT_MOVEMENT.speed))
+                * approach * poseDelta / 1000,
             );
             const beforeCol = this.logical.col;
             const beforeRow = this.logical.row;
@@ -980,6 +1084,7 @@ export function createSanctuaryMovement({
               this.heights,
             );
             if (moved) {
+              this.pathBlockedFrames = 0;
               this.lastWorldVector = {
                 col: this.logical.col - beforeCol,
                 row: this.logical.row - beforeRow,
@@ -988,7 +1093,17 @@ export function createSanctuaryMovement({
                 this.lastWorldVector, this.view, this.direction,
               );
             } else {
-              this.path = null;
+              // One blocked frame used to discard the whole remaining route, so
+              // brushing a prop cancelled the walk. Give it a few frames to
+              // slide along the obstruction first — moveWithCollision already
+              // retries each axis separately — and only give up if it is
+              // genuinely stuck.
+              this.pathBlockedFrames += 1;
+              if (this.pathBlockedFrames
+                >= finite(config.pathBlockedGraceFrames, DEFAULT_MOVEMENT.pathBlockedGraceFrames)) {
+                this.path = null;
+                this.pathBlockedFrames = 0;
+              }
             }
           }
         }
