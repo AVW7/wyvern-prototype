@@ -88,6 +88,14 @@ export const SANCTUARY = {
     flightResponseMs: 140,
     bobAmplitude: 2.5,
     maxDeltaMs: 50,
+    // Screen-pixel radius the actor collides with, against a 64px-wide tile
+    // diamond. Measured in Blender, the walking model's folded body is 28.9
+    // world units across (1.2 tiles) and its feet 8.7 (0.36 tiles); this sits
+    // between them, at roughly the torso half-width. The default was 3 — a
+    // point — which is why the body used to end up overlapping walls and props
+    // it had never collided with. Raising it further would stop the wyvern
+    // fitting down a one-tile corridor.
+    collisionRadius: 22,
     // Max height levels the wyvern climbs onto in one step. Gentle hills and
     // terraces (rise <= this) are walkable and ridden up; a taller rise reads
     // as a cliff/wall it's stopped by and must go around.
@@ -132,9 +140,11 @@ export const SANCTUARY = {
     // the same on-screen size as the 2D residents at default zoom.
     targetHeightPx: 64,
     // Motion slot → clip name as it exists in drogon-sanctuary.glb.
-    // tools/prep-drogon.mjs keeps exactly these 16 out of the source's 52; its
-    // KEEP list and this table must be changed together. systems/dragonMotion.js
-    // decides which slot is active; the debug panel can rebind any slot live.
+    // Clips named Fly_* do not exist in the source: tools/blender-flight-clips.py
+    // derives them from it (see that file's header), and tools/prep-drogon.mjs
+    // then keeps exactly the 17 source clips plus those 8. Its KEEP list and
+    // this table must be changed together. systems/dragonMotion.js decides which
+    // slot is active; the debug panel can rebind any slot live.
     clips: {
       idle: 'DaenerysDragon_Neutural_Watch',
       idleBreak: 'DaenerysDragon_Neutural_Roar',
@@ -146,22 +156,58 @@ export const SANCTUARY = {
       turnRightSmall: 'DaenerysDragon_Battle_TurnR20',
       turnLeft: 'DaenerysDragon_Battle_TurnL90',
       turnRight: 'DaenerysDragon_Battle_TurnR90',
-      takeoff: 'DaenerysDragon_Battle_Up',
-      land: 'DaenerysDragon_Battle_Down',
-      // No dedicated hover clip survives the cut; the level-flight loop is the
-      // banked sky move played straight, with roll supplied by the rig instead.
-      fly: 'DaenerysDragon_Battle_SkyMoveL',
-      bankLeft: 'DaenerysDragon_Battle_SkyMoveL',
-      bankRight: 'DaenerysDragon_Battle_SkyMoveR',
+      // Battle_Up ran 8.2 s, and Battle_Down was a descent *loop* — it began and
+      // ended in the flight pose, so bound as `land` it never actually put the
+      // dragon down. Both are retimed and resolved onto the pose the clip they
+      // hand off to starts from.
+      takeoff: 'Fly_Takeoff',
+      land: 'Fly_Land',
+      // Level flight is now a clip. It used to be a 0.42 cross-weight of the two
+      // banked sky moves, on the theory that opposing banks cancel; measured on
+      // the posed rig they do not — that mix sits 5.2° left and rocks through
+      // 16° a beat. Fly_Level_Loop holds -0.6° across the whole cycle at the
+      // same 70° wing swing, and the banks are its ±27° siblings.
+      fly: 'Fly_Level_Loop',
+      flyHover: 'Fly_Level_Loop',
+      flyGlide: 'Fly_Glide_Loop',
+      bankLeft: 'Fly_BankL_Loop',
+      bankRight: 'Fly_BankR_Loop',
       attack: 'DaenerysDragon_Battle_Attack04',
+      attackAlt: 'DaenerysDragon_Battle_Attack01',
       dracarys: 'DaenerysDragon_Battle_Skill08',
+      // The airborne breath. Skill08 is the source's only fire clip and it is
+      // grounded — feet keyed to the floor — so only its neck/head gesture is
+      // layered over the level cycle, and the flame stays the particle effect
+      // createDracarysParticles() already spawns.
+      flyDracarys: 'Fly_Dracarys',
       special: 'DaenerysDragon_Neutural_Roar',
+      // Wings held out, with a slow breathe so it does not read as a freeze;
+      // the hold frame is the widest-reach frame of the cycle. Scouting is this
+      // at altitude — it was a duplicate sky clip until 2026-07-21 and then a
+      // blend preset; it is a clip again, and a real one this time.
+      glide: 'Fly_Glide_Loop',
+      scout: 'Fly_Glide_Loop',
+      // Airborne and stationary used to play the cruise, which read as coasting
+      // on nothing. Slower, deeper stroke, body leaned toward Battle_Up's climb
+      // posture.
+      hover: 'Fly_Hover_Loop',
+      // Airborne strike passes. Identified by measuring foot-drop relative to
+      // the pelvis across all 52 source clips: these sit in the same 570-660
+      // band as SkyMove/Up/Down, and nowhere near the grounded attacks.
+      flyAttackLeft: 'DaenerysDragon_Battle_Skill10_L',
+      flyAttackRight: 'DaenerysDragon_Battle_Skill10_R',
+      // Full about-face. turnLeft/turnRight are 90° clips and read badly when
+      // the wyvern is asked to reverse.
+      turnLeftAbout: 'DaenerysDragon_Battle_TurnL180',
+      turnRightAbout: 'DaenerysDragon_Battle_TurnR180',
     },
     // Clips that play once and hand back to whatever motion was underneath,
     // instead of looping. Everything not listed here is a looping base motion.
     oneShotClips: [
       'turnLeft', 'turnRight', 'turnLeftSmall', 'turnRightSmall',
-      'takeoff', 'land', 'attack', 'dracarys', 'special', 'idleBreak',
+      'turnLeftAbout', 'turnRightAbout',
+      'takeoff', 'land', 'attack', 'attackAlt', 'dracarys', 'special', 'idleBreak',
+      'flyAttackLeft', 'flyAttackRight', 'flyDracarys',
     ],
     // How the model is steered. See systems/dragonMotion.js — this block is
     // that module's entire configuration, and every value is live-tunable from
@@ -182,13 +228,26 @@ export const SANCTUARY = {
       // Yaw rate (deg/sec) at which the turning-walk clips fully replace the
       // straight walk, and the roll a full-rate air turn leans into.
       walkTurnRateDeg: 55,
+      // Airborne turning is its own regime — a flying dragon carries momentum
+      // through a far wider arc than one pivoting on its feet, so "hard over"
+      // is a higher yaw rate in the air than on the ground.
+      flightTurnRateDeg: 90,
+      // How fast the lean into a turn builds and relaxes. Lower reads heavier.
+      bankBlendResponseHz: 2.2,
       bankMaxDeg: 32,
-      bankGain: 0.32,
+      // Rig roll *on top of* the banked clips, so this is deliberately small —
+      // past ~0.2 the model reads as pivoting inside its own animation.
+      bankGain: 0.16,
       bankResponseHz: 3.2,
       // Nose up/down from vertical speed, and how hard altitude change drives it.
       pitchMaxDeg: 18,
       pitchGain: 0.22,
       pitchResponseHz: 2.6,
+      // The imported rig's neutral airborne pose has a visible nose-down
+      // attitude. Apply a small authored correction only while hovering so a
+      // stopped wyvern holds level above its shadow rather than appearing to
+      // dive at the ground.
+      hoverPitchDeg: 12,
       // Altitude (world units) the climb has to pass before takeoff is
       // considered done, and below which landing commits.
       takeoffAltitude: 24,
@@ -197,6 +256,21 @@ export const SANCTUARY = {
       // per-second chance it does once eligible.
       idleBreakAfterSec: 14,
       idleBreakChance: 0.12,
+    },
+    // Ground contact. See systems/terrainHeightField.js — the model's Y comes
+    // from a bilinear sample of a dilated height grid, not from the one cell
+    // its centre rounds to.
+    ground: {
+      // How fast the model rides onto a new ground height, and the only thing
+      // absorbing the step at a terrace edge — the surface there is genuinely
+      // discontinuous, so it is travelled over time rather than smoothed away.
+      // 9 settles a full level in about 100ms. Lower reads heavier; too low and
+      // the feet lag visibly behind the ground on a staircase.
+      settleHz: 9,
+      // Height levels per tile of slope at which the body reaches its full
+      // pitch. Walking up a one-level-per-tile ramp at gain 1 gives the whole
+      // pitchMaxDeg, which is too much, so this is deliberately shallow.
+      slopePitchGain: 0.45,
     },
     crossfadeMs: 250,
     // Flight height is now real, player-controlled altitude — see

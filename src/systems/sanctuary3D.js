@@ -4,7 +4,11 @@ import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { GAME, SANCTUARY, TERRAIN } from '../config.js';
 import { BIOMES } from '../data/biomes.js';
 import { TILE_SIZE, HEIGHT_SCALE, gridToWorld3D, tileCenterY } from './grid3d.js';
-import { createDragonMotion } from './dragonMotion.js';
+import { bankWeights, createDragonMotion } from './dragonMotion.js';
+import {
+  createHeightField, easeGroundHeight, sampleHeight, slopeAlong,
+} from './terrainHeightField.js';
+import { createHeightGrid } from './sanctuaryMovement.js';
 import { createNoise } from './noise.js';
 import { ensureDecorTexture } from './textureBake.js';
 import { neighbourOcclusion, tileFaceCanvases } from './tileTexture3D.js';
@@ -524,8 +528,10 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   const threeScene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, GAME.width / GAME.height, 1, 10000);
 
-  // Setup basic lighting
-  threeScene.add(new THREE.HemisphereLight(0xe0e8ff, 0x1f1f2e, 1.2));
+  // Setup basic lighting. The dragon's authored albedo is intentionally very
+  // dark; a stronger sky/ground fill keeps its wing membranes and scales
+  // readable when the player views it from the shadowed side.
+  threeScene.add(new THREE.HemisphereLight(0xeaf2ff, 0x40516a, 1.65));
   const sunLight = new THREE.DirectionalLight(0xffffff, 0.95);
   sunLight.position.set(400, 800, 300);
   sunLight.castShadow = true;
@@ -541,6 +547,9 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   sunLight.shadow.bias = -0.0005;
   sunLight.shadow.normalBias = 0.02;
   threeScene.add(sunLight);
+  const dragonFillLight = new THREE.DirectionalLight(0xb9d3ff, 0.55);
+  dragonFillLight.position.set(-450, 350, -500);
+  threeScene.add(dragonFillLight);
 
   const tileMeshes = [];
   const decorSprites = {}; // key: col_row -> { sprite, type, cell, ... }
@@ -565,12 +574,26 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   // which motion slot should be playing, how fast, and how the body is angled;
   // everything below only translates that into Three.js calls.
   const dragonMotion = createDragonMotion({ motion: SANCTUARY.dragon3D?.motion });
-  // Base motion to return to once a one-shot ends, and the slot a caller forced
-  // through setMotion() (the debug panel and the Dracarys action use this).
+  // Base motion to return to once a one-shot ends, and the two channels a
+  // caller can steer with. They are deliberately separate: `overrideMotion` is
+  // a looping slot forced to stay on screen (debug panel), while `actionMotion`
+  // is a gameplay action held for as long as the wyvern is in that state and
+  // edge-detected into a single one-shot inside dragonMotion. Running both
+  // through one variable is what made the panel's Walk button fire a one-shot
+  // walk before settling — see docs/WYVERN_DEBUG_PANEL_PLAN.md, Finding A.
   let baseMotion = 'idle';
   let baseTimeScale = 1;
   let overrideMotion = null;
+  let actionMotion = null;
+  // Last ground speed handed to the state machine (world units/sec). Derived in
+  // update() from the movement controller's step; kept so the debug panel can
+  // read the same number the walk cycle's playback rate is matched against.
+  let lastGroundSpeed = 0;
+  // Eased ground height per resident, so a step up is ridden rather than
+  // teleported. Keyed by animal id because every resident rides its own.
+  const groundHeights = new Map();
   let elapsedSec = 0;
+  let takeoffGustSpawned = false;
 
   // Camera State
   let camTarget = new THREE.Vector3(0, 0, 0);
@@ -607,9 +630,14 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   // sink through raised terrain. Round to the owning cell, mirroring the
   // collision system's heightAt() so the model rides exactly the tile the
   // movement gate stands it on.
+  // Ground under a continuous position, smoothed and dilated — see
+  // systems/terrainHeightField.js for why rounding to one cell was wrong.
+  // Built from the same createHeightGrid() the collision gate uses, so the
+  // surface the model rides and the terrain it is allowed onto agree.
+  const heightField = createHeightField(createHeightGrid(tiles));
+
   function terrainHeightAt(footprint) {
-    const cell = tiles[Math.round(footprint.row)]?.[Math.round(footprint.col)];
-    return cell?.height || TERRAIN.baseHeight;
+    return sampleHeight(heightField, footprint.col, footprint.row);
   }
 
   // Group tiles by biome to construct InstancedMesh per biome.
@@ -884,10 +912,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       return;
     }
 
-    if (scene.sys.settings.key === 'Vault') {
-      // In Rider Vault, we don't render flat 2D billboard sprites
-      return;
-    }
+    // We don't render flat 2D billboard sprites in 3D scenes (both Rider Vault and Roost grounds)
+    return;
 
     // Billboard the 2D drawer art for props with no 3D build. The texture has
     // to be *baked* first, not merely looked up: BaseScene bakes the exterior
@@ -952,9 +978,13 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       // bounding box, which blows up the scale.
       const { center, minY, finalScale } = cached.measurements;
 
-      cloned.position.x -= center.x;
-      cloned.position.z -= center.z;
-      cloned.position.y -= minY;
+      // Scaled, because `position` is in the parent's space and an object's own
+      // `scale` does not apply to it. Measuring the offsets on the unscaled
+      // scene and then subtracting them raw left the model about 3.6 world
+      // units — 15% of a tile — off its own shadow and selection ring.
+      cloned.position.x -= center.x * finalScale;
+      cloned.position.z -= center.z * finalScale;
+      cloned.position.y -= minY * finalScale;
 
       cloned.traverse((node) => {
         if (node.isMesh) {
@@ -962,17 +992,29 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
           node.castShadow = true;
           node.receiveShadow = true;
           if (node.material) {
-            node.material = node.material.clone();
-            node.material.roughness = 0.6;
-            node.material.metalness = 0.1;
-            
-            // Calibrate loaded textures to use sRGB Color Space if any exist
-            if (node.material.map) {
-              node.material.map.colorSpace = THREE.SRGBColorSpace;
-            }
-            if (node.material.emissiveMap) {
-              node.material.emissiveMap.colorSpace = THREE.SRGBColorSpace;
-            }
+            const materialWasArray = Array.isArray(node.material);
+            const sourceMaterials = materialWasArray
+              ? node.material
+              : [node.material];
+            const calibratedMaterials = sourceMaterials.map((source) => {
+              const material = source.clone();
+              material.roughness = 0.68;
+              material.metalness = 0.05;
+
+              // A small warm self-fill preserves the black wyvern's carved
+              // texture in a daylight scene without turning it into a glowing
+              // creature. It complements the scene fill light above.
+              if (material.emissive) {
+                material.emissive.setHex(0x160e0a);
+                material.emissiveIntensity = 0.38;
+              }
+
+              // Calibrate loaded textures to use sRGB Color Space if any exist.
+              if (material.map) material.map.colorSpace = THREE.SRGBColorSpace;
+              if (material.emissiveMap) material.emissiveMap.colorSpace = THREE.SRGBColorSpace;
+              return material;
+            });
+            node.material = materialWasArray ? calibratedMaterials : calibratedMaterials[0];
           }
         }
       });
@@ -1248,21 +1290,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         localMixer.timeScale = currentAnimSpeed;
       });
     } else {
-      // 2.5D Sprite Billboard for other residents
-      let textureKey = `species-${r.animal.species}`;
-      if (r.usesProfileTexture) {
-        textureKey = r.visual.textureKey;
-      }
-      const phaserTexture = scene.textures.get(textureKey)?.getSourceImage();
-      if (phaserTexture) {
-        const tex = getCachedTexture(textureKey, phaserTexture);
-        const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
-        const sprite = new THREE.Sprite(spriteMat);
-        sprite.position.set(0, 12, 0);
-        sprite.scale.set(22, 22, 1);
-        flightPivot.add(sprite);
-        visual3D = sprite;
-      }
+      // In 3D scenes, we don't render flat 2D billboard sprites for non-controlled residents
     }
 
     residentVisuals[r.animal.id] = {
@@ -1290,6 +1318,53 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       previous.crossFadeTo(action, fadeMs / 1000, false);
     }
     currentMotion = resolved;
+  }
+
+  // Hold the level cycle and both banked ones at once and weight them, so an
+  // airborne turn is a lean that grows and relaxes rather than a crossfade
+  // between separate loops. `blend` is dragonMotion's bankBlend: -1 hard right,
+  // 0 level, +1 hard left.
+  //
+  // The three are kept phase-locked to the level clip. They are derived from
+  // one wingbeat of the same source cycle, so letting their times drift apart
+  // blends a downstroke into an upstroke and the wings visibly cancel out into
+  // a flat glide.
+  function applyFlightBlend(blend, fadeMs) {
+    const level = actions.fly;
+    const left = actions.bankLeft;
+    const right = actions.bankRight;
+    if (!level || !left || !right) return false;
+
+    const weights = bankWeights(blend);
+    const held = [[level, weights.level], [left, weights.left], [right, weights.right]];
+
+    if (!level.isRunning() || !left.isRunning() || !right.isRunning()) {
+      // Entering flight: start all three from the outgoing motion, then let the
+      // weights below take over.
+      const previous = actions[currentMotion];
+      held.forEach(([action]) => action.reset().play());
+      if (previous && !held.some(([action]) => action === previous)) {
+        previous.fadeOut(fadeMs / 1000);
+      }
+    }
+    held.forEach(([action, weight]) => {
+      action.time = level.time;
+      action.setEffectiveTimeScale(1);
+      action.setEffectiveWeight(weight);
+    });
+    currentMotion = 'fly';
+    return true;
+  }
+
+  function runningWeight(action) {
+    return action?.isRunning() ? action.getEffectiveWeight() : 0;
+  }
+
+  // Release all three so a single-action motion can take over cleanly.
+  function stopFlightBlend(fadeMs) {
+    [actions.fly, actions.bankLeft, actions.bankRight].forEach((action) => {
+      if (action?.isRunning()) action.fadeOut(fadeMs / 1000);
+    });
   }
 
   // Restart a one-shot from its first frame even if it is already the current
@@ -1514,6 +1589,56 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         maxLifetime: 0.5,
       });
     }
+  }
+
+  // Create radial ground shockwave / dust gust particles under wyvern's feet during takeoff
+  function createTakeoffGroundGust(position, yaw) {
+    const gustCount = 36;
+    const geo = new THREE.BufferGeometry();
+    const positions = [];
+    const velocities = [];
+    const lifetimes = [];
+
+    const groundY = position.y + 1; // low ground plane
+
+    for (let i = 0; i < gustCount; i++) {
+      const angle = (i / gustCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+      const speed = Math.random() * 35 + 25;
+
+      positions.push(
+        position.x + Math.sin(angle) * 3,
+        groundY + Math.random() * 1.5,
+        position.z + Math.cos(angle) * 3,
+      );
+
+      velocities.push(
+        Math.sin(angle) * speed,
+        Math.random() * 6 + 2,
+        Math.cos(angle) * speed,
+      );
+      lifetimes.push(Math.random() * 0.6 + 0.4);
+    }
+
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0xcccccc,
+      size: 9.0,
+      map: getSmokeParticleTexture(),
+      transparent: true,
+      blending: THREE.NormalBlending,
+      depthWrite: false,
+    });
+    const points = new THREE.Points(geo, mat);
+    threeScene.add(points);
+
+    activeParticles.push({
+      points,
+      velocities,
+      lifetimes,
+      maxLifetimes: [...lifetimes],
+      isFireBreath: false,
+      isSmoke: true,
+    });
   }
 
   return {
@@ -1809,6 +1934,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
           ? Math.hypot(moveVector.col, moveVector.row) * TILE_SIZE
           : 0;
         const speed = deltaSec > 0 ? stepped / deltaSec : 0;
+        lastGroundSpeed = speed;
 
         const pose = dragonMotion.update({
           dtMs: deltaMs,
@@ -1817,7 +1943,17 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
           isFlying: Boolean(movement?.isFlying),
           altitude: movement?.getAltitude?.() ?? 0,
           targetAltitude: movement?.getTargetAltitude?.() ?? 0,
-          action: overrideMotion,
+          action: actionMotion,
+          // Ground rise along the way it is heading, so the body pitches into
+          // a climb instead of sliding up it flat.
+          groundSlope: moveVector
+            ? slopeAlong(
+              heightField,
+              movement?.getLogicalFootprint?.()?.col ?? 0,
+              movement?.getLogicalFootprint?.()?.row ?? 0,
+              moveVector,
+            ) * (SANCTUARY.dragon3D?.ground?.slopePitchGain ?? 1)
+            : 0,
         });
 
         baseMotion = overrideMotion && !dragonMotion.pendingOneShot
@@ -1826,16 +1962,30 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         baseTimeScale = pose.baseTimeScale;
 
         const fade = SANCTUARY.dragon3D?.crossfadeMs ?? 250;
+        // Level flight and the two banked turns are held together and weighted
+        // rather than crossfaded between — see applyFlightBlend().
+        // An override or a one-shot still wins, so forcing `bankLeft` from the
+        // debug panel shows that clip alone.
+        const blending = pose.airborne
+          && baseMotion === 'fly'
+          && !pose.oneShot
+          && !dragonMotion.pendingOneShot;
+
         if (pose.oneShot) {
+          stopFlightBlend(fade);
           if (!playOneShot(pose.oneShot, fade)) dragonMotion.oneShotFinished();
+        } else if (blending) {
+          applyFlightBlend(pose.bankBlend, fade);
         } else if (!dragonMotion.pendingOneShot) {
+          stopFlightBlend(fade);
           playMotion(baseMotion, fade);
         }
 
         // Speed-matched playback on the walk cycle only; a one-shot or a flight
-        // loop should run at its authored rate.
+        // loop should run at its authored rate. The blended pair sets its own
+        // weights and time scales, so it is left alone here.
         const activeAction = actions[currentMotion];
-        if (activeAction) {
+        if (activeAction && !blending) {
           const matched = currentMotion === baseMotion && !dragonMotion.pendingOneShot;
           activeAction.setEffectiveTimeScale(matched ? baseTimeScale : 1);
         }
@@ -1871,7 +2021,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       }
 
       // Spawning dracarys fire breath particles
-      if (currentMotion === 'dracarys' && controlledDragon) {
+      if ((currentMotion === 'dracarys' || currentMotion === 'flyDracarys') && controlledDragon) {
         dracarysTimer += deltaMs;
         if (dracarysTimer >= 40) {
           dracarysTimer = 0;
@@ -1882,6 +2032,18 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         }
       } else {
         dracarysTimer = 0;
+      }
+
+      // Spawning takeoff ground dust gust
+      if (currentMotion === 'takeoff' && controlledDragon) {
+        if (!takeoffGustSpawned) {
+          takeoffGustSpawned = true;
+          const dragonPos = new THREE.Vector3();
+          controlledDragon.getWorldPosition(dragonPos);
+          createTakeoffGroundGust(dragonPos, controlledDragon.rotation.y);
+        }
+      } else {
+        takeoffGustSpawned = false;
       }
 
       // Update fire lights
@@ -2009,7 +2171,18 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         const visual = residentVisuals[r.animal.id];
         if (!visual) return;
 
-        const currentHeight = terrainHeightAt(r.footprint);
+        // Ride onto the sampled ground rather than snapping to it — a terrace
+        // edge and a climbStep rise both move the surface a whole level in one
+        // frame, and the body should travel that, not teleport.
+        const targetHeight = terrainHeightAt(r.footprint);
+        const currentHeight = easeGroundHeight(
+          groundHeights.get(r.animal.id),
+          targetHeight,
+          deltaSec,
+          SANCTUARY.dragon3D?.ground?.settleHz ?? 9,
+        );
+        groundHeights.set(r.animal.id, currentHeight);
+
         const surface = gridToWorld3D(r.footprint.col, r.footprint.row, currentHeight, cols, rows);
 
         // The group (with the grounded shadow + selection ring) always rides the
@@ -2093,7 +2266,13 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         }
 
         // Handle zoom based on Phaser camera zoom
-        targetDistance = 460 / phaserCam.zoom;
+        // At the maximum 2D follow zoom the old 3D distance was only 128
+        // units, narrower than the wyvern's wingspan. Keep a flight framing
+        // floor so airborne hover, banks, and breath actions remain legible in
+        // their game environment instead of clipping through the viewport.
+        const followDistance = 460 / phaserCam.zoom;
+        const isFlying = Boolean(scene.movement?.isFlying);
+        targetDistance = isFlying ? Math.max(followDistance, 300) : followDistance;
         camDistance += (targetDistance - camDistance) * 0.15;
 
         // Position camera in orbit
@@ -2111,12 +2290,44 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       renderer.render(threeScene, camera);
     },
 
-    // Force a motion slot, overriding the state machine. `null` hands control
-    // back to it. Used by the debug panel and the Dracarys roster action.
+    // Force a looping motion slot to stay on screen, overriding the state
+    // machine's own choice of base motion. `null` hands control back to it.
+    // A one-shot does not belong here — it would be held forever instead of
+    // playing once; use triggerAction() for those.
     setMotion(motion) {
       pendingMotion = motion || 'idle';
       overrideMotion = motion || null;
       if (!controlledDragon && motion) playMotion(motion);
+    },
+
+    // The gameplay action the wyvern is currently performing, or `null`.
+    // Level-triggered: BaseScene calls this every frame with whatever the
+    // movement state maps to, and dragonMotion edge-detects it into one
+    // one-shot, so holding a state does not restart the clip.
+    setAction(motion) {
+      actionMotion = motion || null;
+    },
+
+    /**
+     * Play a one-shot now, from its first frame, and hand back to the base
+     * motion when it finishes. Rejects looping slots: only the clips listed in
+     * `oneShotClips` are built with LoopOnce, so anything else would never fire
+     * the mixer's `finished` event and would leave the model frozen on it.
+     *
+     * @returns {boolean} whether the clip was started
+     */
+    triggerAction(motion) {
+      let resolved = motion;
+      if (dragonMotion.airborne) {
+        if (motion === 'dracarys') resolved = 'flyDracarys';
+        else if (motion === 'attack') resolved = 'flyAttackLeft';
+      }
+      if (!(SANCTUARY.dragon3D?.oneShotClips || []).includes(resolved)) return false;
+      if (!playOneShot(resolved, SANCTUARY.dragon3D?.crossfadeMs ?? 250)) return false;
+      // Tell the state machine a one-shot owns the model, so update() does not
+      // crossfade back to the base motion on the very next frame.
+      dragonMotion.pendingOneShot = resolved;
+      return true;
     },
 
     /** Every clip name in the loaded model, for the debug panel's picker. */
@@ -2135,11 +2346,37 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         base: baseMotion,
         pending: dragonMotion.pendingOneShot,
         override: overrideMotion,
+        action: actionMotion,
         timeScale: Number(baseTimeScale.toFixed(2)),
+        speed: Math.round(lastGroundSpeed),
         airborne: dragonMotion.airborne,
+        // -1 hard right .. 0 level .. +1 hard left, and each held clip's share
+        // of the blend that produces it. Without these a mis-weighted turn
+        // looks the same as a turn that never started.
+        // An action that has never been played still reports weight 1, so a
+        // stopped clip would read as fully on. Report what is actually running.
+        bankBlend: Number(dragonMotion.bankBlend.toFixed(2)),
+        flyLevelWeight: Number(runningWeight(actions.fly).toFixed(2)),
+        bankLeftWeight: Number(runningWeight(actions.bankLeft).toFixed(2)),
+        bankRightWeight: Number(runningWeight(actions.bankRight).toFixed(2)),
         headingDeg: Math.round(dragonMotion.heading * 180 / Math.PI),
         rollDeg: Math.round(dragonMotion.roll * 180 / Math.PI),
         pitchDeg: Math.round(dragonMotion.pitch * 180 / Math.PI),
+      };
+    },
+
+    /**
+     * Per-frame renderer cost, for the debug panel's readout. `renderer.info`
+     * is reset by Three every frame, so this must be read after render() —
+     * the panel polls, so it always is.
+     */
+    getRenderStats() {
+      return {
+        calls: renderer.info.render.calls,
+        triangles: renderer.info.render.triangles,
+        geometries: renderer.info.memory.geometries,
+        textures: renderer.info.memory.textures,
+        programs: renderer.info.programs?.length ?? 0,
       };
     },
 

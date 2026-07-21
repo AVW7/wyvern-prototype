@@ -213,7 +213,10 @@ gained a full 18-slot `clips` table, an `oneShotClips` list (one-shots use
 mixer's `finished` event — previously an attack looped forever), and a
 `motion` tuning block. The debug panel gained a live motion readout and a
 clip picker, so the remaining slot↔clip guesses can be settled by eye
-instead of by re-running the asset build.
+instead of by re-running the asset build. **The panel is no longer owned by
+this plan** — it is rebuilt and extended under
+[`WYVERN_DEBUG_PANEL_PLAN.md`](WYVERN_DEBUG_PANEL_PLAN.md), which also carries
+the remaining slot↔clip settlement work (its Milestone 4).
 
 **Terrain.** Look and materials only — no layout change, no new mechanics.
 ACES filmic tone mapping; per-instance colour jitter and a baked

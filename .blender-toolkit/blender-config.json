@@ -1,0 +1,11 @@
+{
+  "detectedBlenderVersions": [
+    {
+      "version": "5.1.1",
+      "path": "/Applications/Blender.app/Contents/MacOS/Blender"
+    }
+  ],
+  "blenderExecutable": "/Applications/Blender.app/Contents/MacOS/Blender",
+  "addonInstalled": false,
+  "defaultPort": 9400
+}

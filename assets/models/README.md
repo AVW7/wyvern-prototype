@@ -35,10 +35,12 @@ isn't reached for by accident later.
 ## dragon/drogon-sanctuary.glb
 
 Milestone 2/3 asset, and the one the sanctuary currently renders. Rigged
-(292 joints, 39,234 triangles) with the 16 clips `systems/dragonMotion.js`
-drives — idle, idle break, alert, walk and its two turning variants, four
-turn-in-place clips, takeoff, land, two air banks, an attack and a fire
-breath. 9.5 MB.
+(230 bones, 25 authored animation clips) with a 40.5u wingspan by 26.3u length.
+Native orientation faces `-Y` forward (aligned to Three.js $+Z$ via $180^\circ$ rotation). 9.5 MB.
+
+- **Body Dimensions**: Wingspan 40.51u, Head-Tail Length 26.34u, Height 19.97u (2:1 wing-to-length ratio).
+- **Armature**: `SKM_DaenerysDragon` (Root bone `Root`, 230 bones, scale `0.01`).
+- **Heading Convention**: Head at `-Y`, Tail at `+Y` (Native `-Y` facing).
 
 - Title: "Drogon – Game of Thrones Dragon"
 - Source: https://sketchfab.com/3d-models/drogon-game-of-thrones-dragon-d0522be8d01a40cd9e0791bef04e07de
@@ -73,3 +75,13 @@ takes it from 121 MB to 9.5 MB:
 - converts the legacy `KHR_materials_pbrSpecularGlossiness` materials to
   `pbrMetallicRoughness` (Three.js dropped support for the old extension);
 - resizes both textures to 1024 px webp.
+
+## props/*.glb (Procedural 3D Props)
+
+Procedurally generated low-poly 3D sanctuary props (crystal pylons, dragon braziers, sanctuary pedestals) built using `blender-toolkit` standards:
+
+- **Generation Command**: `npm run blender:generate-props` or `node tools/blender-runner.mjs --generate-props`
+- **Source Script**: `tools/generate-sanctuary-props.py`
+- **Output Directory**: `assets/models/props/`
+- **Export Format**: Standard GLB with PBR metallic/roughness and emission channels.
+

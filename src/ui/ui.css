@@ -1174,174 +1174,237 @@ button:active { transform: scale(0.97); }
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: var(--text-faint);
 }
+/* ── 3D Wyvern debug panel ──────────────────────────────────────────────
+   Development instrument, not player UI (docs/WYVERN_DEBUG_PANEL_PLAN.md).
+   The panel itself is lil-gui, vendored inside `three`; these rules only
+   restate its own custom properties in the game's palette so it does not
+   read as a second application bolted onto the corner of the screen. */
+.wyvern-debug-panel.lil-gui {
+  --background-color: var(--panel-bg);
+  --text-color: var(--text-dim);
+  --title-background-color: var(--color-black-950);
+  --title-text-color: var(--accent);
+  --widget-color: rgba(212, 175, 55, 0.12);
+  --hover-color: rgba(212, 175, 55, 0.22);
+  --focus-color: var(--accent-strong);
+  --number-color: var(--accent);
+  --string-color: var(--text-faint);
+  --font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-size: 11px;
+  --width: 300px;
 
-/* 3D Wyvern Debug Panel */
-.test-panel {
+  z-index: 20;
+  border-left: 1px solid var(--panel-border);
+}
+
+/* Disabled rows are readouts, not broken controls, so they keep full contrast
+   instead of lil-gui's default half-opacity "you can't touch this" styling. */
+.wyvern-debug-panel.lil-gui .controller.disabled {
+  opacity: 1;
+}
+
+.wyvern-debug-panel.lil-gui .controller.disabled input {
+  color: var(--accent);
+  opacity: 1;
+}
+
+/* Stats sits beside the panel rather than under it; both are fixed to the
+   viewport, so the offset is the panel's own --width. */
+.wyvern-debug-stats {
+  opacity: 0.85;
+}
+
+/* --- Action Pipeline Kanban Panel (ui/actionKanbanPanel.js) --- */
+.kanban-panel-card {
   position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 320px;
+  top: 70px;
+  right: 16px;
+  width: 270px;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  border-radius: var(--radius-card);
-  box-shadow: var(--elev-float);
+  border-radius: var(--radius-outer);
+  backdrop-filter: blur(12px);
+  padding: 12px;
+  z-index: 25;
+  box-shadow: var(--shadow-luxe);
   color: var(--text);
-  font-family: var(--font-family);
-  z-index: 1000;
+  font-family: inherit;
+}
+
+.kanban-header {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: auto;
-}
-
-.test-panel.is-minimized {
-  width: 180px;
-  height: 48px;
-}
-
-.test-panel.is-minimized .test-panel-content {
-  display: none;
-}
-
-.test-panel-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 12px 18px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
 }
 
-.test-panel-header h3 {
+.kanban-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kanban-title h3 {
   margin: 0;
   font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.test-panel-btn-small {
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px;
-  line-height: 1;
-}
-
-.test-panel-btn-small:hover {
-  color: var(--text);
-}
-
-.test-panel-content {
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-height: 85vh;
-  overflow-y: auto;
-}
-
-.test-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  padding-bottom: 12px;
-}
-
-.test-section:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.test-section label {
-  font-size: 11px;
-  color: var(--text-dim);
-  font-weight: 500;
-}
-
-.test-section h4 {
-  margin: 0 0 6px 0;
-  font-size: 11px;
+  color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: var(--color-gold-500);
 }
 
-.test-btn-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-
-.test-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-inner);
+.kanban-status-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
   color: var(--text-dim);
-  padding: 6px 4px;
+}
+.kanban-status-badge.active {
+  background: rgba(212, 175, 55, 0.25);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  animation: pulse-gold 1.5s infinite;
+}
+
+.kanban-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding-right: 4px;
+}
+
+.kanban-empty-msg {
   font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  color: var(--text-faint);
+  text-align: center;
+  padding: 14px 0;
 }
 
-.test-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text);
-  border-color: rgba(255, 255, 255, 0.2);
+.kanban-step-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 6px 8px;
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.test-btn.is-active {
+.kanban-step-card.step-active {
+  border-color: var(--accent);
   background: rgba(212, 175, 55, 0.15);
-  border-color: var(--color-gold-500);
-  color: var(--color-gold-500);
 }
 
-.test-btn-primary {
-  background: rgba(212, 175, 55, 0.2);
-  border-color: rgba(212, 175, 55, 0.4);
-  color: var(--color-gold-500);
+.kanban-telemetry-bar {
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--accent);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  text-align: center;
 }
 
-.test-btn-primary:hover {
-  background: rgba(212, 175, 55, 0.3);
+.step-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(0,0,0,0.4);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.step-label {
+  font-size: 11px;
+  font-weight: 600;
   color: var(--text);
 }
-
-.test-btn-secondary {
-  background: rgba(255, 69, 0, 0.1);
-  border-color: rgba(255, 69, 0, 0.25);
-  color: #ff6347;
+.step-sub {
+  font-size: 9px;
+  color: var(--text-dim);
 }
 
-.test-btn-secondary:hover {
-  background: rgba(255, 69, 0, 0.2);
-  color: #ff7f50;
-  border-color: rgba(255, 69, 0, 0.4);
+.step-actions {
+  display: flex;
+  gap: 2px;
 }
 
-.test-panel input[type="range"] {
-  -webkit-appearance: none;
+.btn-step-opt {
+  padding: 2px 4px;
+  font-size: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+.btn-step-del:hover {
+  background: rgba(220, 50, 50, 0.3);
+  border-color: #ff4444;
+}
+
+.kanban-preset-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.btn-preset-opt {
+  flex: 1;
+  padding: 4px 6px;
+  font-size: 10px;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: var(--accent);
+  border-radius: 4px;
+}
+.btn-preset-opt:hover {
+  background: rgba(212, 175, 55, 0.25);
+  border-color: var(--accent);
+}
+
+.kanban-add-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.btn-add-step {
+  padding: 4px 6px;
+  font-size: 10px;
+  flex: 1 1 30%;
+}
+
+.kanban-exec-bar {
+  display: flex;
+}
+.btn-kanban-exec {
   width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-pill);
-  outline: none;
+  padding: 8px;
+  font-size: 12px;
+}
+.btn-run {
+  background: linear-gradient(135deg, var(--color-gold-500), var(--color-gold-700));
+  color: #000;
+  font-weight: 700;
+}
+.btn-stop {
+  background: rgba(200, 40, 40, 0.4);
+  border-color: #ff4444;
 }
 
-.test-panel input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--color-gold-500);
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-.test-panel input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}

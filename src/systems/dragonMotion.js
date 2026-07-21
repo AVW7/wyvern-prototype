@@ -22,12 +22,22 @@ const DEFAULTS = {
   walkClipSpeed: 96,
   walkTimeScale: { min: 0.55, max: 1.9 },
   walkTurnRateDeg: 55,
+  // Airborne turning is its own regime: a flying dragon carries momentum
+  // through a much wider arc than a walking one pivoting on its feet, so the
+  // yaw rate that counts as "hard over" is higher than walkTurnRateDeg.
+  flightTurnRateDeg: 90,
+  bankBlendResponseHz: 2.2,
   bankMaxDeg: 32,
-  bankGain: 0.32,
+  bankGain: 0.16,
   bankResponseHz: 3.2,
   pitchMaxDeg: 18,
   pitchGain: 0.22,
   pitchResponseHz: 2.6,
+  hoverPitchDeg: 12,
+  // Degrees of nose-up per height-level-per-tile of ground slope, while
+  // walking. Without this a climb reads as sliding up a ramp with the body
+  // held flat.
+  slopePitchDeg: 26,
   takeoffAltitude: 24,
   landAltitude: 6,
   idleBreakAfterSec: 14,
@@ -52,6 +62,32 @@ export function shortestAngle(from, to) {
 }
 
 /**
+ * Split an airborne turn across the level clip and the two banked ones.
+ *
+ * This used to cross-weight bankLeft against bankRight alone, with level
+ * defined as the mix where their opposing banks cancel. They do not cancel:
+ * measured on the posed rig, that mix sits 5.2° left and rocks through 16° of
+ * roll every wingbeat, because blending two steeply banked poses averages the
+ * poses and not the bank. tools/blender-flight-clips.py derives a real level
+ * cycle (-0.6° across the beat), so level is a clip to hold, not a ratio to
+ * find, and the banks are only what a turn leans *into*.
+ *
+ * All three share one wingbeat window, so they stay phase-locked and the
+ * weights below never blend a downstroke into an upstroke.
+ *
+ * @param {number} blend - -1 hard right .. 0 level .. +1 hard left
+ * @returns {{level: number, left: number, right: number}} weights summing to 1
+ */
+export function bankWeights(blend) {
+  const b = clamp(finite(blend, 0), -1, 1);
+  return {
+    level: 1 - Math.abs(b),
+    left: Math.max(b, 0),
+    right: Math.max(-b, 0),
+  };
+}
+
+/**
  * Create a motion state machine for one dragon.
  *
  * @param {object} options
@@ -69,6 +105,12 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
     /** Current body roll / pitch (radians), eased toward their targets. */
     roll: 0,
     pitch: 0,
+    /**
+     * Where the airborne turn sits between the two banked sky clips:
+     * -1 hard right, 0 level, +1 hard left. Eased, so it lags the input the
+     * way a body with mass does.
+     */
+    bankBlend: 0,
     /** Degrees/sec the body turned on the last update; drives banking. */
     yawRateDeg: 0,
     /** Motion slot the base (looping) layer should be playing. */
@@ -105,6 +147,9 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
      * @param {number} input.altitude - current altitude, world units
      * @param {number} input.targetAltitude - altitude being eased toward
      * @param {string|null} input.action - 'attack' | 'dracarys' | 'special'
+     * @param {number} [input.groundSlope] - ground rise along the direction of
+     *   travel, in height levels per tile. Positive is uphill. Ignored while
+     *   airborne. See slopeAlong() in systems/terrainHeightField.js.
      * @returns {{base: string, baseTimeScale: number, oneShot: string|null,
      *   heading: number, roll: number, pitch: number, airborne: boolean}}
      */
@@ -116,6 +161,7 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       altitude = 0,
       targetAltitude = 0,
       action = null,
+      groundSlope = 0,
     } = {}) {
       const dt = clamp(finite(dtMs, 0), 0, 100) / 1000;
       this.oneShot = null;
@@ -136,16 +182,22 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       // ── One-shot arbitration ───────────────────────────────────────────
       // Player actions outrank everything, and only fire on the frame the
       // action first appears so holding the key does not restart the clip.
+      const wantsAir = isFlying && targetAltitude > config.landAltitude;
       if (action && action !== this.lastAction) {
-        this.oneShot = action;
-        this.pendingOneShot = action;
+        let resolvedAction = action;
+        if (this.airborne) {
+          if (action === 'dracarys') resolvedAction = 'flyDracarys';
+          else if (action === 'attack') resolvedAction = this.yawRateDeg < -10 ? 'flyAttackRight' : 'flyAttackLeft';
+          else if (action === 'attackAlt') resolvedAction = 'flyAttackRight';
+        }
+        this.oneShot = resolvedAction;
+        this.pendingOneShot = resolvedAction;
       }
       this.lastAction = action;
 
       // Takeoff / landing bracket the airborne state. `takeoffAltitude` is the
       // altitude the climb must pass before the dragon counts as flying, so a
       // twitch on the ascend key does not trigger a full takeoff.
-      const wantsAir = isFlying && targetAltitude > config.landAltitude;
       if (!this.airborne && wantsAir) {
         this.airborne = true;
         if (!this.oneShot) {
@@ -172,22 +224,30 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
         this.pendingOneShot = this.oneShot;
       }
 
-      // ── Base motion ────────────────────────────────────────────────────
+      // ── Vertical Speed & Base motion ─────────────────────────────────────
+      const verticalSpeed = dt > 0 ? (altitude - this.lastAltitude) / dt : 0;
+      this.lastAltitude = altitude;
+
       let base;
       let baseTimeScale = 1;
       if (this.airborne) {
-        const turnRatio = clamp(this.yawRateDeg / config.walkTurnRateDeg, -1, 1);
-        if (turnRatio > 0.35) base = 'bankLeft';
-        else if (turnRatio < -0.35) base = 'bankRight';
-        else base = 'fly';
+        // A stationary airborne wyvern should hold and beat in place.  The
+        // level-flight loop reads as coasting when there is no horizontal
+        // motion, even though the motion controller reports zero speed.
+        base = moving ? 'fly' : 'hover';
+        if (moving) {
+          baseTimeScale = Math.abs(verticalSpeed) > 1.5 || speed > 110 ? 1.15 : 0.95;
+        } else {
+          baseTimeScale = 1.05;
+        }
+        const turnRatio = clamp(this.yawRateDeg / config.flightTurnRateDeg, -1, 1);
+        this.bankBlend += (turnRatio - this.bankBlend)
+          * (1 - Math.exp(-dt * config.bankBlendResponseHz));
       } else if (moving) {
-        // Blend the straight walk into its turning variants by how hard the
-        // body is rotating, so a curving path is not a straight-line shuffle.
         const turnRatio = clamp(this.yawRateDeg / config.walkTurnRateDeg, -1, 1);
         if (turnRatio > 0.45) base = 'walkLeft';
         else if (turnRatio < -0.45) base = 'walkRight';
         else base = 'walk';
-        // Speed-matched playback: this is the fix for foot sliding.
         baseTimeScale = clamp(
           speed / Math.max(1, config.walkClipSpeed),
           config.walkTimeScale.min,
@@ -198,7 +258,6 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       }
 
       // ── Idle break ─────────────────────────────────────────────────────
-      // A 15-second idle loop with nothing on top reads as a paused video.
       if (base === 'idle' && !this.oneShot && !this.pendingOneShot) {
         this.idleSec += dt;
         if (this.idleSec >= config.idleBreakAfterSec
@@ -213,8 +272,6 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       this.base = base;
 
       // ── Body attitude ──────────────────────────────────────────────────
-      // Bank into turns while airborne and level out otherwise; nose up or down
-      // with vertical speed. Both eased so they never pop.
       const bankTarget = this.airborne
         ? clamp(
           -this.yawRateDeg * config.bankGain,
@@ -222,18 +279,23 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
           config.bankMaxDeg,
         ) * DEG
         : 0;
-      // Measured climb rate, not the gap to the target: the movement controller
-      // eases altitude, so the remaining gap is large on the first frame of a
-      // climb and would peg the nose to its limit instantly.
-      const verticalSpeed = dt > 0 ? (altitude - this.lastAltitude) / dt : 0;
-      this.lastAltitude = altitude;
+      // The imported rig's rest pose points the head visibly down. Hover gets
+      // a modest nose-up correction on top of real vertical motion, while
+      // cruise remains level unless it is climbing or descending.
+      const hoverPitchDeg = this.airborne && base === 'hover'
+        ? config.hoverPitchDeg
+        : 0;
       const pitchTarget = this.airborne
         ? clamp(
-          verticalSpeed * config.pitchGain,
+          verticalSpeed * config.pitchGain + hoverPitchDeg,
           -config.pitchMaxDeg,
           config.pitchMaxDeg,
         ) * DEG
-        : 0;
+        : clamp(
+          (moving ? finite(groundSlope, 0) : 0) * config.slopePitchDeg,
+          -config.pitchMaxDeg,
+          config.pitchMaxDeg,
+        ) * DEG;
       this.roll += (bankTarget - this.roll)
         * (1 - Math.exp(-dt * config.bankResponseHz));
       this.pitch += (pitchTarget - this.pitch)
@@ -247,6 +309,7 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
         roll: this.roll,
         pitch: this.pitch,
         airborne: this.airborne,
+        bankBlend: this.bankBlend,
       };
     },
   };

@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ISO, TERRAIN } from '../src/config.js';
+import { ISO, SANCTUARY, TERRAIN } from '../src/config.js';
 import { gridToScreen } from '../src/systems/iso.js';
+import { createDragonMotion } from '../src/systems/dragonMotion.js';
+import { INTERACTIONS, buildSanctuaryExterior } from '../src/data/sanctuary.js';
 import {
   canOccupy,
   createSanctuaryMovement,
   createSanctuaryWanderers,
   createWalkableMask,
   findPath,
+  smoothPath,
 } from '../src/systems/sanctuaryMovement.js';
 import {
   projectFootprint,
@@ -556,8 +559,38 @@ describe('sanctuary movement', () => {
       expect(path).toBeDefined();
       expect(path).not.toBeNull();
       expect(path.length).toBeGreaterThan(0);
-      expect(path[0]).toEqual({ col: 1, row: 1 });
-      expect(path[path.length - 1]).toEqual({ col: 2, row: 2 });
+      // Across open ground the route is the destination and nothing else:
+      // findPath now string-pulls its own output, so the intermediate cell
+      // (1,1) is dropped rather than being walked to and re-aimed from.
+      expect(path).toEqual([{ col: 2, row: 2 }]);
+    });
+
+    it('keeps the corners that a wall makes load-bearing', () => {
+      // Straightening must not cut through terrain. A wall down the middle
+      // with one gap forces a genuine dog-leg, and those nodes have to survive.
+      const mask = [
+        [true, true, true, true, true],
+        [true, true, false, true, true],
+        [true, true, false, true, true],
+        [true, true, false, true, true],
+        [true, true, true, true, true],
+      ];
+      const heights = Array.from({ length: 5 }, () => [1, 1, 1, 1, 1]);
+      const path = findPath(mask, heights, { col: 0, row: 2 }, { col: 4, row: 2 });
+
+      expect(path).not.toBeNull();
+      expect(path[path.length - 1]).toEqual({ col: 4, row: 2 });
+      // Every leg of the smoothed route must stay on walkable ground.
+      let from = { col: 0, row: 2 };
+      for (const node of path) {
+        const steps = 12;
+        for (let i = 1; i <= steps; i += 1) {
+          const col = from.col + ((node.col - from.col) * i) / steps;
+          const row = from.row + ((node.row - from.row) * i) / steps;
+          expect(canOccupy(mask, col, row), `${col},${row}`).toBe(true);
+        }
+        from = node;
+      }
     });
 
     it('respects climb constraints (cliffs) and finds alternate path', () => {
@@ -727,5 +760,344 @@ describe('sanctuary flight altitude', () => {
     controller.setFlying(false);
     controller.update(1000, 1000);
     expect(controller.getAltitude()).toBeCloseTo(0);
+  });
+
+  describe('setTargetAltitude', () => {
+    // Slow settle so the climb takes several frames, which is the whole point
+    // of asking for a target rather than snapping to it.
+    function slowFlyer() {
+      return createSanctuaryMovement({
+        scene: sceneWith({ R: { isDown: false }, Q: { isDown: false } }),
+        layer: { sort: vi.fn() },
+        tiles: openTiles(),
+        resident: residentAt(2, 2),
+        tuning: { ...flightTuning(), flight: { ...flightTuning().flight, settleHz: 2.5 } },
+      });
+    }
+
+    it('opens a gap between current and target, rather than closing it', () => {
+      // setAltitude() teleports: both values land on the target in the same
+      // frame, so nothing downstream ever sees a climb in progress.
+      const snapped = slowFlyer();
+      snapped.setAltitude(60);
+      expect(snapped.getAltitude()).toBe(60);
+      expect(snapped.getTargetAltitude()).toBe(60);
+
+      const eased = slowFlyer();
+      eased.setTargetAltitude(60);
+      expect(eased.getTargetAltitude()).toBe(60);
+      expect(eased.getAltitude()).toBe(0);
+    });
+
+    it('takes several frames to arrive, and gets there', () => {
+      const controller = slowFlyer();
+      controller.setTargetAltitude(60);
+
+      controller.update(0, 100);
+      const afterOneFrame = controller.getAltitude();
+      expect(afterOneFrame).toBeGreaterThan(0);
+      expect(afterOneFrame).toBeLessThan(60);
+
+      for (let t = 100; t <= 4000; t += 100) controller.update(t, 100);
+      expect(controller.getAltitude()).toBeCloseTo(60, 0);
+    });
+
+    it('marks the wyvern as flying so update() does not reset the target', () => {
+      // update() forces targetAltitude back to the floor on every frame the
+      // controller is not flying, so a climb requested from the ground has to
+      // set isFlying or it is undone before it is ever seen.
+      const controller = slowFlyer();
+      controller.setTargetAltitude(60);
+      expect(controller.isFlying).toBe(true);
+
+      controller.update(0, 100);
+      expect(controller.getTargetAltitude()).toBe(60);
+    });
+
+    it('lands, and stops flying, when asked for the floor', () => {
+      const controller = slowFlyer();
+      controller.setTargetAltitude(60);
+      for (let t = 0; t <= 4000; t += 100) controller.update(t, 100);
+
+      controller.setTargetAltitude(0);
+      expect(controller.isFlying).toBe(false);
+      for (let t = 4000; t <= 8000; t += 100) controller.update(t, 100);
+      expect(controller.getAltitude()).toBeCloseTo(0, 0);
+    });
+
+    it('clamps to the configured ceiling and floor', () => {
+      const controller = slowFlyer();
+      controller.setTargetAltitude(9999);
+      expect(controller.getTargetAltitude()).toBe(100);
+      controller.setTargetAltitude(-50);
+      expect(controller.getTargetAltitude()).toBe(0);
+      controller.setTargetAltitude(Number.NaN);
+      expect(controller.getTargetAltitude()).toBe(0);
+    });
+  });
+});
+
+describe('flight altitude drives the 3D takeoff/land bracket', () => {
+  // The seam that was broken: the panel could set an altitude, but the model
+  // never played takeoff or land because the value snapped. This drives the
+  // real movement controller into the real state machine, which is the only
+  // place the two agree on what "airborne" means.
+  const MOTION = SANCTUARY.dragon3D.motion;
+
+  function rig() {
+    const controller = createSanctuaryMovement({
+      scene: sceneWith({ R: { isDown: false }, Q: { isDown: false } }),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      resident: residentAt(2, 2),
+      tuning: {
+        speed: 0,
+        maxDeltaMs: 100,
+        flight: {
+          minAltitude: 0, maxAltitude: 140, takeoffAltitude: 42, climbSpeed: 90, settleHz: 2.5,
+        },
+      },
+    });
+    const machine = createDragonMotion({ motion: MOTION, random: () => 1 });
+    // One frame of the loop sanctuary3D.update() runs.
+    const step = (ms = 16, time = 0) => {
+      controller.update(time, ms);
+      return machine.update({
+        dtMs: ms,
+        speed: 0,
+        isFlying: controller.isFlying,
+        altitude: controller.getAltitude(),
+        targetAltitude: controller.getTargetAltitude(),
+      });
+    };
+    return { controller, machine, step };
+  }
+
+  it('plays takeoff after an eased climb is requested', () => {
+    const { controller, step } = rig();
+    expect(step(16, 0).oneShot).toBe(null);
+
+    controller.setTargetAltitude(80);
+    const shots = [];
+    for (let t = 0; t < 2000; t += 16) shots.push(step(16, t).oneShot);
+
+    expect(shots).toContain('takeoff');
+    expect(shots.filter((s) => s === 'takeoff').length).toBe(1);
+  });
+
+  it('climbs through the takeoff instead of arriving before it', () => {
+    // Finding B, stated precisely: a snap still *fires* takeoff, but the model
+    // is already at altitude on the frame the clip starts, so the climb it
+    // animates has nothing left to cover. What the eased path buys is frames
+    // spent actually travelling, which is what reads as a takeoff on screen.
+    const snapped = rig();
+    snapped.controller.setAltitude(80);
+    let snappedClimbFrames = 0;
+    for (let t = 0; t < 2000; t += 16) {
+      const before = snapped.controller.getAltitude();
+      snapped.step(16, t);
+      if (snapped.controller.getAltitude() - before > 0.5) snappedClimbFrames += 1;
+    }
+    expect(snappedClimbFrames).toBe(0);
+
+    const eased = rig();
+    eased.controller.setTargetAltitude(80);
+    let easedClimbFrames = 0;
+    for (let t = 0; t < 2000; t += 16) {
+      const before = eased.controller.getAltitude();
+      eased.step(16, t);
+      if (eased.controller.getAltitude() - before > 0.5) easedClimbFrames += 1;
+    }
+    // Roughly a second of climb at the configured settle rate.
+    expect(easedClimbFrames).toBeGreaterThan(20);
+  });
+
+  it('plays land on the way back down', () => {
+    const { controller, machine, step } = rig();
+    controller.setTargetAltitude(80);
+    for (let t = 0; t < 3000; t += 16) step(16, t);
+    expect(machine.airborne).toBe(true);
+
+    controller.setTargetAltitude(0);
+    const shots = [];
+    for (let t = 3000; t < 8000; t += 16) shots.push(step(16, t).oneShot);
+
+    expect(shots).toContain('land');
+    expect(machine.airborne).toBe(false);
+  });
+});
+
+describe('smoothPath', () => {
+  const open = (size) => Array.from({ length: size }, () => Array(size).fill(true));
+  const flatHeights = (size) => Array.from({ length: size }, () => Array(size).fill(1));
+
+  it('collapses a straight run to its endpoint', () => {
+    const path = [
+      { col: 1, row: 0 }, { col: 2, row: 0 }, { col: 3, row: 0 }, { col: 4, row: 0 },
+    ];
+    const smoothed = smoothPath(open(6), flatHeights(6), path, { start: { col: 0, row: 0 } });
+    expect(smoothed).toEqual([{ col: 4, row: 0 }]);
+  });
+
+  it('keeps a corner it cannot see past', () => {
+    // A wall between the two arms of an L means the corner is real.
+    const mask = open(5);
+    mask[1][2] = false;
+    mask[2][2] = false;
+    mask[0][2] = false;
+    const path = [
+      { col: 1, row: 0 }, { col: 1, row: 3 }, { col: 3, row: 3 },
+    ];
+    const smoothed = smoothPath(mask, flatHeights(5), path, { start: { col: 1, row: 0 } });
+    expect(smoothed.length).toBeGreaterThan(1);
+    expect(smoothed[smoothed.length - 1]).toEqual({ col: 3, row: 3 });
+  });
+
+  it('never shortcuts across a cliff the actor could not climb', () => {
+    // Straight line from (0,0) to (4,0) crosses a 5-level wall at col 2.
+    const heights = flatHeights(5);
+    heights[0][2] = 6;
+    const path = [
+      { col: 1, row: 0 }, { col: 2, row: 0 }, { col: 3, row: 0 }, { col: 4, row: 0 },
+    ];
+    const smoothed = smoothPath(open(5), heights, path, {
+      start: { col: 0, row: 0 }, climbStep: 1,
+    });
+    // It must not collapse to a single hop straight through the wall.
+    expect(smoothed).not.toEqual([{ col: 4, row: 0 }]);
+  });
+
+  it('always keeps the destination', () => {
+    const path = [{ col: 1, row: 1 }, { col: 2, row: 2 }];
+    const smoothed = smoothPath(open(4), flatHeights(4), path, { start: { col: 0, row: 0 } });
+    expect(smoothed[smoothed.length - 1]).toEqual({ col: 2, row: 2 });
+  });
+
+  it('passes trivial paths straight through', () => {
+    expect(smoothPath(open(4), flatHeights(4), [])).toEqual([]);
+    expect(smoothPath(open(4), flatHeights(4), [{ col: 1, row: 1 }]))
+      .toEqual([{ col: 1, row: 1 }]);
+    expect(smoothPath(open(4), flatHeights(4), null)).toBeNull();
+  });
+});
+
+describe('path following robustness', () => {
+  const openTilesLocal = (size = 8) => Array.from(
+    { length: size }, () => Array.from({ length: size }, () => cell()),
+  );
+
+  function walker(tiles, tuning = {}) {
+    return createSanctuaryMovement({
+      scene: sceneWith({}),
+      layer: { sort: vi.fn() },
+      tiles,
+      resident: residentAt(1, 1),
+      tuning: { speed: 200, maxDeltaMs: 100, collisionRadius: 0, ...tuning },
+    });
+  }
+
+  it('does not abandon the route on a single blocked frame', () => {
+    // A wall the actor slides along: moveWithCollision reports no movement on
+    // the frame it first makes contact, which used to null the whole path.
+    const tiles = openTilesLocal();
+    for (let row = 0; row < 8; row += 1) tiles[row][4] = cell(6);
+
+    const controller = walker(tiles, { pathBlockedGraceFrames: 12 });
+    controller.setPath([{ col: 6, row: 1 }]);
+    controller.update(0, 16);
+    // One contact frame must not have cancelled it.
+    controller.update(16, 16);
+    expect(controller.path).not.toBeNull();
+  });
+
+  it('gives up once genuinely stuck for the whole grace period', () => {
+    const tiles = openTilesLocal();
+    for (let row = 0; row < 8; row += 1) tiles[row][2] = cell(6);
+
+    const controller = walker(tiles, { pathBlockedGraceFrames: 3 });
+    controller.setPath([{ col: 6, row: 1 }]);
+    for (let i = 0; i < 10; i += 1) controller.update(i * 16, 16);
+    expect(controller.path).toBeNull();
+  });
+
+  it('resets the blocked counter when it makes progress again', () => {
+    const controller = walker(openTilesLocal(), { pathBlockedGraceFrames: 3 });
+    controller.setPath([{ col: 6, row: 1 }]);
+    controller.update(0, 16);
+    expect(controller.pathBlockedFrames).toBe(0);
+  });
+
+  it('slows as it reaches the final waypoint', () => {
+    const controller = walker(openTilesLocal(), { arrivalRadius: 60, arrivalMinScale: 0.35 });
+    controller.setPath([{ col: 5, row: 1 }]);
+
+    // Distance covered on an early frame, far from the target...
+    const beforeFar = controller.getLogicalFootprint().col;
+    controller.update(0, 16);
+    const farStep = controller.getLogicalFootprint().col - beforeFar;
+
+    // ...versus a frame taken right next to it.
+    controller.setPath([{ col: 5, row: 1 }]);
+    controller.getLogicalFootprint();
+    const near = createSanctuaryMovement({
+      scene: sceneWith({}),
+      layer: { sort: vi.fn() },
+      tiles: openTilesLocal(),
+      resident: residentAt(4.85, 1),
+      tuning: {
+        speed: 200, maxDeltaMs: 100, collisionRadius: 0,
+        arrivalRadius: 60, arrivalMinScale: 0.35,
+      },
+    });
+    near.setPath([{ col: 5, row: 1 }]);
+    const beforeNear = near.getLogicalFootprint().col;
+    near.update(0, 16);
+    const nearStep = near.getLogicalFootprint().col - beforeNear;
+
+    expect(farStep).toBeGreaterThan(0);
+    expect(nearStep).toBeGreaterThan(0);
+    expect(nearStep).toBeLessThan(farStep);
+  });
+});
+
+describe('landmark reachability with the grown collision footprint', () => {
+  // collisionRadius went from 3px (effectively a point) to 22px so the body
+  // stops against walls at its real size. The risk that buys is that the
+  // wyvern can no longer get close enough to an authored landmark to interact
+  // with it — every one of these is a place the player must be able to reach.
+  const { tiles } = buildSanctuaryExterior();
+  const mask = createWalkableMask(tiles);
+  const radius = SANCTUARY.movement.collisionRadius;
+
+  /** Screen distance between two grid cells, the metric interactions use. */
+  const screenDistance = (a, b) => {
+    const pa = projectFootprint(a.col, a.row, TERRAIN.baseHeight);
+    const pb = projectFootprint(b.col, b.row, TERRAIN.baseHeight);
+    return Math.hypot(pa.x - pb.x, pa.y - pb.y);
+  };
+
+  INTERACTIONS.outside.forEach((target) => {
+    it(`${target.id} still has standing room inside its ${target.range}px range`, () => {
+      const range = target.range ?? SANCTUARY.interaction.defaultRange;
+      let best = null;
+
+      for (let row = 0; row < mask.length; row += 0.5) {
+        for (let col = 0; col < (mask[Math.round(row)]?.length ?? 0); col += 0.5) {
+          const spot = { col, row };
+          if (screenDistance(spot, target) > range) continue;
+          // canOccupy samples the radius the actor really collides with.
+          if (!canOccupy(mask, col, row)) continue;
+          if (!canOccupy(mask, col + radius / 64, row)) continue;
+          if (!canOccupy(mask, col - radius / 64, row)) continue;
+          if (!canOccupy(mask, col, row + radius / 64)) continue;
+          if (!canOccupy(mask, col, row - radius / 64)) continue;
+          best = spot;
+          break;
+        }
+        if (best) break;
+      }
+
+      expect(best, `no walkable spot within ${range}px of ${target.id}`).not.toBeNull();
+    });
   });
 });

@@ -11,11 +11,14 @@
     "test:watch": "vitest",
     "check:syntax": "node scripts/check-syntax.mjs",
     "typecheck": "tsc --noEmit",
+    "blender:check": "node tools/blender-runner.mjs --check",
+    "blender:generate-props": "node tools/blender-runner.mjs --generate-props",
     "check": "npm run check:syntax && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "phaser": "3.80.1",
-    "three": "0.185.1"
+    "three": "0.185.1",
+    "threejs-devtools-mcp": "^0.4.1"
   },
   "devDependencies": {
     "jsdom": "^29.1.1",

@@ -40,7 +40,9 @@ positioning/compositing; a later milestone swaps in a fully animated,
 rigged dragon model. Full scope, non-goals, and milestones live in
 [`docs/SANCTUARY_3D_DRAGON_PLAN.md`](docs/SANCTUARY_3D_DRAGON_PLAN.md). This
 does not block or reopen the rotatable-camera plan's Milestone 5
-directional-art acceptance gate above.
+directional-art acceptance gate above. The development panel used to drive
+and tune that model has its own plan in
+[`docs/WYVERN_DEBUG_PANEL_PLAN.md`](docs/WYVERN_DEBUG_PANEL_PLAN.md).
 
 ## Phase 1 — Close the base ↔ mission loop
 

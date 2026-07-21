@@ -10,9 +10,9 @@
     "semantic_hash": "8530a15026952a604bcfeff47c03351a"
   },
   "package.json": {
-    "mtime": 1784622373.6078587,
-    "ast_hash": "9c3ec62af8f342f91cd2481bec4c85d5",
-    "semantic_hash": ""
+    "mtime": 1784654557.1992157,
+    "ast_hash": "b9674c2c62f71752b763deae93432a53",
+    "semantic_hash": "b9674c2c62f71752b763deae93432a53"
   },
   "scripts/check-syntax.mjs": {
     "mtime": 1784280645.369623,
@@ -25,9 +25,9 @@
     "semantic_hash": "d8d5928034066b4ebe1992ebf1866a7b"
   },
   "src/config.js": {
-    "mtime": 1784608379.7794008,
-    "ast_hash": "78defb9bfd1cb036028ca4395cd8c9d5",
-    "semantic_hash": "78defb9bfd1cb036028ca4395cd8c9d5"
+    "mtime": 1784658029.684527,
+    "ast_hash": "a9de71b05c3174e2fa2549a857d039b5",
+    "semantic_hash": "a9de71b05c3174e2fa2549a857d039b5"
   },
   "src/data/atlas.js": {
     "mtime": 1784262074.6998713,
@@ -40,9 +40,9 @@
     "semantic_hash": "0097c0bab35129dc2f11a40cb03b4d4c"
   },
   "src/data/sanctuary.js": {
-    "mtime": 1784559730.3010216,
-    "ast_hash": "a49ecfc3510e8693ae4027ed0c9e1fbf",
-    "semantic_hash": "a49ecfc3510e8693ae4027ed0c9e1fbf"
+    "mtime": 1784657726.00256,
+    "ast_hash": "9fe3d437318d37fff88253dca94cb74b",
+    "semantic_hash": "9fe3d437318d37fff88253dca94cb74b"
   },
   "src/data/species.js": {
     "mtime": 1784209389.5852401,
@@ -52,7 +52,7 @@
   "src/data/wyverns.js": {
     "mtime": 1784622327.9227374,
     "ast_hash": "44d70a7990954b7ff35e29d790526003",
-    "semantic_hash": ""
+    "semantic_hash": "44d70a7990954b7ff35e29d790526003"
   },
   "src/entities/Enemy.js": {
     "mtime": 1784203719.0766664,
@@ -62,7 +62,7 @@
   "src/entities/Wyvern.js": {
     "mtime": 1784622961.55587,
     "ast_hash": "a2905dc80dbcf1f7a99196bbc2b16721",
-    "semantic_hash": ""
+    "semantic_hash": "a2905dc80dbcf1f7a99196bbc2b16721"
   },
   "src/input/keyboardActions.ts": {
     "mtime": 1784609496.9251246,
@@ -70,9 +70,9 @@
     "semantic_hash": "995cbeafecb9e60d7e5425ab23b90bf1"
   },
   "src/main.js": {
-    "mtime": 1784585342.7185047,
-    "ast_hash": "2ecb36cde727851cea97173c16543b4d",
-    "semantic_hash": "2ecb36cde727851cea97173c16543b4d"
+    "mtime": 1784652811.3119042,
+    "ast_hash": "48ce86860020dfebf2d917ab608633b3",
+    "semantic_hash": "48ce86860020dfebf2d917ab608633b3"
   },
   "src/scenes/AtlasScene.js": {
     "mtime": 1784609664.1604686,
@@ -80,9 +80,9 @@
     "semantic_hash": "eb427a8d03276c4f63ef459ec04d4713"
   },
   "src/scenes/BaseScene.js": {
-    "mtime": 1784609679.1859205,
-    "ast_hash": "62571c64aa5a31aaab6506868f8f3ab8",
-    "semantic_hash": "62571c64aa5a31aaab6506868f8f3ab8"
+    "mtime": 1784655210.001749,
+    "ast_hash": "9e7b53d78ec6b8a831fabcbfb2d25c04",
+    "semantic_hash": "9e7b53d78ec6b8a831fabcbfb2d25c04"
   },
   "src/scenes/BootScene.js": {
     "mtime": 1784202758.7705047,
@@ -97,12 +97,12 @@
   "src/scenes/PreloadScene.js": {
     "mtime": 1784622435.4439418,
     "ast_hash": "1d6fce00b40ffc2dc5dc60f363b3b3eb",
-    "semantic_hash": ""
+    "semantic_hash": "1d6fce00b40ffc2dc5dc60f363b3b3eb"
   },
   "src/scenes/VaultScene.js": {
-    "mtime": 1784609646.2909427,
-    "ast_hash": "ca2e85be30a1f279acab7854ef4abbbe",
-    "semantic_hash": "ca2e85be30a1f279acab7854ef4abbbe"
+    "mtime": 1784626001.1266367,
+    "ast_hash": "46ccb2604e28206382910bcccf16f7e9",
+    "semantic_hash": "46ccb2604e28206382910bcccf16f7e9"
   },
   "src/systems/atlasWorld.js": {
     "mtime": 1784262008.1108427,
@@ -115,9 +115,9 @@
     "semantic_hash": "dbc355dd8c99dbfe3a7009453375eedc"
   },
   "src/systems/dragonMotion.js": {
-    "mtime": 1784606799.2475088,
-    "ast_hash": "e11af786bd57f49f9c176ce74fb78e55",
-    "semantic_hash": "e11af786bd57f49f9c176ce74fb78e55"
+    "mtime": 1784658080.8591213,
+    "ast_hash": "c04aedc81f5589762acf2422ed74b9b7",
+    "semantic_hash": "c04aedc81f5589762acf2422ed74b9b7"
   },
   "src/systems/draw.js": {
     "mtime": 1784206232.3373044,
@@ -140,14 +140,14 @@
     "semantic_hash": "0e7b34930633d2e44aa4ab3304be1601"
   },
   "src/systems/roster.js": {
-    "mtime": 1784280300.0649726,
-    "ast_hash": "d33a062b84c0392f41cbb52c42f4b557",
-    "semantic_hash": "d33a062b84c0392f41cbb52c42f4b557"
+    "mtime": 1784626025.961725,
+    "ast_hash": "b7ace8df88755541140c0222d1eec5a5",
+    "semantic_hash": "b7ace8df88755541140c0222d1eec5a5"
   },
   "src/systems/sanctuary3D.js": {
-    "mtime": 1784607842.3637846,
-    "ast_hash": "504bdcc5401b957a549720e06210e0b6",
-    "semantic_hash": "504bdcc5401b957a549720e06210e0b6"
+    "mtime": 1784656098.5899532,
+    "ast_hash": "87ac8b71068537fd11f1791a59a1e09d",
+    "semantic_hash": "87ac8b71068537fd11f1791a59a1e09d"
   },
   "src/systems/sanctuaryCamera.js": {
     "mtime": 1784609590.5550873,
@@ -170,9 +170,9 @@
     "semantic_hash": "88aaeb7063116c159b5b2e3f81270f91"
   },
   "src/systems/sanctuaryMovement.js": {
-    "mtime": 1784609512.2965446,
-    "ast_hash": "95171537fb91dfce0ece76d52ebc150e",
-    "semantic_hash": "95171537fb91dfce0ece76d52ebc150e"
+    "mtime": 1784646787.4488683,
+    "ast_hash": "8dbed9e22d19d568228acf0fc1ff5359",
+    "semantic_hash": "8dbed9e22d19d568228acf0fc1ff5359"
   },
   "src/systems/sanctuaryProjection.js": {
     "mtime": 1784586211.848173,
@@ -180,9 +180,9 @@
     "semantic_hash": "facfba5d68ed670a81204b27a0120282"
   },
   "src/systems/sanctuaryRender.js": {
-    "mtime": 1784622968.6616104,
-    "ast_hash": "89606f71ba84f2871d6b7d9945b05b7e",
-    "semantic_hash": ""
+    "mtime": 1784625768.3031874,
+    "ast_hash": "8145095348f4a82bbb1ad1ac44161ef9",
+    "semantic_hash": "8145095348f4a82bbb1ad1ac44161ef9"
   },
   "src/systems/terrain.js": {
     "mtime": 1784207453.1280308,
@@ -207,7 +207,7 @@
   "src/systems/wyvernPresentation.js": {
     "mtime": 1784622940.521206,
     "ast_hash": "e13c18d4a1b3f7e0b62b267d5c6d8f8b",
-    "semantic_hash": ""
+    "semantic_hash": "e13c18d4a1b3f7e0b62b267d5c6d8f8b"
   },
   "src/ui/atlasPanel.js": {
     "mtime": 1784376380.3816066,
@@ -215,14 +215,9 @@
     "semantic_hash": "91c7ad2cc5ec9f125d547130ece7e292"
   },
   "src/ui/roostPanel.js": {
-    "mtime": 1784604324.9937656,
-    "ast_hash": "fd983815afe24e37ee61126cf35a4f7e",
-    "semantic_hash": "fd983815afe24e37ee61126cf35a4f7e"
-  },
-  "src/ui/testPanel.js": {
-    "mtime": 1784608387.2497864,
-    "ast_hash": "603e20f2ed8a0c168427f86a14c24c28",
-    "semantic_hash": "603e20f2ed8a0c168427f86a14c24c28"
+    "mtime": 1784653019.599638,
+    "ast_hash": "92675a5eebc8c77b6e09e671ff45bf66",
+    "semantic_hash": "92675a5eebc8c77b6e09e671ff45bf66"
   },
   "src/ui/uiKit.js": {
     "mtime": 1784376064.7215862,
@@ -235,9 +230,9 @@
     "semantic_hash": "a1dc2a37f365094b4b7f9ff0d4714aca"
   },
   "src/ui/vaultPanel.js": {
-    "mtime": 1784605707.9102576,
-    "ast_hash": "3637099f9ac64afad8d7ae8803e49d3a",
-    "semantic_hash": "3637099f9ac64afad8d7ae8803e49d3a"
+    "mtime": 1784626007.6306136,
+    "ast_hash": "bb8558d8c458cd2289af06185ff44d99",
+    "semantic_hash": "bb8558d8c458cd2289af06185ff44d99"
   },
   "tests/baseSceneLifecycle.test.js": {
     "mtime": 1784397718.5667074,
@@ -245,9 +240,9 @@
     "semantic_hash": "60a1fadd0955e2931e21bc382d01c7a0"
   },
   "tests/dragonMotion.test.js": {
-    "mtime": 1784607169.038515,
-    "ast_hash": "4245561e66d166c25b81cd0153432f0d",
-    "semantic_hash": "4245561e66d166c25b81cd0153432f0d"
+    "mtime": 1784655260.864385,
+    "ast_hash": "0222deb61ba8ce87f457ba15794a1d99",
+    "semantic_hash": "0222deb61ba8ce87f457ba15794a1d99"
   },
   "tests/grid3d.test.js": {
     "mtime": 1784565965.573513,
@@ -275,9 +270,9 @@
     "semantic_hash": "d1bc612f5519369ff4c23598c822bd7f"
   },
   "tests/sanctuaryMovement.test.js": {
-    "mtime": 1784566033.4806497,
-    "ast_hash": "e0847f531bec5b020c5dbbd66259a996",
-    "semantic_hash": "e0847f531bec5b020c5dbbd66259a996"
+    "mtime": 1784647247.7718325,
+    "ast_hash": "2b59706342cecec275560b57ebc07174",
+    "semantic_hash": "2b59706342cecec275560b57ebc07174"
   },
   "tests/sanctuaryPicker.test.js": {
     "mtime": 1784566066.7971911,
@@ -290,9 +285,9 @@
     "semantic_hash": "30121bb37099d2e88c5d0298526a22dc"
   },
   "tests/sanctuaryRenderGroundPlane.test.js": {
-    "mtime": 1784397718.5685823,
-    "ast_hash": "459c4deaae09a74d9e05849a5e962e53",
-    "semantic_hash": "459c4deaae09a74d9e05849a5e962e53"
+    "mtime": 1784625865.2046196,
+    "ast_hash": "44e3ed3837c2ebe8034bea50b66201bb",
+    "semantic_hash": "44e3ed3837c2ebe8034bea50b66201bb"
   },
   "tests/sanctuaryTextureBake.test.js": {
     "mtime": 1784397718.568809,
@@ -307,12 +302,12 @@
   "tests/wyvernPresentation.test.js": {
     "mtime": 1784622983.735091,
     "ast_hash": "0ba1e4dc60c4e5cd0f076685719b886f",
-    "semantic_hash": ""
+    "semantic_hash": "0ba1e4dc60c4e5cd0f076685719b886f"
   },
   "tools/prep-drogon.mjs": {
-    "mtime": 1784606628.0973356,
-    "ast_hash": "9cb06f5705c0fb76d6b31d7dd7eaa9ce",
-    "semantic_hash": "9cb06f5705c0fb76d6b31d7dd7eaa9ce"
+    "mtime": 1784649545.689829,
+    "ast_hash": "bb71e18809eec98144f70351a96e40a7",
+    "semantic_hash": "bb71e18809eec98144f70351a96e40a7"
   },
   "tsconfig.json": {
     "mtime": 1784609361.520265,
@@ -475,14 +470,14 @@
     "semantic_hash": "7c8eef7cf83eddf7758147a8f766343d"
   },
   "AI_CONTEXT.md": {
-    "mtime": 1784550283.3142495,
-    "ast_hash": "8ab729d925ffa1e047588155fa8d49e9",
-    "semantic_hash": "8ab729d925ffa1e047588155fa8d49e9"
+    "mtime": 1784627473.2511804,
+    "ast_hash": "f0386766bd3f23c34e335353358284ca",
+    "semantic_hash": "f0386766bd3f23c34e335353358284ca"
   },
   "AI_CONTRIBUTIONS.md": {
-    "mtime": 1784622739.3920736,
-    "ast_hash": "5b6b28938b603405a9992ae87cede92e",
-    "semantic_hash": ""
+    "mtime": 1784658183.440856,
+    "ast_hash": "50ee23860e7b13a40e6e7090bb8429b6",
+    "semantic_hash": "50ee23860e7b13a40e6e7090bb8429b6"
   },
   "CLAUDE.md": {
     "mtime": 1784550283.3148694,
@@ -495,14 +490,14 @@
     "semantic_hash": "6724a108614371921b0cb0ad4a63ef6e"
   },
   "README.md": {
-    "mtime": 1784550283.3151362,
-    "ast_hash": "5a20e09dc7b92e14a8849c8b895631ff",
-    "semantic_hash": "5a20e09dc7b92e14a8849c8b895631ff"
+    "mtime": 1784627470.9106696,
+    "ast_hash": "bfe8ed689bdb0f826323045543e30750",
+    "semantic_hash": "bfe8ed689bdb0f826323045543e30750"
   },
   "ROADMAP.md": {
-    "mtime": 1784550283.3156044,
-    "ast_hash": "d89328ab89e9f976c9ad4adb0f988c78",
-    "semantic_hash": "d89328ab89e9f976c9ad4adb0f988c78"
+    "mtime": 1784627479.6294749,
+    "ast_hash": "7e82e5a85dca0539961652a83a893b05",
+    "semantic_hash": "7e82e5a85dca0539961652a83a893b05"
   },
   "assets/audio/README.md": {
     "mtime": 1784202901.9230416,
@@ -510,9 +505,9 @@
     "semantic_hash": "6b317f1e206eb58a4cf09c942fd47ac7"
   },
   "assets/models/README.md": {
-    "mtime": 1784608404.2782447,
-    "ast_hash": "f663fc306b517cdf9b3244141d9ff375",
-    "semantic_hash": "f663fc306b517cdf9b3244141d9ff375"
+    "mtime": 1784656692.1290834,
+    "ast_hash": "21754deec45de6803c363e47bbc1577e",
+    "semantic_hash": "21754deec45de6803c363e47bbc1577e"
   },
   "assets/tilemaps/README.md": {
     "mtime": 1784202901.9217508,
@@ -525,9 +520,9 @@
     "semantic_hash": "826da7b7e81117a18f497fe6315c89de"
   },
   "docs/SANCTUARY_3D_DRAGON_PLAN.md": {
-    "mtime": 1784608428.5624857,
-    "ast_hash": "ad819b8730f33d9e1ec62d884c1c96ce",
-    "semantic_hash": "ad819b8730f33d9e1ec62d884c1c96ce"
+    "mtime": 1784627485.9960551,
+    "ast_hash": "fa6151d272d1bc36da2650f8ad300085",
+    "semantic_hash": "fa6151d272d1bc36da2650f8ad300085"
   },
   "docs/SANCTUARY_FREE_ROAM_PLAN.md": {
     "mtime": 1784398004.0803773,
@@ -549,64 +544,124 @@
     "ast_hash": "3258afe28c89c692128b1fa589f65aa4",
     "semantic_hash": "3258afe28c89c692128b1fa589f65aa4"
   },
-  "wyvernassets-3d testing/mega_wyvern 2/license.txt": {
-    "mtime": 1715945992.0,
-    "ast_hash": "791552de1edcdc8c8f731c28942f958e",
-    "semantic_hash": "791552de1edcdc8c8f731c28942f958e"
+  ".blender-toolkit/blender-config.json": {
+    "mtime": 1784654506.9530432,
+    "ast_hash": "9ae6eb8be65b6a54c59933cc8c7aba4e",
+    "semantic_hash": "9ae6eb8be65b6a54c59933cc8c7aba4e"
   },
-  "wyvernassets-3d testing/mega_wyvern/license.txt": {
-    "mtime": 1715945992.0,
-    "ast_hash": "791552de1edcdc8c8f731c28942f958e",
-    "semantic_hash": "791552de1edcdc8c8f731c28942f958e"
+  ".claude/skills/blender-motion-state-inspection/.skillfish.json": {
+    "mtime": 1784652257.7660427,
+    "ast_hash": "14829a3b5e60ec145e7caaa416b7da30",
+    "semantic_hash": "14829a3b5e60ec145e7caaa416b7da30"
   },
-  "wyvernassets-3d testing/wyvern (1)/license.txt": {
-    "mtime": 1647017976.0,
-    "ast_hash": "c06eb9ad373d60330466888aa02ccb76",
-    "semantic_hash": "c06eb9ad373d60330466888aa02ccb76"
+  "src/systems/actionPipeline.js": {
+    "mtime": 1784657642.2103937,
+    "ast_hash": "b3a34f0495496ee96088d2226a443f07",
+    "semantic_hash": "b3a34f0495496ee96088d2226a443f07"
   },
-  "wyvernassets-3d testing/drogon-game-of-thrones-dragon/textures/T_DaenerysDragon_Body_D.png": {
-    "mtime": 1779327496.0,
-    "ast_hash": "bab8d5d6a8c62dde1bc2eb0c01e17927",
-    "semantic_hash": "bab8d5d6a8c62dde1bc2eb0c01e17927"
+  "src/systems/blendTree.js": {
+    "mtime": 1784655754.7789304,
+    "ast_hash": "d2ebfd7cf18c89c2d5d67981b0a2f2f7",
+    "semantic_hash": "d2ebfd7cf18c89c2d5d67981b0a2f2f7"
   },
-  "wyvernassets-3d testing/drogon-game-of-thrones-dragon/textures/T_DaenerysDragon_Head_D.png": {
-    "mtime": 1779327496.0,
-    "ast_hash": "c89e18599bd9c19013b2cd9a0d493f40",
-    "semantic_hash": "c89e18599bd9c19013b2cd9a0d493f40"
+  "src/systems/creatureFSM.js": {
+    "mtime": 1784655746.1098275,
+    "ast_hash": "7ad9189d47dc8b5649536f66ac639663",
+    "semantic_hash": "7ad9189d47dc8b5649536f66ac639663"
   },
-  "wyvernassets-3d testing/mega_wyvern 2/textures/Dragon_Boss_05_baseColor.png": {
-    "mtime": 1715945994.0,
-    "ast_hash": "18e8095b8806339972ceffbc18b16212",
-    "semantic_hash": "18e8095b8806339972ceffbc18b16212"
+  "src/systems/terrainHeightField.js": {
+    "mtime": 1784647058.3745205,
+    "ast_hash": "7df98a44ffe7dd34b0961cfc8e27819c",
+    "semantic_hash": "7df98a44ffe7dd34b0961cfc8e27819c"
   },
-  "wyvernassets-3d testing/mega_wyvern 2/textures/Dragon_Boss_05_metallicRoughness.png": {
-    "mtime": 1715945996.0,
-    "ast_hash": "817f254f716f884c38dd94cfba38231b",
-    "semantic_hash": "817f254f716f884c38dd94cfba38231b"
+  "src/ui/actionKanbanPanel.js": {
+    "mtime": 1784657655.2036216,
+    "ast_hash": "edf08cdd4f9ce31ce4ca0094840c2f76",
+    "semantic_hash": "edf08cdd4f9ce31ce4ca0094840c2f76"
   },
-  "wyvernassets-3d testing/mega_wyvern 2/textures/Dragon_Boss_05_specularf0.png": {
-    "mtime": 1715945998.0,
-    "ast_hash": "6f0aedd8f4f910cf7813d33a4729d952",
-    "semantic_hash": "6f0aedd8f4f910cf7813d33a4729d952"
+  "src/ui/debugPanel.js": {
+    "mtime": 1784635880.5239267,
+    "ast_hash": "58fe322c4ced99348c198c25ac04e4b6",
+    "semantic_hash": "58fe322c4ced99348c198c25ac04e4b6"
   },
-  "wyvernassets-3d testing/mega_wyvern/textures/Dragon_Boss_05_baseColor.png": {
-    "mtime": 1715945994.0,
-    "ast_hash": "18e8095b8806339972ceffbc18b16212",
-    "semantic_hash": "18e8095b8806339972ceffbc18b16212"
+  "src/ui/debugPanelSchema.js": {
+    "mtime": 1784628300.6321394,
+    "ast_hash": "7a80f55ee30a225651d8952ccda946ff",
+    "semantic_hash": "7a80f55ee30a225651d8952ccda946ff"
   },
-  "wyvernassets-3d testing/mega_wyvern/textures/Dragon_Boss_05_metallicRoughness.png": {
-    "mtime": 1715945996.0,
-    "ast_hash": "817f254f716f884c38dd94cfba38231b",
-    "semantic_hash": "817f254f716f884c38dd94cfba38231b"
+  "tests/actionPipeline.test.js": {
+    "mtime": 1784655217.3233795,
+    "ast_hash": "5ca4c02a7cbaa005cfba038bfbcfe298",
+    "semantic_hash": "5ca4c02a7cbaa005cfba038bfbcfe298"
   },
-  "wyvernassets-3d testing/mega_wyvern/textures/Dragon_Boss_05_specularf0.png": {
-    "mtime": 1715945998.0,
-    "ast_hash": "6f0aedd8f4f910cf7813d33a4729d952",
-    "semantic_hash": "6f0aedd8f4f910cf7813d33a4729d952"
+  "tests/blendTree.test.js": {
+    "mtime": 1784655777.5097291,
+    "ast_hash": "624d53ff739067909f076229ae65b587",
+    "semantic_hash": "624d53ff739067909f076229ae65b587"
   },
-  "wyvernassets-3d testing/wyvern/textures/internal_ground_ao_texture.jpeg": {
-    "mtime": 1635970466.0,
-    "ast_hash": "9ebf076a419a10537ab73731b431f5fa",
-    "semantic_hash": "9ebf076a419a10537ab73731b431f5fa"
+  "tests/creatureFSM.test.js": {
+    "mtime": 1784655769.284204,
+    "ast_hash": "d945fb1de7ac946002c3261a5b1042e6",
+    "semantic_hash": "d945fb1de7ac946002c3261a5b1042e6"
+  },
+  "tests/debugPanel.dom.test.js": {
+    "mtime": 1784628644.4708958,
+    "ast_hash": "83726f3d98e03097b21a88ba93fe6538",
+    "semantic_hash": "83726f3d98e03097b21a88ba93fe6538"
+  },
+  "tests/debugPanelSchema.test.js": {
+    "mtime": 1784628598.4521573,
+    "ast_hash": "1db370a4f47f9cd61b3125c923a44213",
+    "semantic_hash": "1db370a4f47f9cd61b3125c923a44213"
+  },
+  "tests/terrainHeightField.test.js": {
+    "mtime": 1784647195.470176,
+    "ast_hash": "ae7f635fda423055e3a9837465811492",
+    "semantic_hash": "ae7f635fda423055e3a9837465811492"
+  },
+  "tools/analyze-flight-frames.py": {
+    "mtime": 1784658007.3112204,
+    "ast_hash": "87940ce84a4567ebd9ebf815585ed855",
+    "semantic_hash": "87940ce84a4567ebd9ebf815585ed855"
+  },
+  "tools/blender-flight-clips.py": {
+    "mtime": 1784654642.8365602,
+    "ast_hash": "c1d6db34b99c1d98a90cc04919f6a75b",
+    "semantic_hash": "c1d6db34b99c1d98a90cc04919f6a75b"
+  },
+  "tools/blender-runner.mjs": {
+    "mtime": 1784654522.2019522,
+    "ast_hash": "7ecec947f2619828e9094c90966f6006",
+    "semantic_hash": "7ecec947f2619828e9094c90966f6006"
+  },
+  "tools/generate-sanctuary-props.py": {
+    "mtime": 1784654634.0017715,
+    "ast_hash": "a9050d21b30e039d8a2f547d374d03ad",
+    "semantic_hash": "a9050d21b30e039d8a2f547d374d03ad"
+  },
+  "tools/inspect-wyvern-blend.py": {
+    "mtime": 1784656640.591693,
+    "ast_hash": "bf1a201dbc27655dd7869aa749894ffc",
+    "semantic_hash": "bf1a201dbc27655dd7869aa749894ffc"
+  },
+  ".agents/skills/blender-toolkit/SKILL.md": {
+    "mtime": 1784653587.7091572,
+    "ast_hash": "d54a1508b0c1faca36291723c3576f88",
+    "semantic_hash": "d54a1508b0c1faca36291723c3576f88"
+  },
+  ".claude/skills/blender-motion-state-inspection/SKILL.md": {
+    "mtime": 1784652257.7657225,
+    "ast_hash": "c515ea1ed287f31db319a5c6519b78c8",
+    "semantic_hash": "c515ea1ed287f31db319a5c6519b78c8"
+  },
+  ".claude/skills/blender-toolkit/SKILL.md": {
+    "mtime": 1784653594.5156143,
+    "ast_hash": "0568faf64c0cb41bbb652887711d0175",
+    "semantic_hash": "0568faf64c0cb41bbb652887711d0175"
+  },
+  "docs/WYVERN_DEBUG_PANEL_PLAN.md": {
+    "mtime": 1784649837.706851,
+    "ast_hash": "98b71bedeb9a3832d681e373e8255097",
+    "semantic_hash": "98b71bedeb9a3832d681e373e8255097"
   }
 }

@@ -37,7 +37,10 @@ import {
   gainXp, getAnimal, getRoster, raiseBond, recruitAnimal,
 } from '../systems/roster.js';
 import { createSanctuary3D } from '../systems/sanctuary3D.js';
-import { createDragonTestPanel } from '../ui/testPanel.js';
+import { createDragonDebugPanel } from '../ui/debugPanel.js';
+import { createActionPipeline } from '../systems/actionPipeline.js';
+import { createActionKanbanPanel } from '../ui/actionKanbanPanel.js';
+import { applyTuning } from '../ui/debugPanelSchema.js';
 import { KeyboardAction, onKeydown } from '../input/keyboardActions.js';
 
 // Scene starts destroy display objects, but this small in-memory preference row
@@ -114,8 +117,7 @@ export default class BaseScene extends Phaser.Scene {
     this.projectionView = normalizeView(SANCTUARY_SESSION.cameraView);
 
     this.sanctuary3D = null;
-    this.testPanel = null;
-    this.testOverrideAction = null;
+    this.debugPanel = null;
 
     // G toggles flight for the wyvern. Deliberately a plain key rather
     // than a roster/HUD affordance: flight is an experiment-only state with no
@@ -172,11 +174,17 @@ export default class BaseScene extends Phaser.Scene {
       // systems/dragonMotion.js from the movement controller's own state, which
       // is the only place that knows speed and altitude. See
       // docs/SANCTUARY_3D_DRAGON_PLAN.md, Milestone 3.
-      this.sanctuary3D.setMotion(
-        this.testOverrideAction || ACTION_MOTIONS[this.movement?.state] || null,
-      );
+      //
+      // setAction(), not setMotion(): this is the action channel, edge-detected
+      // into one one-shot inside the state machine. The debug panel's base-loop
+      // override rides setMotion() and must not collide with it — see
+      // docs/WYVERN_DEBUG_PANEL_PLAN.md, Finding A.
+      this.sanctuary3D.setAction(ACTION_MOTIONS[this.movement?.state] || null);
       this.sanctuary3D.update(delta);
     }
+
+    this.actionPipeline?.update(delta);
+    this.actionKanbanPanel?.update();
 
     // Prompt/marker depths and wandering actors are dynamic. The sanctuary's
     // population is small enough that a single continuous painter sort is the
@@ -202,9 +210,8 @@ export default class BaseScene extends Phaser.Scene {
     // lagoon surface, lava lights and debug-panel timers on every rebuild.
     this.sanctuary3D?.destroy();
     this.sanctuary3D = null;
-    this.testPanel?.destroy();
-    this.testPanel = null;
-    this.testOverrideAction = null;
+    this.debugPanel?.destroy();
+    this.debugPanel = null;
 
     const worldData = buildSanctuaryExterior();
     this.world = buildSanctuaryView(
@@ -243,9 +250,10 @@ export default class BaseScene extends Phaser.Scene {
     });
     this.sanctuary3D.show();
 
-    if (this.sanctuary3D) {
-      this.testPanel = createDragonTestPanel(this, this.sanctuary3D);
-    }
+    // A rebuild throws the whole 3D layer away, so whatever was dialled in on
+    // the panel has to be pushed at the replacement before it is shown.
+    applyTuning(this.sanctuary3D);
+    this.debugPanel = createDragonDebugPanel(this, this.sanctuary3D);
 
     this.movement = createSanctuaryMovement({
       scene: this,
@@ -277,6 +285,23 @@ export default class BaseScene extends Phaser.Scene {
       onOrbit: (next) => this.applyCameraOrbit(next),
     });
     this.buildInteractions(worldData.interactions);
+
+    this.actionPipeline = createActionPipeline({
+      movement: this.movement,
+      dragon3D: this.sanctuary3D,
+    });
+    this.actionKanbanPanel = createActionKanbanPanel({
+      overlayContainer: document.getElementById('ui-overlay'),
+      pipeline: this.actionPipeline,
+      onSelectTargetMode: () => {
+        const target = this.interactions?.targets?.[0];
+        if (target) {
+          this.actionPipeline.setTargetCell({ col: target.col, row: target.row }, target.label || 'Target');
+          this.actionPipeline.addStep('target', { targetCell: { col: target.col, row: target.row }, name: target.label || 'Target' });
+        }
+      },
+    });
+    this.actionKanbanPanel.render();
 
     this.residents.forEach((resident) => {
       resident.selectionRing?.setVisible(resident.animal.id === this.selectedWyvernId);
@@ -606,9 +631,30 @@ export default class BaseScene extends Phaser.Scene {
     this.showResult(`${animal.name} is now exploring the sanctuary.`);
   }
 
+  faceInteractionTarget(target) {
+    if (!target) return;
+    const tCol = typeof target.col === 'number' ? target.col : (typeof target.footprint?.col === 'number' ? target.footprint.col : null);
+    const tRow = typeof target.row === 'number' ? target.row : (typeof target.footprint?.row === 'number' ? target.footprint.row : null);
+    if (tCol === null || tRow === null) return;
+    const resident = this.residents.find((entry) => entry.animal.id === this.selectedWyvernId);
+    const myCol = resident?.footprint?.col;
+    const myRow = resident?.footprint?.row;
+    if (typeof myCol === 'number' && typeof myRow === 'number') {
+      const dCol = tCol - myCol;
+      const dRow = tRow - myRow;
+      if (dCol !== 0 || dRow !== 0) {
+        const len = Math.hypot(dCol, dRow);
+        if (this.movement) {
+          this.movement.lastWorldVector = { col: dCol / len, row: dRow / len };
+        }
+      }
+    }
+  }
+
   drinkFromSpring(target) {
     const animal = raiseBond(this.selectedWyvernId, 5);
     if (!animal) return false;
+    this.faceInteractionTarget(target);
     this.movement?.playAction(WYVERN_STATES.SPECIAL, 620);
     playSanctuaryEffect(
       this, this.world.layer, targetFootprint(target, this.projectionView), 'restore',
@@ -621,6 +667,7 @@ export default class BaseScene extends Phaser.Scene {
   trainInWorld(target) {
     const animal = gainXp(this.selectedWyvernId, 25);
     if (!animal) return false;
+    this.faceInteractionTarget(target);
     this.movement?.playAction(WYVERN_STATES.ATTACK, 650);
     playSanctuaryEffect(
       this, this.world.layer, targetFootprint(target, this.projectionView), 'train',
@@ -633,6 +680,7 @@ export default class BaseScene extends Phaser.Scene {
   feedInWorld(target) {
     const animal = raiseBond(this.selectedWyvernId, 15);
     if (!animal) return false;
+    this.faceInteractionTarget(target);
     this.movement?.playAction(WYVERN_STATES.GUARD, 580);
     playSanctuaryEffect(
       this, this.world.layer, targetFootprint(target, this.projectionView), 'feed',
@@ -677,6 +725,7 @@ export default class BaseScene extends Phaser.Scene {
   strikeDummy(target) {
     const animal = gainXp(this.selectedWyvernId, 10);
     if (!animal) return false;
+    this.faceInteractionTarget(target);
     this.movement?.playAction(WYVERN_STATES.ATTACK, 650);
     this.sanctuary3D?.strikeDummy(target.col, target.row);
     playSanctuaryEffect(
@@ -690,6 +739,7 @@ export default class BaseScene extends Phaser.Scene {
   lightBrazier(target) {
     const animal = raiseBond(this.selectedWyvernId, 5);
     if (!animal) return false;
+    this.faceInteractionTarget(target);
     this.movement?.playAction(WYVERN_STATES.SPECIAL, 800);
     this.sanctuary3D?.lightBrazier(target.col, target.row);
     playSanctuaryEffect(
@@ -703,6 +753,7 @@ export default class BaseScene extends Phaser.Scene {
   resonateCrystal(target) {
     const animal = gainXp(this.selectedWyvernId, 15);
     if (!animal) return false;
+    this.faceInteractionTarget(target);
     this.movement?.playAction(WYVERN_STATES.SPECIAL, 800);
     this.sanctuary3D?.resonateCrystal(target.col, target.row);
     playSanctuaryEffect(
@@ -824,10 +875,20 @@ export default class BaseScene extends Phaser.Scene {
       ? this.time.delayedCall(durationMs, () => {
         this.resultMessage = '';
         this.messageTimer = null;
-        if (this.sys.isActive()) this.buildOverlay();
+        if (this.sys.isActive()) this.updateResultMessage('');
       })
       : null;
-    this.buildOverlay();
+    this.updateResultMessage(message);
+  }
+
+  updateResultMessage(message) {
+    const el = document.getElementById('sanctuary-result-msg');
+    if (el) {
+      el.innerHTML = message || 'Approach a glowing landmark and press E.';
+      el.className = `sanctuary-result${message ? '' : ' is-muted'}`;
+    } else {
+      this.buildOverlay();
+    }
   }
 
   saveSessionState() {
@@ -846,8 +907,11 @@ export default class BaseScene extends Phaser.Scene {
     this.wanderers?.destroy();
     this.movement?.destroy();
     this.cameraController?.destroy();
-    this.testPanel?.destroy();
-    this.testPanel = null;
+    this.debugPanel?.destroy();
+    this.debugPanel = null;
+    this.actionKanbanPanel?.destroy();
+    this.actionKanbanPanel = null;
+    this.actionPipeline = null;
     this.sanctuary3D?.destroy();
     this.interactions = null;
     this.wanderers = null;

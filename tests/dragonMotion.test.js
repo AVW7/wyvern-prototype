@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDragonMotion, shortestAngle } from '../src/systems/dragonMotion.js';
+import { bankWeights, createDragonMotion, shortestAngle } from '../src/systems/dragonMotion.js';
 import { SANCTUARY } from '../src/config.js';
 
 const MOTION = SANCTUARY.dragon3D.motion;
@@ -24,6 +24,58 @@ describe('shortestAngle', () => {
 
   it('is zero for identical headings', () => {
     expect(shortestAngle(1.2, 1.2)).toBeCloseTo(0, 9);
+  });
+});
+
+describe('bankWeights', () => {
+  it('always sums to one, so the blend never gains or loses energy', () => {
+    for (let b = -1; b <= 1.0001; b += 0.1) {
+      const { level, left, right } = bankWeights(b);
+      expect(level + left + right).toBeCloseTo(1, 9);
+    }
+  });
+
+  it('is the level clip alone when flying straight', () => {
+    // The whole point of deriving Fly_Level_Loop: level is a clip, not a mix of
+    // the two banked ones, which measured 5.2 deg off level when cross-weighted.
+    expect(bankWeights(0)).toEqual({ level: 1, left: 0, right: 0 });
+  });
+
+  it('reaches a pure banked clip at either extreme', () => {
+    expect(bankWeights(1)).toEqual({ level: 0, left: 1, right: 0 });
+    expect(bankWeights(-1)).toEqual({ level: 0, left: 0, right: 1 });
+  });
+
+  it('never holds both banks at once, so they cannot cancel each other', () => {
+    for (let b = -1; b <= 1.0001; b += 0.05) {
+      const { left, right } = bankWeights(b);
+      expect(Math.min(left, right)).toBe(0);
+    }
+  });
+
+  it('moves monotonically from right to left across the range', () => {
+    let previous = -Infinity;
+    for (let b = -1; b <= 1.0001; b += 0.05) {
+      const { left, right } = bankWeights(b);
+      const lean = left - right;
+      expect(lean).toBeGreaterThan(previous);
+      previous = lean;
+    }
+  });
+
+  it('stays inside 0..1 for out-of-range and junk input', () => {
+    for (const b of [5, -5, Number.NaN, Number.POSITIVE_INFINITY, undefined]) {
+      const weights = bankWeights(b);
+      for (const weight of Object.values(weights)) {
+        expect(weight).toBeGreaterThanOrEqual(0);
+        expect(weight).toBeLessThanOrEqual(1);
+      }
+      expect(weights.level + weights.left + weights.right).toBeCloseTo(1, 9);
+    }
+  });
+
+  it('treats junk input as level rather than as a lean', () => {
+    expect(bankWeights(Number.NaN).level).toBe(1);
   });
 });
 
@@ -130,7 +182,24 @@ describe('createDragonMotion turn clips', () => {
 });
 
 describe('createDragonMotion flight', () => {
-  const climbing = { isFlying: true, altitude: 40, targetAltitude: 80 };
+  const climbing = { isFlying: true, altitude: 40, targetAltitude: 80, speed: 100 };
+
+  it('uses hover when stationary airborne and fly when moving airborne', () => {
+    const machine = createDragonMotion({ motion: MOTION });
+    machine.update({ dtMs: 16, ...climbing });
+    machine.oneShotFinished();
+    expect(machine.update({ dtMs: 16, ...climbing, speed: 0 }).base).toBe('hover');
+    expect(machine.update({ dtMs: 16, ...climbing, speed: 100 }).base).toBe('fly');
+  });
+
+  it('holds a nose-up correction while stationary in the air', () => {
+    const machine = createDragonMotion({ motion: MOTION });
+    machine.update({ dtMs: 16, ...climbing });
+    machine.oneShotFinished();
+    const hover = machine.update({ dtMs: 1000, ...climbing, speed: 0 });
+    expect(hover.base).toBe('hover');
+    expect(hover.pitch).toBeGreaterThan(0);
+  });
 
   it('fires takeoff exactly once on the ground→air transition', () => {
     const machine = createDragonMotion({ motion: MOTION });
@@ -159,14 +228,83 @@ describe('createDragonMotion flight', () => {
     expect(machine.airborne).toBe(false);
   });
 
-  it('flies level when not turning and banks when it is', () => {
+  it('stays on the blended flight loop instead of switching clips to turn', () => {
     const machine = createDragonMotion({ motion: MOTION });
     machine.update({ dtMs: 16, ...climbing });
     machine.oneShotFinished();
     expect(machine.update({ dtMs: 16, ...climbing }).base).toBe('fly');
 
-    const turning = machine.update({ dtMs: 16, ...climbing, desiredHeading: Math.PI });
-    expect(turning.base).toBe('bankLeft');
+    const turning = run(machine, { ...climbing, desiredHeading: Math.PI }, 400);
+    expect(turning.base).toBe('fly');
+  });
+
+  describe('airborne bank blend', () => {
+    it('is level when flying straight', () => {
+      const machine = createDragonMotion({ motion: MOTION });
+      machine.update({ dtMs: 16, ...climbing });
+      machine.oneShotFinished();
+      const straight = run(machine, climbing, 600);
+      expect(straight.bankBlend).toBeCloseTo(0, 2);
+    });
+
+    it('leans toward the left clip on a left turn and the right on a right', () => {
+      const left = createDragonMotion({ motion: MOTION });
+      left.update({ dtMs: 16, ...climbing });
+      left.oneShotFinished();
+      // Positive yaw rate is a left turn, matching the heading convention.
+      expect(run(left, { ...climbing, desiredHeading: Math.PI / 2 }, 500).bankBlend)
+        .toBeGreaterThan(0.2);
+
+      const right = createDragonMotion({ motion: MOTION });
+      right.update({ dtMs: 16, ...climbing });
+      right.oneShotFinished();
+      expect(run(right, { ...climbing, desiredHeading: -Math.PI / 2 }, 500).bankBlend)
+        .toBeLessThan(-0.2);
+    });
+
+    it('never leaves the -1..+1 the weighting expects', () => {
+      const machine = createDragonMotion({ motion: MOTION });
+      machine.update({ dtMs: 16, ...climbing });
+      machine.oneShotFinished();
+      // Hard alternating input, far past what the yaw limiter can follow.
+      for (let i = 0; i < 60; i += 1) {
+        const pose = machine.update({
+          dtMs: 16, ...climbing, desiredHeading: i % 2 ? Math.PI : -Math.PI,
+        });
+        expect(pose.bankBlend).toBeGreaterThanOrEqual(-1);
+        expect(pose.bankBlend).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it('eases rather than snapping, so the lean has weight', () => {
+      const machine = createDragonMotion({ motion: MOTION });
+      machine.update({ dtMs: 16, ...climbing });
+      machine.oneShotFinished();
+
+      const first = machine.update({ dtMs: 16, ...climbing, desiredHeading: Math.PI / 2 });
+      const settled = run(machine, { ...climbing, desiredHeading: Math.PI / 2 }, 800);
+      // One frame in it has barely moved; held, it commits.
+      expect(first.bankBlend).toBeLessThan(0.2);
+      expect(settled.bankBlend).toBeGreaterThan(first.bankBlend);
+    });
+
+    it('relaxes back to level when the turn stops', () => {
+      const machine = createDragonMotion({ motion: MOTION });
+      machine.update({ dtMs: 16, ...climbing });
+      machine.oneShotFinished();
+      const turned = run(machine, { ...climbing, desiredHeading: Math.PI / 2 }, 600);
+      expect(Math.abs(turned.bankBlend)).toBeGreaterThan(0.2);
+
+      // desiredHeading null means "hold whatever heading you have".
+      const levelled = run(machine, { ...climbing, desiredHeading: null }, 1500);
+      expect(Math.abs(levelled.bankBlend)).toBeLessThan(0.1);
+    });
+
+    it('treats the air as a wider arc than the ground', () => {
+      // The same yaw rate should read as a smaller share of a full turn in the
+      // air than on foot, which is what flightTurnRateDeg encodes.
+      expect(MOTION.flightTurnRateDeg).toBeGreaterThan(MOTION.walkTurnRateDeg);
+    });
   });
 
   it('rolls opposite the turn and levels out again', () => {
@@ -192,7 +330,8 @@ describe('createDragonMotion flight', () => {
 
   it('pitches from the measured climb rate, not the gap to the target', () => {
     const machine = createDragonMotion({ motion: MOTION });
-    // A large remaining gap with no actual movement must not tip the nose.
+    // A large remaining gap with no actual movement must not add climb pitch
+    // beyond the hover's intentional neutral-pose correction.
     machine.update({ dtMs: 16, isFlying: true, altitude: 10, targetAltitude: 140 });
     machine.oneShotFinished();
     const stalled = run(
@@ -200,7 +339,8 @@ describe('createDragonMotion flight', () => {
       { isFlying: true, altitude: 10, targetAltitude: 140 },
       500,
     );
-    expect(Math.abs(stalled.pitch)).toBeLessThan(1 * DEG);
+    expect(stalled.pitch).toBeGreaterThan(0);
+    expect(stalled.pitch).toBeLessThan((MOTION.hoverPitchDeg + 1) * DEG);
   });
 });
 
@@ -211,6 +351,29 @@ describe('createDragonMotion actions', () => {
     expect(machine.update({ dtMs: 16, action: 'dracarys' }).oneShot).toBeNull();
     machine.update({ dtMs: 16, action: null });
     expect(machine.update({ dtMs: 16, action: 'dracarys' }).oneShot).toBe('dracarys');
+  });
+
+  it('resolves dracarys to flyDracarys when airborne', () => {
+    const machine = createDragonMotion({ motion: MOTION });
+    // First establish airborne state
+    machine.update({ dtMs: 16, isFlying: true, altitude: 40, targetAltitude: 80 });
+    machine.oneShotFinished();
+
+    const pose = machine.update({
+      dtMs: 16, action: 'dracarys', isFlying: true, altitude: 40, targetAltitude: 80,
+    });
+    expect(pose.oneShot).toBe('flyDracarys');
+  });
+
+  it('resolves attack to flyAttackLeft when airborne', () => {
+    const machine = createDragonMotion({ motion: MOTION });
+    machine.update({ dtMs: 16, isFlying: true, altitude: 40, targetAltitude: 80 });
+    machine.oneShotFinished();
+
+    const pose = machine.update({
+      dtMs: 16, action: 'attack', isFlying: true, altitude: 40, targetAltitude: 80,
+    });
+    expect(pose.oneShot).toBe('flyAttackLeft');
   });
 
   it('lets an action outrank a takeoff on the same frame', () => {
@@ -243,5 +406,59 @@ describe('createDragonMotion idle breaks', () => {
     run(machine, { speed: 0 }, (MOTION.idleBreakAfterSec + 5) * 1000);
     machine.update({ dtMs: 16, speed: 100 });
     expect(machine.idleSec).toBe(0);
+  });
+});
+
+describe('ground slope pitch', () => {
+  const MOTION_CFG = SANCTUARY.dragon3D.motion;
+  const walking = { speed: 90, isFlying: false, altitude: 0, targetAltitude: 0 };
+
+  it('pitches the nose up walking uphill and down walking downhill', () => {
+    // Without this a climb reads as sliding up a ramp with the body held flat.
+    const up = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    const uphill = run(up, { ...walking, groundSlope: 1 }, 1200);
+    expect(uphill.pitch).toBeGreaterThan(0);
+
+    const down = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    const downhill = run(down, { ...walking, groundSlope: -1 }, 1200);
+    expect(downhill.pitch).toBeLessThan(0);
+  });
+
+  it('never exceeds the configured pitch limit even on a sheer slope', () => {
+    const machine = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    const steep = run(machine, { ...walking, groundSlope: 99 }, 2000);
+    expect(Math.abs(steep.pitch)).toBeLessThanOrEqual(MOTION_CFG.pitchMaxDeg * DEG + 1e-6);
+  });
+
+  it('stands level on a slope when it is not walking', () => {
+    // Otherwise a dragon parked on a hillside is stuck nose-up forever.
+    const machine = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    run(machine, { ...walking, groundSlope: 1 }, 1200);
+    const stopped = run(machine, { ...walking, speed: 0, groundSlope: 1 }, 2000);
+    expect(Math.abs(stopped.pitch)).toBeLessThan(1 * DEG);
+  });
+
+  it('ignores ground slope while airborne', () => {
+    // In the air the nose follows climb rate; the terrain below is irrelevant.
+    const machine = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    machine.update({ dtMs: 16, speed: 0, isFlying: true, altitude: 40, targetAltitude: 80 });
+    machine.oneShotFinished();
+    const flying = run(machine, {
+      speed: 90, isFlying: true, altitude: 80, targetAltitude: 80, groundSlope: 1,
+    }, 2000);
+    expect(Math.abs(flying.pitch)).toBeLessThan(1 * DEG);
+  });
+
+  it('eases into the slope rather than snapping to it', () => {
+    const machine = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    const first = machine.update({ dtMs: 16, ...walking, groundSlope: 1 });
+    const settled = run(machine, { ...walking, groundSlope: 1 }, 1500);
+    expect(first.pitch).toBeLessThan(settled.pitch);
+  });
+
+  it('treats a missing slope as flat', () => {
+    const machine = createDragonMotion({ motion: MOTION_CFG, random: () => 1 });
+    const pose = run(machine, walking, 800);
+    expect(pose.pitch).toBeCloseTo(0, 6);
   });
 });
