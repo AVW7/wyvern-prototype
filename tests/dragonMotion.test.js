@@ -28,46 +28,54 @@ describe('shortestAngle', () => {
 });
 
 describe('bankWeights', () => {
-  const LEVEL = MOTION.levelBankBlend;
-
   it('always sums to one, so the blend never gains or loses energy', () => {
     for (let b = -1; b <= 1.0001; b += 0.1) {
-      const { left, right } = bankWeights(b, LEVEL);
-      expect(left + right).toBeCloseTo(1, 9);
+      const { level, left, right } = bankWeights(b);
+      expect(level + left + right).toBeCloseTo(1, 9);
     }
   });
 
-  it('sits at the level mix when flying straight', () => {
-    // Not 0.5: the two clips' banks are +11.9 and -8.7, so cancelling them
-    // needs an uneven mix.
-    expect(bankWeights(0, LEVEL).left).toBeCloseTo(LEVEL, 9);
+  it('is the level clip alone when flying straight', () => {
+    // The whole point of deriving Fly_Level_Loop: level is a clip, not a mix of
+    // the two banked ones, which measured 5.2 deg off level when cross-weighted.
+    expect(bankWeights(0)).toEqual({ level: 1, left: 0, right: 0 });
   });
 
-  it('reaches a pure clip at either extreme', () => {
-    expect(bankWeights(1, LEVEL).left).toBeCloseTo(1, 9);
-    expect(bankWeights(-1, LEVEL).left).toBeCloseTo(0, 9);
+  it('reaches a pure banked clip at either extreme', () => {
+    expect(bankWeights(1)).toEqual({ level: 0, left: 1, right: 0 });
+    expect(bankWeights(-1)).toEqual({ level: 0, left: 0, right: 1 });
+  });
+
+  it('never holds both banks at once, so they cannot cancel each other', () => {
+    for (let b = -1; b <= 1.0001; b += 0.05) {
+      const { left, right } = bankWeights(b);
+      expect(Math.min(left, right)).toBe(0);
+    }
   });
 
   it('moves monotonically from right to left across the range', () => {
     let previous = -Infinity;
     for (let b = -1; b <= 1.0001; b += 0.05) {
-      const { left } = bankWeights(b, LEVEL);
-      expect(left).toBeGreaterThan(previous);
-      previous = left;
+      const { left, right } = bankWeights(b);
+      const lean = left - right;
+      expect(lean).toBeGreaterThan(previous);
+      previous = lean;
     }
   });
 
   it('stays inside 0..1 for out-of-range and junk input', () => {
     for (const b of [5, -5, Number.NaN, Number.POSITIVE_INFINITY, undefined]) {
-      const { left, right } = bankWeights(b, LEVEL);
-      expect(left).toBeGreaterThanOrEqual(0);
-      expect(left).toBeLessThanOrEqual(1);
-      expect(left + right).toBeCloseTo(1, 9);
+      const weights = bankWeights(b);
+      for (const weight of Object.values(weights)) {
+        expect(weight).toBeGreaterThanOrEqual(0);
+        expect(weight).toBeLessThanOrEqual(1);
+      }
+      expect(weights.level + weights.left + weights.right).toBeCloseTo(1, 9);
     }
   });
 
-  it('degrades to an even split when the level mix is junk', () => {
-    expect(bankWeights(0, Number.NaN).left).toBeCloseTo(0.5, 9);
+  it('treats junk input as level rather than as a lean', () => {
+    expect(bankWeights(Number.NaN).level).toBe(1);
   });
 });
 
@@ -174,7 +182,15 @@ describe('createDragonMotion turn clips', () => {
 });
 
 describe('createDragonMotion flight', () => {
-  const climbing = { isFlying: true, altitude: 40, targetAltitude: 80 };
+  const climbing = { isFlying: true, altitude: 40, targetAltitude: 80, speed: 100 };
+
+  it('uses flyHover when stationary airborne and fly when moving airborne', () => {
+    const machine = createDragonMotion({ motion: MOTION });
+    machine.update({ dtMs: 16, ...climbing });
+    machine.oneShotFinished();
+    expect(machine.update({ dtMs: 16, ...climbing, speed: 0 }).base).toBe('flyHover');
+    expect(machine.update({ dtMs: 16, ...climbing, speed: 100 }).base).toBe('fly');
+  });
 
   it('fires takeoff exactly once on the ground→air transition', () => {
     const machine = createDragonMotion({ motion: MOTION });
@@ -204,9 +220,6 @@ describe('createDragonMotion flight', () => {
   });
 
   it('stays on the blended flight loop instead of switching clips to turn', () => {
-    // Airborne turning is a weighted blend of the two banked sky clips, so the
-    // base motion is `fly` throughout and the turn shows up in bankBlend.
-    // Switching between three separate loops is what this replaced.
     const machine = createDragonMotion({ motion: MOTION });
     machine.update({ dtMs: 16, ...climbing });
     machine.oneShotFinished();
@@ -327,6 +340,29 @@ describe('createDragonMotion actions', () => {
     expect(machine.update({ dtMs: 16, action: 'dracarys' }).oneShot).toBeNull();
     machine.update({ dtMs: 16, action: null });
     expect(machine.update({ dtMs: 16, action: 'dracarys' }).oneShot).toBe('dracarys');
+  });
+
+  it('resolves dracarys to flyDracarys when airborne', () => {
+    const machine = createDragonMotion({ motion: MOTION });
+    // First establish airborne state
+    machine.update({ dtMs: 16, isFlying: true, altitude: 40, targetAltitude: 80 });
+    machine.oneShotFinished();
+
+    const pose = machine.update({
+      dtMs: 16, action: 'dracarys', isFlying: true, altitude: 40, targetAltitude: 80,
+    });
+    expect(pose.oneShot).toBe('flyDracarys');
+  });
+
+  it('resolves attack to flyAttackLeft when airborne', () => {
+    const machine = createDragonMotion({ motion: MOTION });
+    machine.update({ dtMs: 16, isFlying: true, altitude: 40, targetAltitude: 80 });
+    machine.oneShotFinished();
+
+    const pose = machine.update({
+      dtMs: 16, action: 'attack', isFlying: true, altitude: 40, targetAltitude: 80,
+    });
+    expect(pose.oneShot).toBe('flyAttackLeft');
   });
 
   it('lets an action outrank a takeoff on the same frame', () => {

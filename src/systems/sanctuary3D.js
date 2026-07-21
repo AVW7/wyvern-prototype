@@ -1302,39 +1302,38 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     currentMotion = resolved;
   }
 
-  // Hold both banked sky clips at once and cross-weight them, so an airborne
-  // turn is a lean that grows and relaxes rather than a crossfade between three
-  // separate loops. `blend` is dragonMotion's bankBlend: -1 hard right, 0
-  // level, +1 hard left.
+  // Hold the level cycle and both banked ones at once and weight them, so an
+  // airborne turn is a lean that grows and relaxes rather than a crossfade
+  // between separate loops. `blend` is dragonMotion's bankBlend: -1 hard right,
+  // 0 level, +1 hard left.
   //
-  // The two clips are kept phase-locked. They are separate recordings of the
-  // same wingbeat, so letting their times drift apart blends a downstroke into
-  // an upstroke and the wings visibly cancel out into a flat glide.
+  // The three are kept phase-locked to the level clip. They are derived from
+  // one wingbeat of the same source cycle, so letting their times drift apart
+  // blends a downstroke into an upstroke and the wings visibly cancel out into
+  // a flat glide.
   function applyFlightBlend(blend, fadeMs) {
+    const level = actions.fly;
     const left = actions.bankLeft;
     const right = actions.bankRight;
-    if (!left || !right) return false;
+    if (!level || !left || !right) return false;
 
-    const { left: leftWeight, right: rightWeight } = bankWeights(
-      blend,
-      SANCTUARY.dragon3D?.motion?.levelBankBlend,
-    );
+    const weights = bankWeights(blend);
+    const held = [[level, weights.level], [left, weights.left], [right, weights.right]];
 
-    if (!left.isRunning() || !right.isRunning()) {
-      // Entering flight: start both from the outgoing motion, then let the
+    if (!level.isRunning() || !left.isRunning() || !right.isRunning()) {
+      // Entering flight: start all three from the outgoing motion, then let the
       // weights below take over.
       const previous = actions[currentMotion];
-      left.reset().play();
-      right.reset().play();
-      if (previous && previous !== left && previous !== right) {
+      held.forEach(([action]) => action.reset().play());
+      if (previous && !held.some(([action]) => action === previous)) {
         previous.fadeOut(fadeMs / 1000);
       }
     }
-    right.time = left.time;
-    left.setEffectiveTimeScale(1);
-    right.setEffectiveTimeScale(1);
-    left.setEffectiveWeight(leftWeight);
-    right.setEffectiveWeight(rightWeight);
+    held.forEach(([action, weight]) => {
+      action.time = level.time;
+      action.setEffectiveTimeScale(1);
+      action.setEffectiveWeight(weight);
+    });
     currentMotion = 'fly';
     return true;
   }
@@ -1343,9 +1342,9 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     return action?.isRunning() ? action.getEffectiveWeight() : 0;
   }
 
-  // Release the pair so a single-action motion can take over cleanly.
+  // Release all three so a single-action motion can take over cleanly.
   function stopFlightBlend(fadeMs) {
-    [actions.bankLeft, actions.bankRight].forEach((action) => {
+    [actions.fly, actions.bankLeft, actions.bankRight].forEach((action) => {
       if (action?.isRunning()) action.fadeOut(fadeMs / 1000);
     });
   }
@@ -1895,8 +1894,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         baseTimeScale = pose.baseTimeScale;
 
         const fade = SANCTUARY.dragon3D?.crossfadeMs ?? 250;
-        // Level flight and the two banked turns are one blended pair rather
-        // than three loops to crossfade between — see applyFlightBlend().
+        // Level flight and the two banked turns are held together and weighted
+        // rather than crossfaded between — see applyFlightBlend().
         // An override or a one-shot still wins, so forcing `bankLeft` from the
         // debug panel shows that clip alone.
         const blending = pose.airborne
@@ -1954,7 +1953,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       }
 
       // Spawning dracarys fire breath particles
-      if (currentMotion === 'dracarys' && controlledDragon) {
+      if ((currentMotion === 'dracarys' || currentMotion === 'flyDracarys') && controlledDragon) {
         dracarysTimer += deltaMs;
         if (dracarysTimer >= 40) {
           dracarysTimer = 0;
@@ -2232,11 +2231,16 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
      * @returns {boolean} whether the clip was started
      */
     triggerAction(motion) {
-      if (!(SANCTUARY.dragon3D?.oneShotClips || []).includes(motion)) return false;
-      if (!playOneShot(motion, SANCTUARY.dragon3D?.crossfadeMs ?? 250)) return false;
+      let resolved = motion;
+      if (dragonMotion.airborne) {
+        if (motion === 'dracarys') resolved = 'flyDracarys';
+        else if (motion === 'attack') resolved = 'flyAttackLeft';
+      }
+      if (!(SANCTUARY.dragon3D?.oneShotClips || []).includes(resolved)) return false;
+      if (!playOneShot(resolved, SANCTUARY.dragon3D?.crossfadeMs ?? 250)) return false;
       // Tell the state machine a one-shot owns the model, so update() does not
       // crossfade back to the base motion on the very next frame.
-      dragonMotion.pendingOneShot = motion;
+      dragonMotion.pendingOneShot = resolved;
       return true;
     },
 
@@ -2260,12 +2264,13 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         timeScale: Number(baseTimeScale.toFixed(2)),
         speed: Math.round(lastGroundSpeed),
         airborne: dragonMotion.airborne,
-        // -1 hard right .. 0 level .. +1 hard left, and the left clip's share
+        // -1 hard right .. 0 level .. +1 hard left, and each held clip's share
         // of the blend that produces it. Without these a mis-weighted turn
         // looks the same as a turn that never started.
         // An action that has never been played still reports weight 1, so a
         // stopped clip would read as fully on. Report what is actually running.
         bankBlend: Number(dragonMotion.bankBlend.toFixed(2)),
+        flyLevelWeight: Number(runningWeight(actions.fly).toFixed(2)),
         bankLeftWeight: Number(runningWeight(actions.bankLeft).toFixed(2)),
         bankRightWeight: Number(runningWeight(actions.bankRight).toFixed(2)),
         headingDeg: Math.round(dragonMotion.heading * 180 / Math.PI),

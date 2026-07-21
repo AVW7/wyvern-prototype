@@ -140,9 +140,11 @@ export const SANCTUARY = {
     // the same on-screen size as the 2D residents at default zoom.
     targetHeightPx: 64,
     // Motion slot → clip name as it exists in drogon-sanctuary.glb.
-    // tools/prep-drogon.mjs keeps exactly these 16 out of the source's 52; its
-    // KEEP list and this table must be changed together. systems/dragonMotion.js
-    // decides which slot is active; the debug panel can rebind any slot live.
+    // Clips named Fly_* do not exist in the source: tools/blender-flight-clips.py
+    // derives them from it (see that file's header), and tools/prep-drogon.mjs
+    // then keeps exactly the 17 source clips plus those 8. Its KEEP list and
+    // this table must be changed together. systems/dragonMotion.js decides which
+    // slot is active; the debug panel can rebind any slot live.
     clips: {
       idle: 'DaenerysDragon_Neutural_Watch',
       idleBreak: 'DaenerysDragon_Neutural_Roar',
@@ -154,27 +156,40 @@ export const SANCTUARY = {
       turnRightSmall: 'DaenerysDragon_Battle_TurnR20',
       turnLeft: 'DaenerysDragon_Battle_TurnL90',
       turnRight: 'DaenerysDragon_Battle_TurnR90',
-      takeoff: 'DaenerysDragon_Battle_Up',
-      land: 'DaenerysDragon_Battle_Down',
-      // There is no level-flight clip in the source: measured over a wingbeat,
-      // SkyMoveL means +11.9° of bank and SkyMoveR means -8.7°. So `fly` is not
-      // a clip of its own — systems/sanctuary3D.js holds bankLeft and bankRight
-      // together and cross-weights them, and the mix that cancels their bank
-      // (motion.levelBankBlend) *is* level flight. This slot stays bound so a
-      // panel override and the clip picker still have something to name.
-      fly: 'DaenerysDragon_Battle_SkyMoveL',
-      bankLeft: 'DaenerysDragon_Battle_SkyMoveL',
-      bankRight: 'DaenerysDragon_Battle_SkyMoveR',
+      // Battle_Up ran 8.2 s, and Battle_Down was a descent *loop* — it began and
+      // ended in the flight pose, so bound as `land` it never actually put the
+      // dragon down. Both are retimed and resolved onto the pose the clip they
+      // hand off to starts from.
+      takeoff: 'Fly_Takeoff',
+      land: 'Fly_Land',
+      // Level flight is now a clip. It used to be a 0.42 cross-weight of the two
+      // banked sky moves, on the theory that opposing banks cancel; measured on
+      // the posed rig they do not — that mix sits 5.2° left and rocks through
+      // 16° a beat. Fly_Level_Loop holds -0.6° across the whole cycle at the
+      // same 70° wing swing, and the banks are its ±27° siblings.
+      fly: 'Fly_Level_Loop',
+      flyHover: 'Fly_Level_Loop',
+      bankLeft: 'Fly_BankL_Loop',
+      bankRight: 'Fly_BankR_Loop',
       attack: 'DaenerysDragon_Battle_Attack04',
       attackAlt: 'DaenerysDragon_Battle_Attack01',
       dracarys: 'DaenerysDragon_Battle_Skill08',
+      // The airborne breath. Skill08 is the source's only fire clip and it is
+      // grounded — feet keyed to the floor — so only its neck/head gesture is
+      // layered over the level cycle, and the flame stays the particle effect
+      // createDracarysParticles() already spawns.
+      flyDracarys: 'Fly_Dracarys',
       special: 'DaenerysDragon_Neutural_Roar',
-      // Corrected 2026-07-21: SkyMoveR01 was bound here as a "level cruise",
-      // but measuring its wingtip bank over the cycle returns SkyMoveR's
-      // numbers to the decimal — it is a duplicate, not a third sky move.
-      // Scouting is therefore a preset (level blend held at altitude), not a
-      // clip, and the duplicate is dropped from the asset.
-      scout: 'DaenerysDragon_Battle_SkyMoveR',
+      // Wings held out, with a slow breathe so it does not read as a freeze;
+      // the hold frame is the widest-reach frame of the cycle. Scouting is this
+      // at altitude — it was a duplicate sky clip until 2026-07-21 and then a
+      // blend preset; it is a clip again, and a real one this time.
+      glide: 'Fly_Glide_Loop',
+      scout: 'Fly_Glide_Loop',
+      // Airborne and stationary used to play the cruise, which read as coasting
+      // on nothing. Slower, deeper stroke, body leaned toward Battle_Up's climb
+      // posture.
+      hover: 'Fly_Hover_Loop',
       // Airborne strike passes. Identified by measuring foot-drop relative to
       // the pelvis across all 52 source clips: these sit in the same 570-660
       // band as SkyMove/Up/Down, and nowhere near the grounded attacks.
@@ -191,7 +206,7 @@ export const SANCTUARY = {
       'turnLeft', 'turnRight', 'turnLeftSmall', 'turnRightSmall',
       'turnLeftAbout', 'turnRightAbout',
       'takeoff', 'land', 'attack', 'attackAlt', 'dracarys', 'special', 'idleBreak',
-      'flyAttackLeft', 'flyAttackRight',
+      'flyAttackLeft', 'flyAttackRight', 'flyDracarys',
     ],
     // How the model is steered. See systems/dragonMotion.js — this block is
     // that module's entire configuration, and every value is live-tunable from
@@ -218,10 +233,6 @@ export const SANCTUARY = {
       flightTurnRateDeg: 90,
       // How fast the lean into a turn builds and relaxes. Lower reads heavier.
       bankBlendResponseHz: 2.2,
-      // Share of SkyMoveL in the level mix; the value that cancels the two sky
-      // clips' opposing bank (+11.9° and -8.7°). Raise it and level flight
-      // leans left, lower it and it leans right.
-      levelBankBlend: 0.42,
       bankMaxDeg: 32,
       // Rig roll *on top of* the banked clips, so this is deliberately small —
       // past ~0.2 the model reads as pivoting inside its own animation.

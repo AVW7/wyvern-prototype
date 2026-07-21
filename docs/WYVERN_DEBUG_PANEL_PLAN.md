@@ -223,8 +223,8 @@ the emitter.
 
 | Preset | Base clip | Altitude | One-shot | Fire |
 | --- | --- | --- | --- | --- |
-| fly | `fly` (SkyMoveL/R, banked) | cruise | — | no |
-| scout | `scout` (SkyMoveR01, level) | high | — | no |
+| fly | `fly` (Fly_Level_Loop) | cruise | — | no |
+| scout | `scout` (Fly_Glide_Loop) | high | — | no |
 | hunt | `alert` → `walk` | ground | — | no |
 | attack | `idle`/`alert` | ground | `attack` / `attackAlt` | no |
 | attack with fire | `idle`/`alert` | ground | `dracarys` | **yes** |
@@ -259,6 +259,16 @@ Rendered stills at mid-clip confirmed each candidate by eye.
 
 **Deliberately excluded:** `Skill11_L/R` — keyframe-identical to `Skill10_L/R`
 (same foot-drop to one decimal, same key counts). Fire is an effect, not a clip.
+
+**Superseded (2026-07-21).** The airborne row above is a survey of the *source*,
+and it still reads correctly as one — but none of those clips ship any more.
+`SkyMoveL/R`, `Up` and `Down` are now inputs to
+`tools/blender-flight-clips.py`, which derives the eight `Fly_*` clips the
+source never had (level, bank L/R, glide, hover, takeoff, land, dracarys) and
+ships those instead. The reason is in that file's header: the source has no
+level-flight clip at all, and the 0.42 cross-blend that stood in for one does
+not actually cancel the two clips' bank — measured on the posed rig it sits
+5.2° left and rocks through 16° a wingbeat.
 
 **Size.** At the original `resample({tolerance: 1e-4})` the 22 clips came to
 19.8 MB (animation data 13.7 MB). Loosening to `1e-3` gives 11.1 MB with no

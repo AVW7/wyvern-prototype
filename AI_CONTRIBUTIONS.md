@@ -5,9 +5,9 @@ visible without treating any model as the sole author.
 
 ## Count
 
-- Distinct contributing model entries: 11
+- Distinct contributing model entries: 13
 - Providers represented: 3
-- Contribution records: 56
+- Contribution records: 63
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -29,6 +29,8 @@ AI-008, Review R-005) and is counted above.
 | AI-009 | Gemini 3.5 Flash (Low) | Google | 2026-07-20 | Set up graphify tool, processed the code structure, analyzed camera/session architecture, and updated agent entry documentation. |
 | AI-010 | Gemini 3.5 Flash (Medium) | Google | 2026-07-20 | Added threejs-loaders skill to workspace customizations directory. |
 | AI-011 | Gemini (exact model unknown) | Google | 2026-07-21 | Removed obsolete 2D sprite animations and related validation/tests to finalize transition to 3D environment. |
+| AI-012 | Gemini 3.6 Flash (Medium) | Google | 2026-07-21 | Fixed Shift + D Dracarys action to play Fly_Dracarys when airborne in 3D mode. |
+| AI-013 | Gemini 3.6 Flash (High) | Google | 2026-07-21 | Applied blender-motion-state-inspection skill to align wyvern orientation during object interactions and map airborne attack clips. |
 
 ## Contribution log
 
@@ -92,6 +94,13 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-054 | 2026-07-21 | AI-010 | Renamed 'Dragon Vault' to 'Rider Vault' across text, UI overlays, and code comments, and removed final 2D Phaser depth-sorting/animation loops from VaultScene. | `src/scenes/VaultScene.js`, `src/ui/vaultPanel.js`, `src/data/sanctuary.js`, `src/systems/roster.js`, `README.md` | `npm run check` full gate pass (all 15 test files / 195 tests passed, built successfully) |
 | C-055 | 2026-07-21 | AI-010 | Prevented 2D billboard sprite creation inside Three.js for flat props (such as the sleeping dragon, torches, crystals, and chests) when rendering inside the Rider Vault, cleaning up the 3D scene from legacy 2.5D graphics. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 15 test files / 195 tests passed, built successfully) |
 | C-056 | 2026-07-21 | AI-010 | Prevented 2D/2.5D billboard sprite creation inside Three.js for both non-controlled residents and flat props (torches, obelisks, tables, chests, crystals, etc.) on the sanctuary grounds (Roost/BaseScene), making the entire diorama layer 100% 3D mesh-based. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 17 test files / 228 tests passed, built successfully) |
+| C-057 | 2026-07-21 | AI-012 | Fixed Shift + D Dracarys action for 3D wyvern model on ground and flying: mapped 'dracarys' action to 'flyDracarys' when airborne in dragonMotion.js and sanctuary3D.js, and updated particle check to spawn fire particles for both dracarys and flyDracarys. | `src/systems/dragonMotion.js`, `src/systems/sanctuary3D.js`, `tests/dragonMotion.test.js` | `npm run check` full gate pass (all 18 test files / 290 tests passed, built successfully) |
+| C-058 | 2026-07-21 | AI-013 | Improved wyvern and 3D environment interactions: added faceInteractionTarget helper in BaseScene.js to turn the wyvern toward target cells during interactions (strike dummy, light brazier, spring, nest, crystal), mapped airborne attack actions to flyAttackLeft in dragonMotion.js and sanctuary3D.js, and added test coverage. | `src/scenes/BaseScene.js`, `src/systems/dragonMotion.js`, `src/systems/sanctuary3D.js`, `tests/dragonMotion.test.js` | `npm run check` full gate pass (all 18 test files / 291 tests passed, built successfully) |
+| C-059 | 2026-07-21 | AI-013 | Prevented UI overlay flash/reload on Shift+D or result messages: added #sanctuary-result-msg element in roostPanel.js and updateResultMessage helper in BaseScene.js to update result messages in-place without rebuilding the DOM. | `src/scenes/BaseScene.js`, `src/ui/roostPanel.js` | `npm run check` full gate pass (all 18 test files / 291 tests passed, built successfully) |
+| C-060 | 2026-07-21 | AI-013 | Added the blender-toolkit skill (WebSocket-based real-time Blender control, geometry creation, materials, modifiers, and Mixamo retargeting) to global and workspace customization roots. | `~/.gemini/config/skills/blender-toolkit/SKILL.md`, `.agents/skills/blender-toolkit/SKILL.md`, `.claude/skills/blender-toolkit/SKILL.md` | Skill file verification and directory structure checks |
+| C-061 | 2026-07-21 | AI-013 | Integrated blender-toolkit skill into wyvern-prototype: configured local Blender 5.1 detection in `.blender-toolkit/blender-config.json`, built Node.js `tools/blender-runner.mjs` CLI runner, created `tools/generate-sanctuary-props.py` to generate procedural 3D sanctuary props (`crystal-pylon.glb`, `dragon-brazier.glb`, `sanctuary-pedestal.glb`), added npm scripts (`npm run blender:check`, `npm run blender:generate-props`), and updated asset documentation. | `.blender-toolkit/blender-config.json`, `tools/blender-runner.mjs`, `tools/generate-sanctuary-props.py`, `package.json`, `assets/models/README.md` | `npm run blender:check` pass, `npm run blender:generate-props` pass (produced 3 GLB prop assets), `npm run check` full gate pass (all 18 test files / 291 tests passed, build succeeded) |
+| C-062 | 2026-07-21 | AI-013 | Added airborne hover state (`flyHover`) and travel-only body attitude pitch dynamics to `dragonMotion.js`, and implemented an interactive Action Pipeline Kanban Board UI (`actionPipeline.js`, `actionKanbanPanel.js`) for queuing and executing automated dragon action sequences. | `src/systems/dragonMotion.js`, `src/config.js`, `src/systems/actionPipeline.js`, `src/ui/actionKanbanPanel.js`, `src/scenes/BaseScene.js`, `src/ui/ui.css`, `tests/actionPipeline.test.js`, `tests/dragonMotion.test.js` | `npm run check` full gate pass (all 19 test files / 295 tests passed, build succeeded) |
+| C-063 | 2026-07-21 | AI-013 | Researched industry-standard dragon flight animation principles (weight transfer, horizontal hover wing stroke vs forward aerodynamic pitch lean, climb pitch, landing deceleration flare), refined `dragonMotion.js` airborne pitch dynamics, and added sequence preset templates to `actionPipeline.js`. | `src/systems/dragonMotion.js`, `src/systems/actionPipeline.js`, `AI_CONTRIBUTIONS.md` | Web research pass, `npm run check` full gate pass (all 19 test files / 295 tests passed, build succeeded) |
 
 ## How another model adds itself
 

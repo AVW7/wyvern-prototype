@@ -156,7 +156,7 @@ export function buildRoostOverlay({
         </div>
       </div>
       ${cameraRigMarkup(cameraView, cameraTransitioning)}
-      ${message || '<p class="sanctuary-result is-muted">Approach a glowing landmark and press E.</p>'}
+      <p id="sanctuary-result-msg" class="sanctuary-result${message ? '' : ' is-muted'}">${message || 'Approach a glowing landmark and press E.'}</p>
       <ul class="roster">${rows}</ul>
       <div class="base-actions">
         <h2 class="recruit-label">Recruit</h2>

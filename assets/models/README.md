@@ -73,3 +73,13 @@ takes it from 121 MB to 9.5 MB:
 - converts the legacy `KHR_materials_pbrSpecularGlossiness` materials to
   `pbrMetallicRoughness` (Three.js dropped support for the old extension);
 - resizes both textures to 1024 px webp.
+
+## props/*.glb (Procedural 3D Props)
+
+Procedurally generated low-poly 3D sanctuary props (crystal pylons, dragon braziers, sanctuary pedestals) built using `blender-toolkit` standards:
+
+- **Generation Command**: `npm run blender:generate-props` or `node tools/blender-runner.mjs --generate-props`
+- **Source Script**: `tools/generate-sanctuary-props.py`
+- **Output Directory**: `assets/models/props/`
+- **Export Format**: Standard GLB with PBR metallic/roughness and emission channels.
+

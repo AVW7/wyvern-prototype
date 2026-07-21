@@ -1213,3 +1213,166 @@ button:active { transform: scale(0.97); }
 .wyvern-debug-stats {
   opacity: 0.85;
 }
+
+/* --- Action Pipeline Kanban Panel (ui/actionKanbanPanel.js) --- */
+.kanban-panel-card {
+  position: absolute;
+  top: 70px;
+  right: 16px;
+  width: 270px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-outer);
+  backdrop-filter: blur(12px);
+  padding: 12px;
+  z-index: 25;
+  box-shadow: var(--shadow-luxe);
+  color: var(--text);
+  font-family: inherit;
+}
+
+.kanban-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.kanban-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kanban-title h3 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.kanban-status-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-dim);
+}
+.kanban-status-badge.active {
+  background: rgba(212, 175, 55, 0.25);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  animation: pulse-gold 1.5s infinite;
+}
+
+.kanban-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding-right: 4px;
+}
+
+.kanban-empty-msg {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-align: center;
+  padding: 14px 0;
+}
+
+.kanban-step-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 6px 8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.kanban-step-card.step-active {
+  border-color: var(--accent);
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.step-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(0,0,0,0.4);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.step-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+}
+.step-sub {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.step-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.btn-step-opt {
+  padding: 2px 4px;
+  font-size: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+.btn-step-del:hover {
+  background: rgba(220, 50, 50, 0.3);
+  border-color: #ff4444;
+}
+
+.kanban-add-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.btn-add-step {
+  padding: 4px 6px;
+  font-size: 10px;
+  flex: 1 1 30%;
+}
+
+.kanban-exec-bar {
+  display: flex;
+}
+.btn-kanban-exec {
+  width: 100%;
+  padding: 8px;
+  font-size: 12px;
+}
+.btn-run {
+  background: linear-gradient(135deg, var(--color-gold-500), var(--color-gold-700));
+  color: #000;
+  font-weight: 700;
+}
+.btn-stop {
+  background: rgba(200, 40, 40, 0.4);
+  border-color: #ff4444;
+}
+

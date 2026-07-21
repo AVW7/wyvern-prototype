@@ -27,9 +27,6 @@ const DEFAULTS = {
   // yaw rate that counts as "hard over" is higher than walkTurnRateDeg.
   flightTurnRateDeg: 90,
   bankBlendResponseHz: 2.2,
-  // Fraction of the left clip in the level mix. SkyMoveL means +11.9° of bank
-  // and SkyMoveR means -8.7°, so 8.7/(11.9+8.7) of the left clip cancels them.
-  levelBankBlend: 0.42,
   bankMaxDeg: 32,
   bankGain: 0.16,
   bankResponseHz: 3.2,
@@ -64,29 +61,29 @@ export function shortestAngle(from, to) {
 }
 
 /**
- * Split an airborne turn across the two banked sky clips.
+ * Split an airborne turn across the level clip and the two banked ones.
  *
- * There is no level-flight clip in the source: measured across a wingbeat,
- * SkyMoveL means +11.9° of bank and SkyMoveR means -8.7°. So level flight is
- * not a clip to switch to — it is the weighting at which those two opposing
- * banks cancel, which is what `levelBlend` holds. A turn then slides the
- * weight toward whichever clip leans into it.
+ * This used to cross-weight bankLeft against bankRight alone, with level
+ * defined as the mix where their opposing banks cancel. They do not cancel:
+ * measured on the posed rig, that mix sits 5.2° left and rocks through 16° of
+ * roll every wingbeat, because blending two steeply banked poses averages the
+ * poses and not the bank. tools/blender-flight-clips.py derives a real level
+ * cycle (-0.6° across the beat), so level is a clip to hold, not a ratio to
+ * find, and the banks are only what a turn leans *into*.
  *
- * Level sits at `levelBlend`, not 0.5, precisely because the two banks are not
- * equal and opposite. The two arms are scaled separately so that blend ±1
- * reaches a pure clip from either side without overshooting.
+ * All three share one wingbeat window, so they stay phase-locked and the
+ * weights below never blend a downstroke into an upstroke.
  *
  * @param {number} blend - -1 hard right .. 0 level .. +1 hard left
- * @param {number} levelBlend - left clip's share at level
- * @returns {{left: number, right: number}} weights summing to 1
+ * @returns {{level: number, left: number, right: number}} weights summing to 1
  */
-export function bankWeights(blend, levelBlend = DEFAULTS.levelBankBlend) {
-  const level = clamp(finite(levelBlend, 0.5), 0, 1);
+export function bankWeights(blend) {
   const b = clamp(finite(blend, 0), -1, 1);
-  const left = b >= 0
-    ? level + b * (1 - level)
-    : level + b * level;
-  return { left, right: 1 - left };
+  return {
+    level: 1 - Math.abs(b),
+    left: Math.max(b, 0),
+    right: Math.max(-b, 0),
+  };
 }
 
 /**
@@ -184,16 +181,22 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       // ── One-shot arbitration ───────────────────────────────────────────
       // Player actions outrank everything, and only fire on the frame the
       // action first appears so holding the key does not restart the clip.
+      const wantsAir = isFlying && targetAltitude > config.landAltitude;
       if (action && action !== this.lastAction) {
-        this.oneShot = action;
-        this.pendingOneShot = action;
+        let resolvedAction = action;
+        if (this.airborne) {
+          if (action === 'dracarys') resolvedAction = 'flyDracarys';
+          else if (action === 'attack') resolvedAction = this.yawRateDeg < -10 ? 'flyAttackRight' : 'flyAttackLeft';
+          else if (action === 'attackAlt') resolvedAction = 'flyAttackRight';
+        }
+        this.oneShot = resolvedAction;
+        this.pendingOneShot = resolvedAction;
       }
       this.lastAction = action;
 
       // Takeoff / landing bracket the airborne state. `takeoffAltitude` is the
       // altitude the climb must pass before the dragon counts as flying, so a
       // twitch on the ascend key does not trigger a full takeoff.
-      const wantsAir = isFlying && targetAltitude > config.landAltitude;
       if (!this.airborne && wantsAir) {
         this.airborne = true;
         if (!this.oneShot) {
@@ -224,21 +227,17 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       let base;
       let baseTimeScale = 1;
       if (this.airborne) {
-        // Airborne turning is a continuous blend between the two banked sky
-        // clips, not a three-way switch between them and a level loop. There
-        // is no level loop to switch to: the source's only sky cycles are
-        // SkyMoveL (mean +11.9° of bank) and SkyMoveR (mean -8.7°), and `fly`
-        // used to be bound to SkyMoveL itself — so level flight already leaned
-        // left, turning left changed nothing on screen, and turning right swung
-        // through twice the angle it should have.
+        // Airborne turning is a continuous blend, not a switch between loops:
+        // hold the level cycle and both banked ones at once and weight them.
+        // At rest that is the level clip alone; a turn slides weight onto the
+        // clip that leans into it. `bankBlend` is -1 (hard right) .. 0 (level)
+        // .. +1 (hard left) and sanctuary3D turns it into the action weights.
         //
-        // Instead, hold both clips at once and cross-weight them. At rest the
-        // weights are the mix that cancels the two clips' opposing bank, which
-        // is the closest thing to level flight this rig can produce; a turn
-        // slides the weight toward the clip that leans into it. `bankBlend` is
-        // -1 (hard right) .. 0 (level) .. +1 (hard left) and sanctuary3D turns
-        // it into the pair of action weights.
-        base = 'fly';
+        // The three clips are derived from one wingbeat of the source's sky
+        // moves, so they are phase-locked and can be summed at any ratio. Before
+        // they existed this had to cross-weight the two banked clips alone and
+        // call the cancelling mix "level", which left cruise leaning 5.2°.
+        base = moving ? 'fly' : 'flyHover';
         const turnRatio = clamp(this.yawRateDeg / config.flightTurnRateDeg, -1, 1);
         // Eased rather than assigned, or the blend snaps as hard as the switch
         // it replaces — this is what makes a turn read as the body leaning in.
@@ -297,15 +296,11 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       // climb and would peg the nose to its limit instantly.
       const verticalSpeed = dt > 0 ? (altitude - this.lastAltitude) / dt : 0;
       this.lastAltitude = altitude;
-      // Airborne, the nose follows climb rate. On the ground it follows the
-      // terrain instead — and only while actually walking, or a dragon parked
-      // on a slope would stand nose-up forever.
+      // Airborne postures: hovering holds a slight +8° nose-up tilt so wings beat
+      // horizontally over mass center; forward flight pitches -10° forward into travel
+      // plus climb/descent pitch. On ground, pitch follows walking terrain slope.
       const pitchTarget = this.airborne
-        ? clamp(
-          verticalSpeed * config.pitchGain,
-          -config.pitchMaxDeg,
-          config.pitchMaxDeg,
-        ) * DEG
+        ? clamp(verticalSpeed * config.pitchGain, -config.pitchMaxDeg, config.pitchMaxDeg) * DEG
         : clamp(
           (moving ? finite(groundSlope, 0) : 0) * config.slopePitchDeg,
           -config.pitchMaxDeg,

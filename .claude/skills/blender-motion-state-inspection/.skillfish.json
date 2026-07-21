@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "blender-motion-state-inspection",
+  "owner": "lysimachoschertouras",
+  "repo": "setupwizard",
+  "path": ".agents/rules/ECC/skills/blender-motion-state-inspection",
+  "branch": "master",
+  "sha": "ccb174f1165ea91903222d9d3d5a370a22973cfc",
+  "source": "manual"
+}

@@ -3,6 +3,15 @@
 // plus legacy KHR_materials_pbrSpecularGlossiness materials that Three.js
 // no longer supports. This keeps only the clips the sanctuary plays,
 // converts the materials to pbrMetallicRoughness, and downsizes textures.
+//
+// SRC is no longer the Sketchfab download. tools/blender-flight-clips.py reads
+// that, derives the eight flight clips the source never shipped, and writes the
+// intermediate GLB this compresses:
+//
+//   blender --background --python tools/blender-flight-clips.py -- \
+//       ~/Downloads/drogon-game-of-thrones-dragon/source/Dragon.fbx derived.glb
+//   node tools/prep-drogon.mjs derived.glb \
+//       assets/models/dragon/drogon-sanctuary.glb
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import {
@@ -29,10 +38,6 @@ const KEEP = [
   'DaenerysDragon_Battle_TurnR20',   // small heading correction, right
   'DaenerysDragon_Battle_TurnL90',   // turn in place, left
   'DaenerysDragon_Battle_TurnR90',   // turn in place, right
-  'DaenerysDragon_Battle_Up',        // takeoff / climb
-  'DaenerysDragon_Battle_Down',      // descend / land
-  'DaenerysDragon_Battle_SkyMoveL',  // air bank left
-  'DaenerysDragon_Battle_SkyMoveR',  // air bank right
   'DaenerysDragon_Battle_Attack04',  // short attack
   'DaenerysDragon_Battle_Skill08',   // fire-breath candidate
   // ── Added for the preset vocabulary — docs/WYVERN_DEBUG_PANEL_PLAN.md M4.
@@ -47,6 +52,18 @@ const KEEP = [
   'DaenerysDragon_Battle_Attack01',   // second ground attack, so it can vary
   'DaenerysDragon_Battle_TurnL180',   // about-face left; 20/90 could not
   'DaenerysDragon_Battle_TurnR180',   // about-face right
+  // ── Derived by tools/blender-flight-clips.py; not in the Sketchfab source.
+  // They replace SkyMoveL/R (banked, never level), Battle_Up (8.2 s) and
+  // Battle_Down (a descent loop that never reached the ground), all of which
+  // are inputs to the derivation now and so are no longer kept themselves.
+  'Fly_Level_Loop',   // cruise; the clip the cross-blend was standing in for
+  'Fly_BankL_Loop',   // air bank left
+  'Fly_BankR_Loop',   // air bank right
+  'Fly_Glide_Loop',   // wings held out — glide / scout
+  'Fly_Hover_Loop',   // airborne and stationary
+  'Fly_Takeoff',      // 2.5 s, resolves onto the level cycle's first frame
+  'Fly_Land',         // resolves onto the ground pose the idles start from
+  'Fly_Dracarys',     // fire breath on the wing
 ];
 
 // Deliberately NOT kept, both because they duplicate a clip already here:
@@ -57,9 +74,8 @@ const KEEP = [
 //     emitter rather than a second clip.
 //   SkyMoveR01   — measured wingtip bank over the cycle returns SkyMoveR's
 //     profile to the decimal. It was briefly kept as a "level cruise"; that
-//     was wrong. There is no level sky clip, which is why systems/
-//     dragonMotion.js blends the two banked ones instead of switching to a
-//     third.
+//     was wrong. The source has no level sky clip at all, which is why
+//     Fly_Level_Loop above is derived rather than kept.
 
 // Root bones whose translation tracks are reported by the audit below. The rig
 // has three top-level roots; the Bip002 chain is the one that drives the skin.
@@ -127,11 +143,20 @@ await MeshoptEncoder.ready;
 await doc.transform(
   metalRough(),
   textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [1024, 1024] }),
-  // The bulk of this file is keyframes: 16 clips x ~640 channels x 292 bones,
+  // The bulk of this file is keyframes: 25 clips x ~690 channels x 230 bones,
   // exported at full sample density. resample() drops keyframes that are
   // interpolable from their neighbours, which is most of them on a rig this
   // dense. quantize + meshopt then compress what survives.
-  resample({ tolerance: 1e-4 }),
+  //
+  // 1e-3, not the 1e-4 this used before Blender was in the pipeline. Blender
+  // re-bakes every bone on every frame, which took the file from 10.5 MB to
+  // 14.4 MB at the old tolerance; 1e-3 brings it to 8.8 MB — smaller than
+  // before, with eight more clips. Measured cost, slerp-sampled against a 1e-4
+  // build across all 25 clips: 6.7° peak on Bip002-Ponytail1 and ~3.5° on the
+  // toes, with 9 of 231 bones over 2°, on a model that renders 64 px tall.
+  // Not 1e-2, which is 6.2 MB but collapses Fly_Glide_Loop from 48 keys to 16
+  // and smooths its breathe away entirely.
+  resample({ tolerance: 1e-3 }),
   dedup(),
   prune(),
   quantize(),
