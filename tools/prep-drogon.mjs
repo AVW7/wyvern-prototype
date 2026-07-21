@@ -35,7 +35,26 @@ const KEEP = [
   'DaenerysDragon_Battle_SkyMoveR',  // air bank right
   'DaenerysDragon_Battle_Attack04',  // short attack
   'DaenerysDragon_Battle_Skill08',   // fire-breath candidate
+  // ── Added for the preset vocabulary — docs/WYVERN_DEBUG_PANEL_PLAN.md M4.
+  // Picked by measuring each clip's foot-drop relative to the pelvis across
+  // the source's 52 actions: the airborne clips cluster at 570-660, and
+  // Skill10_L/R sit squarely in it, which is what identifies them as the
+  // aerial attack. (The pelvis itself never leaves 414 in any clip — this rig
+  // animates in place and lets the engine move the character, so height alone
+  // tells you nothing.) Rendered stills confirmed each one by eye.
+  'DaenerysDragon_Battle_SkyMoveR01', // scout: level cruise, no bank
+  'DaenerysDragon_Battle_Skill10_L',  // fly attack, left-hand pass
+  'DaenerysDragon_Battle_Skill10_R',  // fly attack, right-hand pass
+  'DaenerysDragon_Battle_Attack01',   // second ground attack, so it can vary
+  'DaenerysDragon_Battle_TurnL180',   // about-face left; 20/90 could not
+  'DaenerysDragon_Battle_TurnR180',   // about-face right
 ];
+
+// Skill11_L/R are deliberately NOT kept: their keyframe data is identical to
+// Skill10_L/R (same foot-drop to one decimal, same key counts), and fire is a
+// particle effect the game spawns over a clip rather than anything baked into
+// one — see createDracarysParticles() in systems/sanctuary3D.js. "Fly attack
+// with fire" is therefore Skill10 plus the emitter, not a second clip.
 
 // Root bones whose translation tracks are reported by the audit below. The rig
 // has three top-level roots; the Bip002 chain is the one that drives the skin.

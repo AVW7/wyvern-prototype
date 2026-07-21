@@ -154,14 +154,29 @@ export const SANCTUARY = {
       bankLeft: 'DaenerysDragon_Battle_SkyMoveL',
       bankRight: 'DaenerysDragon_Battle_SkyMoveR',
       attack: 'DaenerysDragon_Battle_Attack04',
+      attackAlt: 'DaenerysDragon_Battle_Attack01',
       dracarys: 'DaenerysDragon_Battle_Skill08',
       special: 'DaenerysDragon_Neutural_Roar',
+      // Level cruise with no bank — the straight-line sky move, which is what
+      // separates a scouting pass from the banked `fly` loop.
+      scout: 'DaenerysDragon_Battle_SkyMoveR01',
+      // Airborne strike passes. Identified by measuring foot-drop relative to
+      // the pelvis across all 52 source clips: these sit in the same 570-660
+      // band as SkyMove/Up/Down, and nowhere near the grounded attacks.
+      flyAttackLeft: 'DaenerysDragon_Battle_Skill10_L',
+      flyAttackRight: 'DaenerysDragon_Battle_Skill10_R',
+      // Full about-face. turnLeft/turnRight are 90° clips and read badly when
+      // the wyvern is asked to reverse.
+      turnLeftAbout: 'DaenerysDragon_Battle_TurnL180',
+      turnRightAbout: 'DaenerysDragon_Battle_TurnR180',
     },
     // Clips that play once and hand back to whatever motion was underneath,
     // instead of looping. Everything not listed here is a looping base motion.
     oneShotClips: [
       'turnLeft', 'turnRight', 'turnLeftSmall', 'turnRightSmall',
-      'takeoff', 'land', 'attack', 'dracarys', 'special', 'idleBreak',
+      'turnLeftAbout', 'turnRightAbout',
+      'takeoff', 'land', 'attack', 'attackAlt', 'dracarys', 'special', 'idleBreak',
+      'flyAttackLeft', 'flyAttackRight',
     ],
     // How the model is steered. See systems/dragonMotion.js — this block is
     // that module's entire configuration, and every value is live-tunable from
