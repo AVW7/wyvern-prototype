@@ -16,7 +16,9 @@ is the sole owner of the design or implementation.
    engineering and the remaining directional-art acceptance work.
 6. `docs/SANCTUARY_3D_DRAGON_PLAN.md` — scoped, owner-approved Three.js
    single-resident 3D rendering experiment (no camera/projection change).
-7. `AI_CONTRIBUTIONS.md` — model registry and append-only work log.
+7. `docs/WYVERN_DEBUG_PANEL_PLAN.md` — the 3D wyvern debug panel: driving,
+   inspecting, and tuning that model from the browser.
+8. `AI_CONTRIBUTIONS.md` — model registry and append-only work log.
 
 ## Collaboration contract
 

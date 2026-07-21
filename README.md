@@ -10,7 +10,9 @@
 > [rotatable sanctuary camera plan](docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md).
 > A separate, scoped experiment rendering one sanctuary resident as a 3D
 > model over the 2D sanctuary is tracked in the
-> [3D dragon experiment plan](docs/SANCTUARY_3D_DRAGON_PLAN.md).
+> [3D dragon experiment plan](docs/SANCTUARY_3D_DRAGON_PLAN.md). The
+> development panel that drives and inspects that model is tracked in the
+> [3D wyvern debug panel plan](docs/WYVERN_DEBUG_PANEL_PLAN.md).
 
 A Phaser 3 scaffold for a two-layer game: an **isometric-background action mission**
 with **sprite wyverns**, plus a **base/roster management sim** between missions.
@@ -56,6 +58,8 @@ supported because the game uses ES modules and loaded assets.
 - `docs/SANCTUARY_3D_DRAGON_PLAN.md` records the scoped, owner-approved
   Three.js single-resident 3D rendering experiment (does not change the
   sanctuary camera or projection).
+- `docs/WYVERN_DEBUG_PANEL_PLAN.md` records the 3D wyvern debug panel — the
+  development instrument for driving and tuning that model.
 
 Models should add themselves only after a material contribution, then append a
 work record with the files/evidence and verification performed.
