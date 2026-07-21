@@ -33,6 +33,7 @@ const DEFAULTS = {
   pitchMaxDeg: 18,
   pitchGain: 0.22,
   pitchResponseHz: 2.6,
+  hoverPitchDeg: 12,
   // Degrees of nose-up per height-level-per-tile of ground slope, while
   // walking. Without this a climb reads as sliding up a ramp with the body
   // held flat.
@@ -230,7 +231,10 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       let base;
       let baseTimeScale = 1;
       if (this.airborne) {
-        base = moving ? 'fly' : 'flyHover';
+        // A stationary airborne wyvern should hold and beat in place.  The
+        // level-flight loop reads as coasting when there is no horizontal
+        // motion, even though the motion controller reports zero speed.
+        base = moving ? 'fly' : 'hover';
         if (moving) {
           baseTimeScale = Math.abs(verticalSpeed) > 1.5 || speed > 110 ? 1.15 : 0.95;
         } else {
@@ -275,11 +279,18 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
           config.bankMaxDeg,
         ) * DEG
         : 0;
-      // Airborne postures: hovering holds a slight +8° nose-up tilt so wings beat
-      // horizontally over mass center; forward flight pitches -10° forward into travel
-      // plus climb/descent pitch. On ground, pitch follows walking terrain slope.
+      // The imported rig's rest pose points the head visibly down. Hover gets
+      // a modest nose-up correction on top of real vertical motion, while
+      // cruise remains level unless it is climbing or descending.
+      const hoverPitchDeg = this.airborne && base === 'hover'
+        ? config.hoverPitchDeg
+        : 0;
       const pitchTarget = this.airborne
-        ? clamp(verticalSpeed * config.pitchGain, -config.pitchMaxDeg, config.pitchMaxDeg) * DEG
+        ? clamp(
+          verticalSpeed * config.pitchGain + hoverPitchDeg,
+          -config.pitchMaxDeg,
+          config.pitchMaxDeg,
+        ) * DEG
         : clamp(
           (moving ? finite(groundSlope, 0) : 0) * config.slopePitchDeg,
           -config.pitchMaxDeg,

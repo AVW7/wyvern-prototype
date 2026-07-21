@@ -331,14 +331,13 @@ def bank_cycle(source_name, frames=None):
     return seal({key: [fc.evaluate(f) for f in frames] for key, fc in chan.items()})
 
 
-def hover_cycle(arm, n_frames=36, stroke=1.18, climb_bias=0.45):
-    """Fly_Hover_Loop — slower, deeper, body carried more upright.
+def hover_cycle(arm, n_frames=36, stroke=1.18, climb_bias=0.0):
+    """Fly_Hover_Loop — slower, deeper wingbeats on a level body.
 
     Airborne-and-stationary currently plays the cruise, which reads as the
     dragon coasting on nothing. Hovering is the level cycle stretched, with a
-    deeper stroke, and the centreline chain leaned toward Battle_Up's climb
-    posture — a real pose out of the source rather than an invented axis
-    rotation.
+    deeper stroke. The earlier climb-pose blend made the body visibly dive at
+    rest, so stationary flight now retains the level cycle's centreline pose.
     """
     level = level_cycle(arm)
     sides = side_map(arm)

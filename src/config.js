@@ -243,6 +243,11 @@ export const SANCTUARY = {
       pitchMaxDeg: 18,
       pitchGain: 0.22,
       pitchResponseHz: 2.6,
+      // The imported rig's neutral airborne pose has a visible nose-down
+      // attitude. Apply a small authored correction only while hovering so a
+      // stopped wyvern holds level above its shadow rather than appearing to
+      // dive at the ground.
+      hoverPitchDeg: 12,
       // Altitude (world units) the climb has to pass before takeoff is
       // considered done, and below which landing commits.
       takeoffAltitude: 24,

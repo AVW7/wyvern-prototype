@@ -528,8 +528,10 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   const threeScene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, GAME.width / GAME.height, 1, 10000);
 
-  // Setup basic lighting
-  threeScene.add(new THREE.HemisphereLight(0xe0e8ff, 0x1f1f2e, 1.2));
+  // Setup basic lighting. The dragon's authored albedo is intentionally very
+  // dark; a stronger sky/ground fill keeps its wing membranes and scales
+  // readable when the player views it from the shadowed side.
+  threeScene.add(new THREE.HemisphereLight(0xeaf2ff, 0x40516a, 1.65));
   const sunLight = new THREE.DirectionalLight(0xffffff, 0.95);
   sunLight.position.set(400, 800, 300);
   sunLight.castShadow = true;
@@ -545,6 +547,9 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   sunLight.shadow.bias = -0.0005;
   sunLight.shadow.normalBias = 0.02;
   threeScene.add(sunLight);
+  const dragonFillLight = new THREE.DirectionalLight(0xb9d3ff, 0.55);
+  dragonFillLight.position.set(-450, 350, -500);
+  threeScene.add(dragonFillLight);
 
   const tileMeshes = [];
   const decorSprites = {}; // key: col_row -> { sprite, type, cell, ... }
@@ -987,17 +992,29 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
           node.castShadow = true;
           node.receiveShadow = true;
           if (node.material) {
-            node.material = node.material.clone();
-            node.material.roughness = 0.6;
-            node.material.metalness = 0.1;
-            
-            // Calibrate loaded textures to use sRGB Color Space if any exist
-            if (node.material.map) {
-              node.material.map.colorSpace = THREE.SRGBColorSpace;
-            }
-            if (node.material.emissiveMap) {
-              node.material.emissiveMap.colorSpace = THREE.SRGBColorSpace;
-            }
+            const materialWasArray = Array.isArray(node.material);
+            const sourceMaterials = materialWasArray
+              ? node.material
+              : [node.material];
+            const calibratedMaterials = sourceMaterials.map((source) => {
+              const material = source.clone();
+              material.roughness = 0.68;
+              material.metalness = 0.05;
+
+              // A small warm self-fill preserves the black wyvern's carved
+              // texture in a daylight scene without turning it into a glowing
+              // creature. It complements the scene fill light above.
+              if (material.emissive) {
+                material.emissive.setHex(0x160e0a);
+                material.emissiveIntensity = 0.38;
+              }
+
+              // Calibrate loaded textures to use sRGB Color Space if any exist.
+              if (material.map) material.map.colorSpace = THREE.SRGBColorSpace;
+              if (material.emissiveMap) material.emissiveMap.colorSpace = THREE.SRGBColorSpace;
+              return material;
+            });
+            node.material = materialWasArray ? calibratedMaterials : calibratedMaterials[0];
           }
         }
       });
@@ -2249,7 +2266,13 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         }
 
         // Handle zoom based on Phaser camera zoom
-        targetDistance = 460 / phaserCam.zoom;
+        // At the maximum 2D follow zoom the old 3D distance was only 128
+        // units, narrower than the wyvern's wingspan. Keep a flight framing
+        // floor so airborne hover, banks, and breath actions remain legible in
+        // their game environment instead of clipping through the viewport.
+        const followDistance = 460 / phaserCam.zoom;
+        const isFlying = Boolean(scene.movement?.isFlying);
+        targetDistance = isFlying ? Math.max(followDistance, 300) : followDistance;
         camDistance += (targetDistance - camDistance) * 0.15;
 
         // Position camera in orbit

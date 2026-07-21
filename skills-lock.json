@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "blender-pro-workflow": {
+      "source": "roble3/cc-blender-skill",
+      "sourceType": "github",
+      "skillPath": "plugin/skills/blender-pro-workflow/SKILL.md",
+      "computedHash": "9ffb2a9b59a77a15cf2e48778d9d4799ec2c803a9087c3160b95674848e48805"
+    }
+  }
+}

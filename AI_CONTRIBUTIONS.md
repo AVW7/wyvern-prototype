@@ -7,7 +7,7 @@ visible without treating any model as the sole author.
 
 - Distinct contributing model entries: 13
 - Providers represented: 3
-- Contribution records: 68
+- Contribution records: 72
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -106,6 +106,10 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-066 | 2026-07-21 | AI-013 | Inspected wyvern model (`drogon-sanctuary.glb`) in Blender headless mode using `inspect-wyvern-blend.py`: measured 40.51u wingspan, 26.34u head-to-tail length, 19.97u height, confirmed `-Y` forward orientation vector, 230 armature bones, and 25 authored motion clips. | `tools/inspect-wyvern-blend.py`, `assets/models/README.md`, `AI_CONTRIBUTIONS.md` | Blender 5.1 headless inspection pass, `npm run check` full gate pass (all 21 test files / 300 tests passed, build succeeded) |
 | C-067 | 2026-07-21 | AI-013 | Enlarged sanctuary island grid from 40x40 to 64x64 (4096 tiles), providing over 2.5x more area for wyvern training, flight, and aerial target strikes; added real-time coordinate telemetry readout banner (`(col, row, alt)`) to `actionPipeline.js`, `actionKanbanPanel.js`, and `ui.css`. | `src/data/sanctuary.js`, `src/systems/actionPipeline.js`, `src/ui/actionKanbanPanel.js`, `src/ui/ui.css`, `AI_CONTRIBUTIONS.md` | `npm run check` full gate pass (all 21 test files / 300 tests passed, built succeeded) |
 | C-068 | 2026-07-21 | AI-013 | Analyzed flight animation keyframe phases in Blender using `analyze-flight-frames.py`: confirmed 26-frame phase lock for `Fly_Level_Loop`/`BankL`/`BankR` (downstroke frame 1, upstroke peak frame 14), 36-frame hover cycle, 48-frame glide cycle; implemented dynamic wing beat time scaling ($1.15\times$ energetic thrust, $0.95\times$ relaxed cruise) in `dragonMotion.js` and `config.js`. | `tools/analyze-flight-frames.py`, `src/systems/dragonMotion.js`, `src/config.js`, `AI_CONTRIBUTIONS.md` | Blender 5.1 analysis pass, `npm run check` full gate pass (all 21 test files / 300 tests passed, build succeeded) |
+| C-069 | 2026-07-21 | AI-002 | Used the JavaScript browser inspector to trace the live Vite instance and fixed its airborne idle selector: a zero-speed wyvern now plays the authored in-place `hover` loop instead of the level-flight loop. | `src/systems/dragonMotion.js`, `tests/dragonMotion.test.js` | Targeted `dragonMotion` test passed (48 tests); full `npm run check` passed (21 files / 300 tests, syntax, typecheck, production build). |
+| C-070 | 2026-07-21 | AI-002 | Corrected the derived hover pose after visual inspection: removed the climb-pose blend that made a stationary wyvern dive, rebuilt the live GLB so `Fly_Hover_Loop` holds a level body, and improved airborne framing and fill lighting for readable flight. | `tools/blender-flight-clips.py`, `assets/models/dragon/drogon-sanctuary.glb`, `src/systems/sanctuary3D.js` | Headless Blender 5.1 rebuild; GLB contract check (25 animations; required flight clips present); `npm run check` passed (21 files / 300 tests, syntax, typecheck, production build). |
+| C-071 | 2026-07-21 | AI-002 | Applied the missing runtime hover-pose correction: a stationary airborne wyvern now receives a bounded +12° nose-up offset in addition to real climb/descent pitch, directly counteracting the imported rig's nose-down rest orientation. | `src/config.js`, `src/systems/dragonMotion.js`, `tests/dragonMotion.test.js` | Targeted motion tests passed (49); `npm run check` passed (21 files / 301 tests, syntax, typecheck, production build). |
+| C-072 | 2026-07-21 | AI-013 | Fixed core.repositoryformatversion Git configuration issue, added blender-pro-workflow skill, verified test suite, and synced all branch changes into main. | `.git/config`, `AI_CONTRIBUTIONS.md`, `.agents/skills/blender-pro-workflow/` | `git config` fix, `npm test` pass (21 files / 301 tests), Git commit and sync to main |
 
 ## How another model adds itself
 

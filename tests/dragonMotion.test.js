@@ -184,12 +184,21 @@ describe('createDragonMotion turn clips', () => {
 describe('createDragonMotion flight', () => {
   const climbing = { isFlying: true, altitude: 40, targetAltitude: 80, speed: 100 };
 
-  it('uses flyHover when stationary airborne and fly when moving airborne', () => {
+  it('uses hover when stationary airborne and fly when moving airborne', () => {
     const machine = createDragonMotion({ motion: MOTION });
     machine.update({ dtMs: 16, ...climbing });
     machine.oneShotFinished();
-    expect(machine.update({ dtMs: 16, ...climbing, speed: 0 }).base).toBe('flyHover');
+    expect(machine.update({ dtMs: 16, ...climbing, speed: 0 }).base).toBe('hover');
     expect(machine.update({ dtMs: 16, ...climbing, speed: 100 }).base).toBe('fly');
+  });
+
+  it('holds a nose-up correction while stationary in the air', () => {
+    const machine = createDragonMotion({ motion: MOTION });
+    machine.update({ dtMs: 16, ...climbing });
+    machine.oneShotFinished();
+    const hover = machine.update({ dtMs: 1000, ...climbing, speed: 0 });
+    expect(hover.base).toBe('hover');
+    expect(hover.pitch).toBeGreaterThan(0);
   });
 
   it('fires takeoff exactly once on the ground→air transition', () => {
@@ -321,7 +330,8 @@ describe('createDragonMotion flight', () => {
 
   it('pitches from the measured climb rate, not the gap to the target', () => {
     const machine = createDragonMotion({ motion: MOTION });
-    // A large remaining gap with no actual movement must not tip the nose.
+    // A large remaining gap with no actual movement must not add climb pitch
+    // beyond the hover's intentional neutral-pose correction.
     machine.update({ dtMs: 16, isFlying: true, altitude: 10, targetAltitude: 140 });
     machine.oneShotFinished();
     const stalled = run(
@@ -329,7 +339,8 @@ describe('createDragonMotion flight', () => {
       { isFlying: true, altitude: 10, targetAltitude: 140 },
       500,
     );
-    expect(Math.abs(stalled.pitch)).toBeLessThan(1 * DEG);
+    expect(stalled.pitch).toBeGreaterThan(0);
+    expect(stalled.pitch).toBeLessThan((MOTION.hoverPitchDeg + 1) * DEG);
   });
 });
 
