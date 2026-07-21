@@ -12,6 +12,7 @@ import {
 } from './sanctuaryProjection.js';
 import { applyGroundPlaneTransform } from './sanctuaryGroundPlane.js';
 import { findPath, nearestWalkable } from './sanctuaryMovement.js';
+import { KeyboardAction, onActionDown } from '../input/keyboardActions.js';
 
 const DEFAULT_VIEW = Object.freeze({ yawDeg: 0, elevationStep: 0 });
 
@@ -385,12 +386,10 @@ class SanctuaryInteractionController {
     this.scene.input.on('pointerupoutside', this.onPointerCancel);
     this.scene.input.on('gameout', this.onPointerCancel);
 
-    this.interactKey = this.scene.input.keyboard?.addKey('E') ?? null;
-    this.onInteractKey = (key, event) => {
-      if (event?.repeat || key?.repeat || this.inputTransitionBlocked('key')) return;
+    this.interactBinding = onActionDown(this.scene.input.keyboard, KeyboardAction.SanctuaryInteract, () => {
+      if (this.inputTransitionBlocked('key')) return;
       this.activateNearest('key');
-    };
-    this.interactKey?.on?.('down', this.onInteractKey);
+    });
   }
 
   refreshActor(actor) {
@@ -895,7 +894,7 @@ class SanctuaryInteractionController {
     this.scene.input?.off('pointerup', this.onPointerUp);
     this.scene.input?.off('pointerupoutside', this.onPointerCancel);
     this.scene.input?.off('gameout', this.onPointerCancel);
-    this.interactKey?.off?.('down', this.onInteractKey);
+    this.interactBinding?.dispose();
     this.scene.input?.setDefaultCursor?.('default');
     this.clearHoverTint();
     this.disableOwnedInteractives();

@@ -2,6 +2,9 @@
 // keeps its own camera implementation; this controller only shares the same
 // interaction principles (fit, cursor zoom, bounded pan) through scene APIs.
 import { GAME, SANCTUARY } from '../config.js';
+import {
+  KeyboardAction, addActionKeys, isActionDown, onActionDown,
+} from '../input/keyboardActions.js';
 
 export const SANCTUARY_CAMERA_MODES = Object.freeze({
   OVERVIEW: 'overview',
@@ -21,15 +24,6 @@ const DEFAULT_CAMERA_RIG = Object.freeze({
   yaw: Object.freeze({ min: -45, max: 45, step: 45, default: 0 }),
   elevation: Object.freeze({ minStep: -1, maxStep: 1, step: 1, defaultStep: 0 }),
   transitionMs: 280,
-});
-
-// Phaser accepts numeric key codes as well as key names. Numeric codes avoid
-// browser/keyboard-layout aliases for the bracket and Page Up/Down controls.
-const CAMERA_RIG_KEYS = Object.freeze({
-  yawLeft: 219,
-  yawRight: 221,
-  elevationDown: 34,
-  elevationUp: 33,
 });
 
 function clamp(value, min, max) {
@@ -285,39 +279,26 @@ export class SanctuaryCameraController {
     const { input } = this.scene;
     input.mouse?.disableContextMenu();
 
-    // String key names keep the module independent of a Phaser import/global.
-    this.spaceKey = input.keyboard?.addKey('SPACE') ?? null;
-    this.followKey = input.keyboard?.addKey('F') ?? null;
-    this.homeKey = input.keyboard?.addKey('HOME') ?? null;
-    this.yawLeftKey = input.keyboard?.addKey(CAMERA_RIG_KEYS.yawLeft) ?? null;
-    this.yawRightKey = input.keyboard?.addKey(CAMERA_RIG_KEYS.yawRight) ?? null;
-    this.elevationDownKey = input.keyboard?.addKey(CAMERA_RIG_KEYS.elevationDown) ?? null;
-    this.elevationUpKey = input.keyboard?.addKey(CAMERA_RIG_KEYS.elevationUp) ?? null;
-
-    this._onFollowDown = (key, event) => {
-      if (!event?.repeat && !key?.repeat && !this._transitioning) this.toggleFollow();
-    };
-    this._onHomeDown = (key, event) => {
-      if (!event?.repeat && !key?.repeat && !this._transitioning) this.reset();
-    };
-    this._onYawLeftDown = (key, event) => {
-      if (!event?.repeat && !key?.repeat) this.stepYaw(-1, { reason: 'keyboard' });
-    };
-    this._onYawRightDown = (key, event) => {
-      if (!event?.repeat && !key?.repeat) this.stepYaw(1, { reason: 'keyboard' });
-    };
-    this._onElevationDown = (key, event) => {
-      if (!event?.repeat && !key?.repeat) this.stepElevation(-1, { reason: 'keyboard' });
-    };
-    this._onElevationUp = (key, event) => {
-      if (!event?.repeat && !key?.repeat) this.stepElevation(1, { reason: 'keyboard' });
-    };
-    this.followKey?.on('down', this._onFollowDown);
-    this.homeKey?.on('down', this._onHomeDown);
-    this.yawLeftKey?.on('down', this._onYawLeftDown);
-    this.yawRightKey?.on('down', this._onYawRightDown);
-    this.elevationDownKey?.on('down', this._onElevationDown);
-    this.elevationUpKey?.on('down', this._onElevationUp);
+    // Bindings live in input/keyboardActions.js.
+    this.panModifierKeys = addActionKeys(input.keyboard, KeyboardAction.SanctuaryCameraPanModifier);
+    this.followBinding = onActionDown(input.keyboard, KeyboardAction.SanctuaryCameraToggleFollow, () => {
+      if (!this._transitioning) this.toggleFollow();
+    });
+    this.homeBinding = onActionDown(input.keyboard, KeyboardAction.SanctuaryCameraHome, () => {
+      if (!this._transitioning) this.reset();
+    });
+    this.yawLeftBinding = onActionDown(input.keyboard, KeyboardAction.SanctuaryCameraYawLeft, () => {
+      this.stepYaw(-1, { reason: 'keyboard' });
+    });
+    this.yawRightBinding = onActionDown(input.keyboard, KeyboardAction.SanctuaryCameraYawRight, () => {
+      this.stepYaw(1, { reason: 'keyboard' });
+    });
+    this.elevationDownBinding = onActionDown(input.keyboard, KeyboardAction.SanctuaryCameraTiltDown, () => {
+      this.stepElevation(-1, { reason: 'keyboard' });
+    });
+    this.elevationUpBinding = onActionDown(input.keyboard, KeyboardAction.SanctuaryCameraTiltUp, () => {
+      this.stepElevation(1, { reason: 'keyboard' });
+    });
 
     this._onPointerDown = (pointer) => {
       if (this._transitioning) {
@@ -330,7 +311,7 @@ export class SanctuaryCameraController {
       this._clickSuppressed = false;
       const right = pointerButtonDown(pointer, 'right', 2, 2);
       const middle = pointerButtonDown(pointer, 'middle', 4, 1);
-      if (right || middle || this.spaceKey?.isDown) this._beginPan(pointer);
+      if (right || middle || isActionDown(this.panModifierKeys)) this._beginPan(pointer);
       else this._beginOrbit(pointer);
     };
     this._onPointerMove = (pointer) => {
@@ -859,12 +840,12 @@ export class SanctuaryCameraController {
     input.off('pointerupoutside', this._onPointerUp);
     input.off('gameout', this._onGameOut);
     input.off('wheel', this._onWheel);
-    this.followKey?.off('down', this._onFollowDown);
-    this.homeKey?.off('down', this._onHomeDown);
-    this.yawLeftKey?.off('down', this._onYawLeftDown);
-    this.yawRightKey?.off('down', this._onYawRightDown);
-    this.elevationDownKey?.off('down', this._onElevationDown);
-    this.elevationUpKey?.off('down', this._onElevationUp);
+    this.followBinding.dispose();
+    this.homeBinding.dispose();
+    this.yawLeftBinding.dispose();
+    this.yawRightBinding.dispose();
+    this.elevationDownBinding.dispose();
+    this.elevationUpBinding.dispose();
     this.scene.events?.off('shutdown', this._onSceneShutdown);
     this.scene.events?.off('destroy', this._onSceneShutdown);
     this.pan.active = false;

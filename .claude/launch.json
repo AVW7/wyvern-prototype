@@ -3,12 +3,13 @@
   "configurations": [
     {
       "name": "wyvern-prototype",
-      "runtimeExecutable": "python3",
+      "runtimeExecutable": "npm",
       "runtimeArgs": [
-        "devserver.py",
-        "8000"
+        "run",
+        "dev"
       ],
-      "port": 8000
+      "port": 5175,
+      "autoPort": true
     }
   ]
 }

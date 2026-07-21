@@ -190,6 +190,51 @@ after Blender-based material conversion (`KHR_materials_pbrSpecularGlossiness`
   animation crossfades correctly with no snap/pop; visual scale/proportions
   read reasonably against the 2D residents.
 
+### Milestone 3 — Convincing control + terrain fidelity (implemented)
+
+Owner direction, 2026-07-21: *"the sanctuary terrain improved, and the
+dragon's action more realistic — look at the presets to see how you can
+implement controlling the wyvern more convincingly."* The "presets" are the
+source model's 52 animation clips, of which Milestone 2 kept 4.
+
+**Steering.** `src/systems/dragonMotion.js` (new, pure, no `three` import,
+covered by `tests/dragonMotion.test.js`) replaces the per-frame if-chain in
+`BaseScene.update` and the `rotation.y = atan2(moveVector)` snap. It
+rate-limits heading, plays a turn clip when a standing dragon is asked to
+face far away, matches the walk cycle's playback rate to actual ground speed,
+brackets flight with takeoff/land one-shots, and banks and pitches the body
+from yaw rate and climb rate. `BaseScene` now tells the 3D layer only about
+*actions*; locomotion is derived from the movement controller.
+
+**Clips.** `tools/prep-drogon.mjs` keeps 16 clips instead of 4 (9.5 MB, up
+from 4.2 MB) and prints a per-clip root-motion audit. `SANCTUARY.dragon3D`
+gained a full 18-slot `clips` table, an `oneShotClips` list (one-shots use
+`LoopOnce` + `clampWhenFinished` and hand back to the base motion on the
+mixer's `finished` event — previously an attack looped forever), and a
+`motion` tuning block. The debug panel gained a live motion readout and a
+clip picker, so the remaining slot↔clip guesses can be settled by eye
+instead of by re-running the asset build.
+
+**Terrain.** Look and materials only — no layout change, no new mechanics.
+ACES filmic tone mapping; per-instance colour jitter and a baked
+neighbour-occlusion term (`systems/tileTexture3D.js`, also new and pure);
+procedural grain/strata face textures per biome; a downward skirt on boundary
+tiles; a scrolling lagoon surface over an opaque bed; lava that breathes and
+actually casts light; distance fog matched to the Phaser backdrop.
+
+**Bug found and fixed on the way:** every exterior billboard prop rendered as
+Phaser's missing-texture placeholder — `sanctuary3D` looked up fixed-view
+`iso-decor-…` keys while `BaseScene` bakes exterior props under projected
+`sanctuary-…-<view>` keys. It now calls `ensureDecorTexture()`, which bakes
+on demand and returns the key it used. Separately, `buildWorld()` did not
+destroy the previous `sanctuary3D`/debug panel before building the next, so
+a rebuild left a second instance alive on the shared renderer.
+
+- **Exit criteria:** reversing direction turns rather than snaps; the walk
+  cycle tracks the ground; flight brackets with takeoff/landing and banks
+  into turns; an action plays once and returns; the terrain reads as surfaces
+  rather than flat cubes.
+
 ## Known, accepted risks
 
 - **Two WebGL contexts** (Phaser + Three.js) run simultaneously — may not

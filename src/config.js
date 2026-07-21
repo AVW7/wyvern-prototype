@@ -131,16 +131,72 @@ export const SANCTUARY = {
     // Matches WYVERN_ART.sanctuaryHeight so the 3D model reads at roughly
     // the same on-screen size as the 2D residents at default zoom.
     targetHeightPx: 64,
-    // Clip names as they exist in drogon-sanctuary.glb. tools/prep-drogon.mjs
-    // keeps only these (plus the unused DaenerysDragon_Battle_Up flight
-    // alternative) out of the source model's 52.
+    // Motion slot → clip name as it exists in drogon-sanctuary.glb.
+    // tools/prep-drogon.mjs keeps exactly these 16 out of the source's 52; its
+    // KEEP list and this table must be changed together. systems/dragonMotion.js
+    // decides which slot is active; the debug panel can rebind any slot live.
     clips: {
       idle: 'DaenerysDragon_Neutural_Watch',
+      idleBreak: 'DaenerysDragon_Neutural_Roar',
+      alert: 'AA_DaenerysDragon_Battle_Stand',
       walk: 'DaenerysDragon_Battle_Walk',
+      walkLeft: 'DaenerysDragon_Battle_WalkL',
+      walkRight: 'DaenerysDragon_Battle_WalkR',
+      turnLeftSmall: 'DaenerysDragon_Battle_TurnL20',
+      turnRightSmall: 'DaenerysDragon_Battle_TurnR20',
+      turnLeft: 'DaenerysDragon_Battle_TurnL90',
+      turnRight: 'DaenerysDragon_Battle_TurnR90',
+      takeoff: 'DaenerysDragon_Battle_Up',
+      land: 'DaenerysDragon_Battle_Down',
+      // No dedicated hover clip survives the cut; the level-flight loop is the
+      // banked sky move played straight, with roll supplied by the rig instead.
       fly: 'DaenerysDragon_Battle_SkyMoveL',
-      special: 'DaenerysDragon_Battle_Up',
-      attack: 'DaenerysDragon_Battle_Up',
-      dracarys: 'DaenerysDragon_Battle_Up',
+      bankLeft: 'DaenerysDragon_Battle_SkyMoveL',
+      bankRight: 'DaenerysDragon_Battle_SkyMoveR',
+      attack: 'DaenerysDragon_Battle_Attack04',
+      dracarys: 'DaenerysDragon_Battle_Skill08',
+      special: 'DaenerysDragon_Neutural_Roar',
+    },
+    // Clips that play once and hand back to whatever motion was underneath,
+    // instead of looping. Everything not listed here is a looping base motion.
+    oneShotClips: [
+      'turnLeft', 'turnRight', 'turnLeftSmall', 'turnRightSmall',
+      'takeoff', 'land', 'attack', 'dracarys', 'special', 'idleBreak',
+    ],
+    // How the model is steered. See systems/dragonMotion.js — this block is
+    // that module's entire configuration, and every value is live-tunable from
+    // the debug panel.
+    motion: {
+      // Degrees/sec the body may rotate. Below this the dragon snaps like a
+      // sprite; far above it and it feels weightless.
+      maxYawRateDeg: 150,
+      // Heading error (deg) that makes a standing dragon play a turn clip
+      // instead of just rotating. The small/large clips split at turnClipBigDeg.
+      turnClipThresholdDeg: 35,
+      turnClipBigDeg: 70,
+      // World units/sec the walk cycle covers at timeScale 1. The walk clip's
+      // playback rate is scaled by (actual speed / this) so the feet track the
+      // ground instead of sliding. Tune by eye at SANCTUARY.movement.speed.
+      walkClipSpeed: 96,
+      walkTimeScale: { min: 0.55, max: 1.9 },
+      // Yaw rate (deg/sec) at which the turning-walk clips fully replace the
+      // straight walk, and the roll a full-rate air turn leans into.
+      walkTurnRateDeg: 55,
+      bankMaxDeg: 32,
+      bankGain: 0.32,
+      bankResponseHz: 3.2,
+      // Nose up/down from vertical speed, and how hard altitude change drives it.
+      pitchMaxDeg: 18,
+      pitchGain: 0.22,
+      pitchResponseHz: 2.6,
+      // Altitude (world units) the climb has to pass before takeoff is
+      // considered done, and below which landing commits.
+      takeoffAltitude: 24,
+      landAltitude: 6,
+      // Seconds of unbroken idle before an idle-break clip may play, and the
+      // per-second chance it does once eligible.
+      idleBreakAfterSec: 14,
+      idleBreakChance: 0.12,
     },
     crossfadeMs: 250,
     // Flight height is now real, player-controlled altitude — see
@@ -153,6 +209,35 @@ export const SANCTUARY = {
       brazierFlameRadius: 8,
       crystalPulseMs: 1200,
     },
+  },
+  // How the Three.js voxel diorama is shaded. Layout still comes from
+  // data/sanctuary.js and colour still comes from data/biomes.js — this only
+  // governs how those are turned into surfaces. See systems/sanctuary3D.js and
+  // systems/tileTexture3D.js; every value is live-tunable from the debug panel.
+  terrain3D: {
+    // Filmic tone mapping. Without it the emissive lava and the lit tops clip
+    // to flat white and the whole diorama reads as untextured plastic.
+    exposure: 1.05,
+    // Per-tile variation baked into the instance colours at build time (free at
+    // runtime). jitter breaks up the flat biome sheet; ao darkens a tile for
+    // each taller neighbour so height reads without a real AO pass.
+    colorJitter: 0.13,
+    aoStrength: 0.45,
+    // Extra world units the island's boundary tiles extend downward, so the
+    // silhouette reads as a monolith instead of a 12-unit crust over nothing.
+    skirtDepth: 96,
+    // Procedural face textures. size is per-face canvas px; grain/strata are
+    // the top speckle and sidewall banding contrast.
+    texture: { size: 64, grain: 0.14, strata: 0.2 },
+    // Distance haze. `color` must match the Phaser backdrop showing through the
+    // transparent Three canvas, or the horizon bands where they meet.
+    fog: { enabled: true, color: '#0f141d', near: 620, far: 1750 },
+    // Lagoon surface: scroll rates (uv/sec) of the two offset normal maps and
+    // how far the surface sits above the tile top.
+    water: { scrollX: 0.035, scrollY: 0.021, lift: 0.6, opacity: 0.82, roughness: 0.08 },
+    // Lava crust glow: emissive floor/ceiling, how fast the noise breathes, and
+    // the point light dropped over each authored lava field.
+    lava: { emissiveMin: 0.75, emissiveMax: 2.3, breatheHz: 0.45, lightIntensity: 2.4, lightRange: 300 },
   },
   // Tall props fade only while their projected foreground overlaps the actor.
   occlusion: { alpha: 0.28, radiusX: 38, radiusY: 74, response: 0.16 },

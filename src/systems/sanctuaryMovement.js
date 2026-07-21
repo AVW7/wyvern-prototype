@@ -16,6 +16,7 @@ import {
   viewDirectionForWorldVectorFree,
 } from './sanctuaryProjection.js';
 import { wyvernAnimationKey } from '../data/wyverns.js';
+import { KeyboardAction, keyNameList } from '../input/keyboardActions.js';
 
 const DEFAULT_MOVEMENT = Object.freeze({
   speed: 120, // ground-plane screen pixels per second
@@ -655,8 +656,18 @@ export function createSanctuaryMovement({
   )));
   const heights = createHeightGrid(tiles);
   const config = movementTuning(tuning);
+  // Key names come from input/keyboardActions.js; normalizedInput() and the
+  // ascend/descend check below still address WASD/arrows/Q/R by Phaser key
+  // name, so a rebind of those actions must keep this list in sync too.
   const keys = suppliedKeys || scene?.input?.keyboard?.addKeys?.(
-    'W,A,S,D,UP,DOWN,LEFT,RIGHT,Q,R',
+    keyNameList(
+      KeyboardAction.SanctuaryMoveUp,
+      KeyboardAction.SanctuaryMoveDown,
+      KeyboardAction.SanctuaryMoveLeft,
+      KeyboardAction.SanctuaryMoveRight,
+      KeyboardAction.SanctuaryFlyAscend,
+      KeyboardAction.SanctuaryFlyDescend,
+    ),
   ) || {};
   const initialView = viewFrom(getView ?? view);
 
@@ -703,6 +714,13 @@ export function createSanctuaryMovement({
 
     getAltitude() {
       return this.altitude;
+    },
+
+    // Where altitude is heading, not where it is. The 3D layer needs both: the
+    // eased value positions the model, the target is what tells it a takeoff or
+    // a landing has been asked for. See systems/dragonMotion.js.
+    getTargetAltitude() {
+      return this.targetAltitude;
     },
 
     setAltitude(alt) {

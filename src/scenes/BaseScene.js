@@ -38,6 +38,7 @@ import {
 } from '../systems/roster.js';
 import { createSanctuary3D } from '../systems/sanctuary3D.js';
 import { createDragonTestPanel } from '../ui/testPanel.js';
+import { KeyboardAction, onKeydown } from '../input/keyboardActions.js';
 
 // Scene starts destroy display objects, but this small in-memory preference row
 // survives Base -> Vault/Mission -> Base. Durable save/load remains deliberately
@@ -50,6 +51,17 @@ const SANCTUARY_SESSION = {
 };
 
 const CAMERA_MODES = new Set(Object.values(SANCTUARY_CAMERA_MODES));
+
+// The only wyvern states the 3D layer is told about. Everything else it works
+// out for itself from the movement controller — see systems/dragonMotion.js.
+// Guard has no clip of its own; the roar reads as the same "planted and
+// warning" beat, which is why it shares SPECIAL.
+const ACTION_MOTIONS = {
+  [WYVERN_STATES.DRACARYS]: 'dracarys',
+  [WYVERN_STATES.ATTACK]: 'attack',
+  [WYVERN_STATES.SPECIAL]: 'special',
+  [WYVERN_STATES.GUARD]: 'special',
+};
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -110,13 +122,13 @@ export default class BaseScene extends Phaser.Scene {
     // gameplay meaning yet (see the plan's Non-goals). Not F — that is already
     // the Follow camera mode, and not E/[/]/PgUp/PgDn/Home/Space either.
     this.wyvernFlying = false;
-    this.input.keyboard?.on('keydown-G', () => {
+    onKeydown(this.input.keyboard, KeyboardAction.DebugToggleFlight, () => {
       this.wyvernFlying = !this.wyvernFlying;
       this.movement?.setFlying?.(this.wyvernFlying);
     });
 
     // Shift + D triggers the Dracarys action
-    this.input.keyboard?.on('keydown-D', (event) => {
+    onKeydown(this.input.keyboard, KeyboardAction.Dracarys, (event) => {
       if (event.shiftKey) {
         event.preventDefault();
         this.dracarysFromPanel(this.selectedWyvernId);
@@ -155,23 +167,14 @@ export default class BaseScene extends Phaser.Scene {
     updateSanctuaryOccluders(this.world.placed, footprint);
 
     if (this.sanctuary3D) {
-      let motion = this.testOverrideAction || 'idle';
-      if (!this.testOverrideAction) {
-        if (this.movement?.state === WYVERN_STATES.DRACARYS) {
-          motion = 'dracarys';
-        } else if (this.movement?.state === WYVERN_STATES.ATTACK) {
-          motion = 'attack';
-        } else if (this.movement?.state === WYVERN_STATES.SPECIAL) {
-          motion = 'special';
-        } else if (this.movement?.state === WYVERN_STATES.GUARD) {
-          motion = 'special';
-        } else if (this.wyvernFlying) {
-          motion = 'fly';
-        } else if (moved) {
-          motion = 'walk';
-        }
-      }
-      this.sanctuary3D.setMotion(motion);
+      // Only *actions* are pushed to the 3D layer. Locomotion — walk vs fly,
+      // turning, takeoff, landing, playback rate — is decided inside
+      // systems/dragonMotion.js from the movement controller's own state, which
+      // is the only place that knows speed and altitude. See
+      // docs/SANCTUARY_3D_DRAGON_PLAN.md, Milestone 3.
+      this.sanctuary3D.setMotion(
+        this.testOverrideAction || ACTION_MOTIONS[this.movement?.state] || null,
+      );
       this.sanctuary3D.update(delta);
     }
 
@@ -192,6 +195,16 @@ export default class BaseScene extends Phaser.Scene {
     this.destroyControllers();
     this.tweens.killAll();
     this.destroyWorldDisplay();
+
+    // Tear down the previous 3D layer and its panel before building the next.
+    // A rebuild (recruiting, changing the controlled wyvern) used to leave the
+    // old instance alive, sharing the one WebGL renderer and re-adding its own
+    // lagoon surface, lava lights and debug-panel timers on every rebuild.
+    this.sanctuary3D?.destroy();
+    this.sanctuary3D = null;
+    this.testPanel?.destroy();
+    this.testPanel = null;
+    this.testOverrideAction = null;
 
     const worldData = buildSanctuaryExterior();
     this.world = buildSanctuaryView(

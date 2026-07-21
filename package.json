@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "validate:atlas": "node scripts/validate-wyvern-atlases.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
-    "check": "npm run check:syntax && npm run validate:atlas && npm test && npm run build"
+    "typecheck": "tsc --noEmit",
+    "check": "npm run check:syntax && npm run typecheck && npm run validate:atlas && npm test && npm run build"
   },
   "dependencies": {
     "phaser": "3.80.1",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "jsdom": "^29.1.1",
+    "typescript": "^7.0.2",
     "vite": "8.1.5",
     "vitest": "4.1.10"
   }

@@ -4,6 +4,10 @@ import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { GAME, SANCTUARY, TERRAIN } from '../config.js';
 import { BIOMES } from '../data/biomes.js';
 import { TILE_SIZE, HEIGHT_SCALE, gridToWorld3D, tileCenterY } from './grid3d.js';
+import { createDragonMotion } from './dragonMotion.js';
+import { createNoise } from './noise.js';
+import { ensureDecorTexture } from './textureBake.js';
+import { neighbourOcclusion, tileFaceCanvases } from './tileTexture3D.js';
 
 // Enable Three.js global Cache
 THREE.Cache.enabled = true;
@@ -80,6 +84,10 @@ function getRenderer() {
   _renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   _renderer.setClearColor(0x000000, 0);
   _renderer.outputColorSpace = THREE.SRGBColorSpace;
+  // Filmic response curve. Without it the emissive lava and the sunlit tile
+  // tops clip straight to white and the whole diorama reads as flat plastic.
+  _renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  _renderer.toneMappingExposure = SANCTUARY.terrain3D?.exposure ?? 1.05;
   _renderer.shadowMap.enabled = true;
   _renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   return _renderer;
@@ -106,30 +114,65 @@ function getTileMaterials(biome) {
   const biomeData = BIOMES[biome] || BIOMES.moss;
   const topColor = new THREE.Color(biomeData.top);
   const sideColor = new THREE.Color(biomeData.left || biomeData.dark);
+  const tuning = SANCTUARY.terrain3D || {};
 
-  const sideMat = new THREE.MeshStandardMaterial({ color: sideColor, roughness: 0.82 });
+  // Procedural grain/strata for the faces. The bake is the biome's own palette
+  // shaded against itself, so `color` stays white here — otherwise the palette
+  // would be applied twice and the tiles would come out muddy. Falls back to
+  // flat colour if the canvas is unavailable (headless, no 2D context).
+  const faces = tileFaceCanvases(biome, biomeData, tuning.texture);
+  const faceMap = (canvas) => {
+    if (!canvas) return null;
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.anisotropy = 4;
+    return tex;
+  };
+  const topMap = faceMap(faces?.top);
+  const sideMap = faceMap(faces?.side);
+
+  const sideMat = new THREE.MeshStandardMaterial({
+    color: sideMap ? 0xffffff : sideColor,
+    map: sideMap,
+    roughness: 0.82,
+  });
 
   let topMat;
   if (biome === 'springwater') {
+    // Opaque bed. The animated surface is a separate mesh laid over these tiles
+    // (see buildWaterSurface) — the old transparent top face showed the inside
+    // of the box, which is why the lagoon read as a hole rather than water.
     topMat = new THREE.MeshStandardMaterial({
-      color: topColor,
-      roughness: 0.1,
-      transparent: true,
-      opacity: 0.65,
-      roughnessMap: null,
+      color: new THREE.Color(biomeData.dark || biomeData.top),
+      roughness: 0.7,
     });
   } else if (biome === 'lava') {
     topMat = new THREE.MeshStandardMaterial({
-      color: topColor,
+      color: topMap ? 0xffffff : topColor,
+      map: topMap,
+      // The baked crust doubles as the emissive mask, so the glow sits in the
+      // dark fissures between the cooled plates instead of washing the surface.
+      emissiveMap: topMap,
       roughness: 0.9,
       emissive: new THREE.Color('#ff4500'),
-      emissiveIntensity: 1.5,
+      emissiveIntensity: tuning.lava?.emissiveMin ?? 1.5,
     });
+    // Tagged so update() can breathe the glow without re-finding it.
+    topMat.userData.isLava = true;
   } else {
-    topMat = new THREE.MeshStandardMaterial({ color: topColor, roughness: 0.92 });
+    topMat = new THREE.MeshStandardMaterial({
+      color: topMap ? 0xffffff : topColor,
+      map: topMap,
+      roughness: 0.92,
+    });
   }
 
   const materials = [sideMat, sideMat, topMat, sideMat, sideMat, sideMat];
+  // Shared across every createSanctuary3D call — destroy() must not dispose
+  // these, which is what this flag tells it.
+  materials.forEach((m) => { m._sanctuary3DCached = true; });
   _matCache.set(biome, materials);
   return materials;
 }
@@ -511,11 +554,23 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   let controlledDragon = null; // reference to the GLTF dragon
   let mixer = null;
   const actions = {};
+  let clipNames = [];
   let currentMotion = null;
   let pendingMotion = 'idle';
   let dracarysTimer = 0;
   let currentScaleMult = 1.0;
   let currentAnimSpeed = 1.0;
+
+  // Steering. The state machine is pure (systems/dragonMotion.js) and decides
+  // which motion slot should be playing, how fast, and how the body is angled;
+  // everything below only translates that into Three.js calls.
+  const dragonMotion = createDragonMotion({ motion: SANCTUARY.dragon3D?.motion });
+  // Base motion to return to once a one-shot ends, and the slot a caller forced
+  // through setMotion() (the debug panel and the Dracarys action use this).
+  let baseMotion = 'idle';
+  let baseTimeScale = 1;
+  let overrideMotion = null;
+  let elapsedSec = 0;
 
   // Camera State
   let camTarget = new THREE.Vector3(0, 0, 0);
@@ -578,6 +633,17 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
 
   const baseGeo = getInstancedBaseGeometry();
   const dummy = new THREE.Object3D();
+  const terrainTuning = SANCTUARY.terrain3D || {};
+  const { hash2: tileHash } = createNoise('sanctuary-3d-tiles');
+  const instanceColor = new THREE.Color();
+
+  // True for a cell on the island's silhouette — one of its four orthogonal
+  // neighbours is a hole. Those tiles get the skirt so the island reads as a
+  // monolith rather than a 12-unit crust floating over nothing.
+  function isBoundaryCell(col, row) {
+    return !tiles[row - 1]?.[col] || !tiles[row + 1]?.[col]
+      || !tiles[row]?.[col - 1] || !tiles[row]?.[col + 1];
+  }
 
   for (const biome in tilesByBiome) {
     const list = tilesByBiome[biome];
@@ -591,20 +657,156 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     list.forEach((tileInfo, index) => {
       const { col, row, height } = tileInfo;
       const surface = gridToWorld3D(col, row, height, cols, rows);
+      const skirt = isBoundaryCell(col, row) ? (terrainTuning.skirtDepth ?? 0) : 0;
 
-      // Position bottom at Y = 0 (since geometry bottom is at 0)
-      dummy.position.set(surface.x, 0, surface.z);
-      dummy.scale.set(1, height * HEIGHT_SCALE, 1);
+      // Position bottom at Y = 0 (since geometry bottom is at 0), or below it
+      // when this cell carries the island skirt. The top face stays put either
+      // way — only the underside moves — so nothing standing on the tile shifts.
+      dummy.position.set(surface.x, -skirt, surface.z);
+      dummy.scale.set(1, height * HEIGHT_SCALE + skirt, 1);
       dummy.updateMatrix();
       instMesh.setMatrixAt(index, dummy.matrix);
+
+      // Per-instance tint: a little deterministic variation so 1,600 cubes stop
+      // reading as one flat sheet, darkened once per taller neighbour so height
+      // reads without paying for a real ambient-occlusion pass. Multiplies into
+      // the shared biome material, so the cache stays intact.
+      const jitter = (tileHash(col, row, 91) - 0.5) * 2 * (terrainTuning.colorJitter ?? 0);
+      const shade = 1 + jitter
+        - neighbourOcclusion(tiles, col, row) * (terrainTuning.aoStrength ?? 0);
+      instanceColor.setScalar(Math.max(0.35, shade));
+      instMesh.setColorAt(index, instanceColor);
 
       tilesData.push({ col, row, height });
     });
 
     instMesh.instanceMatrix.needsUpdate = true;
+    if (instMesh.instanceColor) instMesh.instanceColor.needsUpdate = true;
     instMesh.userData = { tilesData };
     threeScene.add(instMesh);
     tileMeshes.push(instMesh);
+  }
+
+  // ── Lagoon surface ─────────────────────────────────────────────────────
+  // One plane per contiguous run of springwater is overkill for the single
+  // authored lagoon; a single plane over the biome's bounding box, masked to
+  // the tile tops it covers, is enough and costs one draw call.
+  let waterSurface = null;
+  function buildWaterSurface() {
+    const cells = tilesByBiome.springwater;
+    if (!cells?.length) return;
+    const waterCfg = terrainTuning.water || {};
+
+    let minCol = Infinity; let maxCol = -Infinity;
+    let minRow = Infinity; let maxRow = -Infinity;
+    let surfaceHeight = 0;
+    cells.forEach(({ col, row, height }) => {
+      minCol = Math.min(minCol, col); maxCol = Math.max(maxCol, col);
+      minRow = Math.min(minRow, row); maxRow = Math.max(maxRow, row);
+      surfaceHeight = Math.max(surfaceHeight, height);
+    });
+
+    const min = gridToWorld3D(minCol, minRow, surfaceHeight, cols, rows);
+    const max = gridToWorld3D(maxCol, maxRow, surfaceHeight, cols, rows);
+    const width = (max.x - min.x) + TILE_SIZE;
+    const depth = (max.z - min.z) + TILE_SIZE;
+
+    const geo = new THREE.PlaneGeometry(width, depth, 1, 1);
+    geo.rotateX(-Math.PI / 2);
+
+    const biomeData = BIOMES.springwater;
+    const faces = tileFaceCanvases('springwater', biomeData, terrainTuning.texture);
+    const normalTex = faces?.top ? new THREE.CanvasTexture(faces.top) : null;
+    if (normalTex) {
+      normalTex.wrapS = THREE.RepeatWrapping;
+      normalTex.wrapT = THREE.RepeatWrapping;
+      normalTex.repeat.set(width / TILE_SIZE, depth / TILE_SIZE);
+    }
+
+    const mat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(biomeData.top),
+      normalMap: normalTex,
+      normalScale: new THREE.Vector2(0.55, 0.55),
+      roughness: waterCfg.roughness ?? 0.08,
+      metalness: 0.25,
+      transparent: true,
+      opacity: waterCfg.opacity ?? 0.82,
+    });
+
+    waterSurface = new THREE.Mesh(geo, mat);
+    waterSurface.position.set(
+      (min.x + max.x) / 2,
+      min.y + (waterCfg.lift ?? 0.6),
+      (min.z + max.z) / 2,
+    );
+    waterSurface.receiveShadow = true;
+    threeScene.add(waterSurface);
+  }
+  buildWaterSurface();
+
+  // ── Lava lighting ──────────────────────────────────────────────────────
+  // The lava fields were emissive but lit nothing, so the surrounding warmstone
+  // stayed cold. One light per authored field, placed at its centroid.
+  const lavaLights = [];
+  const lavaMaterials = [];
+  function buildLavaLighting() {
+    const cells = tilesByBiome.lava;
+    if (!cells?.length) return;
+    const lavaCfg = terrainTuning.lava || {};
+
+    const topMat = getTileMaterials('lava')[2];
+    if (topMat?.userData?.isLava) lavaMaterials.push(topMat);
+
+    // Split the cells into connected fields so two distant pools do not share
+    // one light hovering over the rock between them.
+    const seen = new Set();
+    const key = (c, r) => `${c}_${r}`;
+    const lookup = new Map(cells.map((cell) => [key(cell.col, cell.row), cell]));
+    cells.forEach((start) => {
+      if (seen.has(key(start.col, start.row))) return;
+      const queue = [start];
+      const field = [];
+      seen.add(key(start.col, start.row));
+      while (queue.length) {
+        const cell = queue.pop();
+        field.push(cell);
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dc, dr]) => {
+          const k = key(cell.col + dc, cell.row + dr);
+          if (lookup.has(k) && !seen.has(k)) {
+            seen.add(k);
+            queue.push(lookup.get(k));
+          }
+        });
+      }
+
+      const centre = field.reduce(
+        (acc, cell) => {
+          const w = gridToWorld3D(cell.col, cell.row, cell.height, cols, rows);
+          return { x: acc.x + w.x, y: Math.max(acc.y, w.y), z: acc.z + w.z };
+        },
+        { x: 0, y: 0, z: 0 },
+      );
+      const light = new THREE.PointLight(
+        0xff6a1e,
+        lavaCfg.lightIntensity ?? 2.4,
+        lavaCfg.lightRange ?? 300,
+      );
+      light.position.set(centre.x / field.length, centre.y + 14, centre.z / field.length);
+      threeScene.add(light);
+      lavaLights.push(light);
+    });
+  }
+  buildLavaLighting();
+
+  // Distance haze. The Three canvas is transparent over the Phaser backdrop, so
+  // the fog colour has to match that backdrop or the horizon bands where the
+  // two meet — it is a tuning value, not a free choice.
+  if (terrainTuning.fog?.enabled) {
+    threeScene.fog = new THREE.Fog(
+      new THREE.Color(terrainTuning.fog.color || GAME.backgroundColor),
+      terrainTuning.fog.near ?? 600,
+      terrainTuning.fog.far ?? 1800,
+    );
   }
 
   // Create Decor Sprite
@@ -678,15 +880,17 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       return;
     }
 
-    // Drawers from Phaser cache
-    let phaserKey = `iso-decor-${cell.biome}-${type}-${variant}`;
-    let sourceImage = scene.textures.get(phaserKey)?.getSourceImage();
-    if (!sourceImage) {
-      // Fallback
-      phaserKey = `iso-decor-moss-tree-0`;
-      sourceImage = scene.textures.get(phaserKey)?.getSourceImage();
-    }
-
+    // Billboard the 2D drawer art for props with no 3D build. The texture has
+    // to be *baked* first, not merely looked up: BaseScene bakes the exterior
+    // props under the projected `sanctuary-…-<view>` keys, so the fixed-view
+    // `iso-decor-…` key guessed here never existed and every one of these props
+    // silently fell back to Phaser's missing-texture placeholder — the black
+    // squares that used to litter the grounds. ensureDecorTexture bakes on
+    // demand and returns the key it actually used. Fixed-view art is the right
+    // choice for a billboard: it always faces the camera, so a view-projected
+    // bake would be skewed for eight of the nine camera angles.
+    const phaserKey = ensureDecorTexture(scene.textures, cell.biome, type, variant);
+    const sourceImage = scene.textures.get(phaserKey)?.getSourceImage();
     if (!sourceImage) return;
 
     const texture = getCachedTexture(phaserKey, sourceImage);
@@ -766,14 +970,25 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
 
       const localMixer = new THREE.AnimationMixer(cloned);
       const localActions = {};
+      const oneShots = new Set(config.oneShotClips || []);
       for (const [motion, clipName] of Object.entries(config.clips)) {
         const clip = THREE.AnimationClip.findByName(cached.animations, clipName);
-        if (clip) {
-          localActions[motion] = localMixer.clipAction(clip);
+        if (!clip) {
+          console.warn(`sanctuary3D: clip "${clipName}" for motion "${motion}" is not in the model`);
+          continue;
         }
+        const clipAction = localMixer.clipAction(clip);
+        if (oneShots.has(motion)) {
+          // One-shots play to their last frame and hold it, so the crossfade
+          // back to the base motion starts from a settled pose instead of
+          // whipping through the clip's return-to-neutral frames.
+          clipAction.setLoop(THREE.LoopOnce, 1);
+          clipAction.clampWhenFinished = true;
+        }
+        localActions[motion] = clipAction;
       }
 
-      onReady(cloned, localMixer, localActions);
+      onReady(cloned, localMixer, localActions, cached.animations);
     }
 
     if (_gltfCache.has(url)) {
@@ -1000,10 +1215,17 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
 
     if (isControlled && r.animal.species === 'wyvern') {
       const config = SANCTUARY.dragon3D;
-      loadOrCloneDragon(config, flightPivot, (cloned, localMixer, localActions) => {
+      loadOrCloneDragon(config, flightPivot, (cloned, localMixer, localActions, animations) => {
         visual3D = cloned;
         mixer = localMixer;
         Object.assign(actions, localActions);
+        clipNames = (animations || []).map((clip) => clip.name);
+        // A one-shot that has run its course hands the base motion back, and
+        // tells the state machine it is free to request another.
+        localMixer.addEventListener('finished', () => {
+          dragonMotion.oneShotFinished();
+          playMotion(baseMotion, SANCTUARY.dragon3D?.crossfadeMs);
+        });
         playMotion(pendingMotion, 0);
         controlledDragon = cloned;
 
@@ -1040,16 +1262,35 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     };
   });
 
-  // Crossfade dragon motions
+  // Crossfade to a motion slot. `currentMotion` tracks the slot that is really
+  // playing — when the requested one has no clip and idle stands in, this must
+  // record 'idle', or the requested slot looks active forever and can never be
+  // started once its clip does exist.
   function playMotion(motion, fadeMs = 250) {
-    const next = actions[motion] || actions.idle;
-    if (!next || currentMotion === motion) return;
+    const next = actions[motion];
+    const resolved = next ? motion : 'idle';
+    const action = next || actions.idle;
+    if (!action || currentMotion === resolved) return;
     const previous = actions[currentMotion];
-    next.reset().setEffectiveWeight(1).play();
-    if (previous && previous !== next) {
-      previous.crossFadeTo(next, fadeMs / 1000, false);
+    action.reset().setEffectiveWeight(1).play();
+    if (previous && previous !== action) {
+      previous.crossFadeTo(action, fadeMs / 1000, false);
+    }
+    currentMotion = resolved;
+  }
+
+  // Restart a one-shot from its first frame even if it is already the current
+  // motion, so pressing Attack twice plays it twice.
+  function playOneShot(motion, fadeMs = 250) {
+    const action = actions[motion];
+    if (!action) return false;
+    const previous = actions[currentMotion];
+    action.reset().setEffectiveWeight(1).setEffectiveTimeScale(1).play();
+    if (previous && previous !== action) {
+      previous.crossFadeTo(action, fadeMs / 1000, false);
     }
     currentMotion = motion;
+    return true;
   }
 
   // Create 3D fire particles
@@ -1391,6 +1632,54 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
           }
         });
       }
+      if (param === 'exposure') {
+        renderer.toneMappingExposure = value;
+      }
+      if (param === 'fogNear' && threeScene.fog) {
+        threeScene.fog.near = value;
+      }
+      if (param === 'fogFar' && threeScene.fog) {
+        threeScene.fog.far = value;
+      }
+      if (param === 'fogEnabled') {
+        threeScene.fog = value
+          ? new THREE.Fog(
+            new THREE.Color(terrainTuning.fog?.color || GAME.backgroundColor),
+            terrainTuning.fog?.near ?? 600,
+            terrainTuning.fog?.far ?? 1800,
+          )
+          : null;
+        threeScene.traverse((child) => {
+          if (child.isMesh && child.material) {
+            const list = Array.isArray(child.material) ? child.material : [child.material];
+            list.forEach((m) => { m.needsUpdate = true; });
+          }
+        });
+      }
+      if (param === 'waterSpeed' && terrainTuning.water) {
+        terrainTuning.water.scrollX = value;
+        terrainTuning.water.scrollY = value * 0.6;
+      }
+      if (param === 'lavaGlow' && terrainTuning.lava) {
+        terrainTuning.lava.emissiveMax = value;
+      }
+      // Rebuilding the instance colours means re-deriving them for every tile,
+      // which is why aoStrength is a rebuild-the-attribute knob rather than a
+      // uniform. Cheap enough at 1,600 tiles to run live from a slider.
+      if (param === 'aoStrength' || param === 'colorJitter') {
+        terrainTuning[param] = value;
+        const color = new THREE.Color();
+        tileMeshes.forEach((mesh) => {
+          mesh.userData.tilesData?.forEach(({ col, row }, index) => {
+            const jitter = (tileHash(col, row, 91) - 0.5) * 2 * (terrainTuning.colorJitter ?? 0);
+            const shade = 1 + jitter
+              - neighbourOcclusion(tiles, col, row) * (terrainTuning.aoStrength ?? 0);
+            color.setScalar(Math.max(0.35, shade));
+            mesh.setColorAt(index, color);
+          });
+          if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+        });
+      }
     },
 
     // Light brazier: change texture and trigger fire particles
@@ -1488,8 +1777,84 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     update(deltaMs) {
       const deltaSec = deltaMs / 1000;
 
+      // ── Dragon steering ──────────────────────────────────────────────
+      // Everything the model does is decided here, from what the movement
+      // controller reports. `overrideMotion` (debug panel / Dracarys) wins.
+      if (controlledDragon) {
+        const movement = scene.movement;
+        const moveVector = movement?.lastWorldVector;
+        const facing = moveVector && (moveVector.col !== 0 || moveVector.row !== 0)
+          ? Math.atan2(moveVector.col, moveVector.row)
+          : null;
+        // The controller reports the step it took last frame in grid units;
+        // convert to the world units/sec the clip rate is calibrated against.
+        const stepped = movement?.isMoving && moveVector
+          ? Math.hypot(moveVector.col, moveVector.row) * TILE_SIZE
+          : 0;
+        const speed = deltaSec > 0 ? stepped / deltaSec : 0;
+
+        const pose = dragonMotion.update({
+          dtMs: deltaMs,
+          speed,
+          desiredHeading: facing,
+          isFlying: Boolean(movement?.isFlying),
+          altitude: movement?.getAltitude?.() ?? 0,
+          targetAltitude: movement?.getTargetAltitude?.() ?? 0,
+          action: overrideMotion,
+        });
+
+        baseMotion = overrideMotion && !dragonMotion.pendingOneShot
+          ? overrideMotion
+          : pose.base;
+        baseTimeScale = pose.baseTimeScale;
+
+        const fade = SANCTUARY.dragon3D?.crossfadeMs ?? 250;
+        if (pose.oneShot) {
+          if (!playOneShot(pose.oneShot, fade)) dragonMotion.oneShotFinished();
+        } else if (!dragonMotion.pendingOneShot) {
+          playMotion(baseMotion, fade);
+        }
+
+        // Speed-matched playback on the walk cycle only; a one-shot or a flight
+        // loop should run at its authored rate.
+        const activeAction = actions[currentMotion];
+        if (activeAction) {
+          const matched = currentMotion === baseMotion && !dragonMotion.pendingOneShot;
+          activeAction.setEffectiveTimeScale(matched ? baseTimeScale : 1);
+        }
+
+        controlledDragon.rotation.y = pose.heading;
+        controlledDragon.rotation.z = pose.roll;
+        controlledDragon.rotation.x = pose.pitch;
+      }
+
+      // ── Ambient terrain motion ───────────────────────────────────────
+      elapsedSec += deltaSec;
+      if (waterSurface?.material?.normalMap) {
+        // Two offsets on one map at different rates: cheaper than a second
+        // texture and enough to break up the repeat into moving water.
+        const waterCfg = terrainTuning.water || {};
+        const map = waterSurface.material.normalMap;
+        map.offset.x = (elapsedSec * (waterCfg.scrollX ?? 0.035)) % 1;
+        map.offset.y = (elapsedSec * (waterCfg.scrollY ?? 0.021)) % 1;
+      }
+      if (lavaMaterials.length) {
+        const lavaCfg = terrainTuning.lava || {};
+        const min = lavaCfg.emissiveMin ?? 0.75;
+        const max = lavaCfg.emissiveMax ?? 2.3;
+        // Two detuned sines read as an irregular breath; a single one pulses
+        // like a metronome and gives the trick away.
+        const t = elapsedSec * (lavaCfg.breatheHz ?? 0.45) * Math.PI * 2;
+        const wave = (Math.sin(t) * 0.6 + Math.sin(t * 1.7 + 1.1) * 0.4 + 1) / 2;
+        const intensity = min + (max - min) * wave;
+        lavaMaterials.forEach((m) => { m.emissiveIntensity = intensity; });
+        lavaLights.forEach((light) => {
+          light.intensity = (lavaCfg.lightIntensity ?? 2.4) * (0.75 + wave * 0.5);
+        });
+      }
+
       // Spawning dracarys fire breath particles
-      if (pendingMotion === 'dracarys' && controlledDragon) {
+      if (currentMotion === 'dracarys' && controlledDragon) {
         dracarysTimer += deltaMs;
         if (dracarysTimer >= 40) {
           dracarysTimer = 0;
@@ -1640,17 +2005,11 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         if (visual.pivot) visual.pivot.position.y = altitude;
         if (visual.label) visual.label.position.y = LABEL_BASE_Y + altitude;
 
-        // Handle rotations (yaw facing). The model's heading is WORLD space, so
-        // derive it from the last world movement vector and keep it when idle.
-        // Deliberately NOT movement.direction: that is a camera-relative 8-way
-        // art heading for the 2D sprites, so using it here re-pointed the model
-        // every time the camera orbited (the dragon appeared to spin with you).
-        if (r.animal.id === selectedWyvernId && controlledDragon) {
-          const moveVector = scene.movement?.lastWorldVector;
-          if (moveVector && (moveVector.col !== 0 || moveVector.row !== 0)) {
-            controlledDragon.rotation.y = Math.atan2(moveVector.col, moveVector.row);
-          }
-        }
+        // Heading, roll and pitch are applied at the top of update() by the
+        // motion state machine. It is deliberately driven by the last WORLD
+        // movement vector, not movement.direction — that is a camera-relative
+        // 8-way art heading for the 2D sprites, so using it here re-pointed the
+        // model every time the camera orbited (the dragon spun with you).
       });
 
       // Free-orbit camera (Vault): ease toward user-driven targets and skip the
@@ -1735,9 +2094,68 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       renderer.render(threeScene, camera);
     },
 
+    // Force a motion slot, overriding the state machine. `null` hands control
+    // back to it. Used by the debug panel and the Dracarys roster action.
     setMotion(motion) {
-      pendingMotion = motion;
-      playMotion(motion);
+      pendingMotion = motion || 'idle';
+      overrideMotion = motion || null;
+      if (!controlledDragon && motion) playMotion(motion);
+    },
+
+    /** Every clip name in the loaded model, for the debug panel's picker. */
+    listClips() {
+      return [...clipNames];
+    },
+
+    /**
+     * What the dragon is doing right now. The motion is decided across three
+     * places — the state machine, the one-shot queue, and any override — so
+     * without this readout a wrong pose gives no clue which one produced it.
+     */
+    getMotionState() {
+      return {
+        current: currentMotion,
+        base: baseMotion,
+        pending: dragonMotion.pendingOneShot,
+        override: overrideMotion,
+        timeScale: Number(baseTimeScale.toFixed(2)),
+        airborne: dragonMotion.airborne,
+        headingDeg: Math.round(dragonMotion.heading * 180 / Math.PI),
+        rollDeg: Math.round(dragonMotion.roll * 180 / Math.PI),
+        pitchDeg: Math.round(dragonMotion.pitch * 180 / Math.PI),
+      };
+    },
+
+    /** Motion slot → clip name, as currently bound. */
+    listMotionSlots() {
+      return Object.keys(SANCTUARY.dragon3D?.clips || {});
+    },
+
+    /**
+     * Rebind a motion slot to a different clip at runtime, so the remaining
+     * clip↔slot choices can be settled by eye instead of by re-running
+     * tools/prep-drogon.mjs. Not persisted — the winning pairs go back into
+     * SANCTUARY.dragon3D.clips by hand.
+     */
+    setClip(motion, clipName) {
+      if (!mixer || !controlledDragon) return false;
+      const cached = _gltfCache.get(SANCTUARY.dragon3D.modelUrl);
+      const clip = THREE.AnimationClip.findByName(cached?.animations || [], clipName);
+      if (!clip) return false;
+
+      const wasCurrent = currentMotion === motion;
+      actions[motion]?.stop();
+      const next = mixer.clipAction(clip);
+      if ((SANCTUARY.dragon3D.oneShotClips || []).includes(motion)) {
+        next.setLoop(THREE.LoopOnce, 1);
+        next.clampWhenFinished = true;
+      }
+      actions[motion] = next;
+      if (wasCurrent) {
+        currentMotion = null;
+        playMotion(motion, 0);
+      }
+      return true;
     },
 
     resize() {
@@ -1766,6 +2184,22 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         fl.light.dispose();
       });
       activeFireLights.length = 0;
+
+      // Per-instance terrain extras. The tile geometry/materials themselves are
+      // in the shared caches and deliberately survive; these are not.
+      lavaLights.forEach((light) => {
+        threeScene.remove(light);
+        light.dispose();
+      });
+      lavaLights.length = 0;
+      lavaMaterials.length = 0;
+      if (waterSurface) {
+        threeScene.remove(waterSurface);
+        waterSurface.geometry.dispose();
+        waterSurface.material.normalMap?.dispose();
+        waterSurface.material.dispose();
+        waterSurface = null;
+      }
 
       // Dispose textures
       if (_fireParticleTex) {

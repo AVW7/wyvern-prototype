@@ -8,6 +8,7 @@ import {
 import { buildSanctuaryInterior } from '../data/sanctuary.js';
 import { buildVaultOverlay } from '../ui/vaultPanel.js';
 import { createSanctuary3D } from '../systems/sanctuary3D.js';
+import { KeyboardAction, addActionKeys, isActionDown } from '../input/keyboardActions.js';
 
 // Degrees of yaw per unit of horizontal wheel delta (touchpad two-finger swipe).
 const WHEEL_YAW_SENS = 0.2;
@@ -48,7 +49,7 @@ export default class VaultScene extends Phaser.Scene {
       this.drag.lastY = pointer.y;
       this.drag.movedBy = 0;
       const panning = pointer.rightButtonDown?.() || pointer.middleButtonDown?.()
-        || this.shiftKey?.isDown;
+        || isActionDown(this.panModifierKeys);
       this.drag.mode = panning ? 'pan' : 'orbit';
     });
 
@@ -99,18 +100,19 @@ export default class VaultScene extends Phaser.Scene {
       this.sanctuary3D.zoomBy(deltaY < 0 ? SANCTUARY.zoom.step : 1 / SANCTUARY.zoom.step);
     });
 
-    // Keyboard rig — mirrors sanctuaryCamera's bracket / PageUp / PageDown / Home.
-    this.shiftKey = this.input.keyboard?.addKey('SHIFT') ?? null;
-    this.yawLeftKey = this.input.keyboard?.addKey(219) ?? null; // [
-    this.yawRightKey = this.input.keyboard?.addKey(221) ?? null; // ]
-    this.tiltUpKey = this.input.keyboard?.addKey(33) ?? null; // PageUp
-    this.tiltDownKey = this.input.keyboard?.addKey(34) ?? null; // PageDown
-    this.homeKey = this.input.keyboard?.addKey('HOME') ?? null;
-    this.yawLeftKey?.on('down', () => this.sanctuary3D?.stepYaw(-1));
-    this.yawRightKey?.on('down', () => this.sanctuary3D?.stepYaw(1));
-    this.tiltUpKey?.on('down', () => this.sanctuary3D?.stepTilt(1));
-    this.tiltDownKey?.on('down', () => this.sanctuary3D?.stepTilt(-1));
-    this.homeKey?.on('down', () => this.sanctuary3D?.resetCamera());
+    // Keyboard rig — mirrors sanctuaryCamera's bracket / PageUp / PageDown /
+    // Home. Bindings live in input/keyboardActions.js.
+    this.panModifierKeys = addActionKeys(this.input.keyboard, KeyboardAction.VaultCameraPanModifier);
+    this.yawLeftKeys = addActionKeys(this.input.keyboard, KeyboardAction.VaultCameraYawLeft);
+    this.yawRightKeys = addActionKeys(this.input.keyboard, KeyboardAction.VaultCameraYawRight);
+    this.tiltUpKeys = addActionKeys(this.input.keyboard, KeyboardAction.VaultCameraTiltUp);
+    this.tiltDownKeys = addActionKeys(this.input.keyboard, KeyboardAction.VaultCameraTiltDown);
+    this.homeKeys = addActionKeys(this.input.keyboard, KeyboardAction.VaultCameraHome);
+    this.yawLeftKeys.forEach((key) => key.on('down', () => this.sanctuary3D?.stepYaw(-1)));
+    this.yawRightKeys.forEach((key) => key.on('down', () => this.sanctuary3D?.stepYaw(1)));
+    this.tiltUpKeys.forEach((key) => key.on('down', () => this.sanctuary3D?.stepTilt(1)));
+    this.tiltDownKeys.forEach((key) => key.on('down', () => this.sanctuary3D?.stepTilt(-1)));
+    this.homeKeys.forEach((key) => key.on('down', () => this.sanctuary3D?.resetCamera()));
   }
 
   update(time, delta) {
@@ -164,8 +166,10 @@ export default class VaultScene extends Phaser.Scene {
   cleanUp() {
     // Detach rig keys from the global keyboard plugin; pointer/wheel listeners
     // are released with the scene's input on shutdown.
-    [this.yawLeftKey, this.yawRightKey, this.tiltUpKey, this.tiltDownKey, this.homeKey]
-      .forEach((key) => key?.removeAllListeners?.('down'));
+    [
+      ...this.yawLeftKeys, ...this.yawRightKeys, ...this.tiltUpKeys,
+      ...this.tiltDownKeys, ...this.homeKeys,
+    ].forEach((key) => key?.removeAllListeners?.('down'));
     if (this.sanctuary3D) {
       this.sanctuary3D.destroy();
       this.sanctuary3D = null;

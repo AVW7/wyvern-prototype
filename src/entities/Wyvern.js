@@ -6,6 +6,9 @@ import {
 } from '../config.js';
 import { DEMO_WYVERNS, wyvernAnimationKey } from '../data/wyverns.js';
 import { resolveWyvernVisual, scaleWyvernVisual } from '../systems/wyvernPresentation.js';
+import {
+  KeyboardAction, addActionKeys, isActionDown, isActionJustDown,
+} from '../input/keyboardActions.js';
 
 const SPEED = 0.12; // px per ms
 
@@ -47,8 +50,12 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
       if (this.shadow?.active) this.shadow.destroy();
     });
 
-    // Input: arrows + WASD + space. Rebind here when you add a settings screen.
-    this.keys = scene.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE');
+    // Input: arrows + WASD + space. Bindings live in input/keyboardActions.js.
+    this.moveUpKeys = addActionKeys(scene.input.keyboard, KeyboardAction.MissionMoveUp);
+    this.moveDownKeys = addActionKeys(scene.input.keyboard, KeyboardAction.MissionMoveDown);
+    this.moveLeftKeys = addActionKeys(scene.input.keyboard, KeyboardAction.MissionMoveLeft);
+    this.moveRightKeys = addActionKeys(scene.input.keyboard, KeyboardAction.MissionMoveRight);
+    this.attackKeys = addActionKeys(scene.input.keyboard, KeyboardAction.MissionAttack);
 
     // Return to idle automatically when a one-shot animation finishes.
     this.on('animationcomplete', (anim) => {
@@ -96,13 +103,12 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
       return; // mid attack/hurt/death — no movement or restate
     }
 
-    const k = this.keys;
     const effects = ORDER_EFFECTS[this.order];
 
     // Attack takes priority and locks movement until the anim completes.
     // Gated by the current order (Scout/Recon can't fight). MissionScene
     // listens for 'attack' to resolve hit detection.
-    if (effects.canAttack && Phaser.Input.Keyboard.JustDown(k.SPACE)) {
+    if (effects.canAttack && isActionJustDown(this.attackKeys)) {
       this.locked = true;
       this.setState(WYVERN_STATES.ATTACK);
       this.emit('attack');
@@ -113,10 +119,10 @@ export default class Wyvern extends Phaser.GameObjects.Sprite {
     let dx = 0;
     let dy = 0;
     if (effects.speedMultiplier > 0) {
-      if (k.LEFT.isDown || k.A.isDown) dx -= 1;
-      if (k.RIGHT.isDown || k.D.isDown) dx += 1;
-      if (k.UP.isDown || k.W.isDown) dy -= 1;
-      if (k.DOWN.isDown || k.S.isDown) dy += 1;
+      if (isActionDown(this.moveLeftKeys)) dx -= 1;
+      if (isActionDown(this.moveRightKeys)) dx += 1;
+      if (isActionDown(this.moveUpKeys)) dy -= 1;
+      if (isActionDown(this.moveDownKeys)) dy += 1;
     }
 
     if (dx !== 0 || dy !== 0) {

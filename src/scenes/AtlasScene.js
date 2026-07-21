@@ -13,6 +13,7 @@ import { ensureTileTexture, ensureDecorTexture } from '../systems/textureBake.js
 import { DECOR_BOX } from '../systems/decorArt.js';
 import { REGIONS, POIS, getRegion } from '../data/atlas.js';
 import { buildAtlasOverlay, setAtlasTooltip } from '../ui/atlasPanel.js';
+import { KeyboardAction, addActionKeys, isActionDown } from '../input/keyboardActions.js';
 
 // How far a pointer may travel between press and release and still count as a
 // click rather than a drag. Stops a pan that ends over a POI from selecting it.
@@ -208,14 +209,14 @@ export default class AtlasScene extends Phaser.Scene {
 
   setupInput() {
     this.input.mouse.disableContextMenu(); // Right-drag is a pan, not a menu.
-    this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.panModifierKeys = addActionKeys(this.input.keyboard, KeyboardAction.AtlasCameraPanModifier);
 
     this.input.on('pointerdown', (pointer, currentlyOver) => {
       // Left-press on a POI selects it; anything else starts a pan. Right and
       // middle always pan, even over a marker.
       const overPoi = currentlyOver.length > 0;
       const forcePan = pointer.rightButtonDown() || pointer.middleButtonDown()
-        || this.spaceKey.isDown;
+        || isActionDown(this.panModifierKeys);
       if (forcePan || !overPoi) this.beginPan(pointer);
     });
 

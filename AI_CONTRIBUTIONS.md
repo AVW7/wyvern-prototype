@@ -7,7 +7,7 @@ visible without treating any model as the sole author.
 
 - Distinct contributing model entries: 10
 - Providers represented: 3
-- Contribution records: 47
+- Contribution records: 48
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -82,6 +82,7 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-045 | 2026-07-20 | AI-003 | Fixed stationary rotation synchronization bug: when the wyvern stops to breathe fire or is idle, fall back to the logical 2D direction string to prevent the 3D model from spinning to DEFAULT_WORLD_FACING. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 14 test files / 164 tests passed, built successfully) |
 | C-046 | 2026-07-20 | AI-009 | Built a floating debug/test UI panel overlay for the 3D wyvern to tune scale, anim speed, altitude, lighting intensities, wireframe mode, and trigger actions. | `src/systems/sanctuary3D.js`, `src/scenes/BaseScene.js`, `src/systems/sanctuaryMovement.js`, `src/ui/testPanel.js`, `src/ui/ui.css` | `npm run check` full gate pass (all 14 test files / 164 tests passed, built successfully) |
 | C-047 | 2026-07-20 | AI-003 | Converted the Vault scene to a 3D Three.js diorama, removed all legacy 2D sprite rendering code, and removed all wyverns, profiles, rosters, actions, and tuning panels (as they are only for outside), rendering the empty chamber with exit raycasting and simplified travel controls. | `src/scenes/VaultScene.js`, `src/systems/sanctuary3D.js`, `src/ui/vaultPanel.js`, `tests/wyvernPresentation.test.js` | `npm run check` full gate pass (all 14 test files / 163 tests passed, built successfully) |
+| C-048 | 2026-07-21 | AI-005 | Milestone 3 of the 3D dragon plan: rebuilt the animation clip table (4 → 16 clips from the source's 52) and added a pure motion state machine so the dragon is steered rather than snapped — rate-limited heading, turn-in-place clips, speed-matched walk playback, takeoff/landing, banking and pitch, and one-shot actions that stop looping. Terrain look/materials pass: tone mapping, per-tile colour jitter and baked neighbour occlusion, procedural face textures, island skirt, animated lagoon surface, breathing lava with real light, distance fog. Fixed exterior billboard props rendering as Phaser's missing-texture placeholder (wrong texture-key namespace) and a rebuild leaking a second `sanctuary3D` instance and debug panel. | `src/systems/dragonMotion.js` (new), `src/systems/tileTexture3D.js` (new), `tests/dragonMotion.test.js` (new), `tests/tileTexture3D.test.js` (new), `src/systems/sanctuary3D.js`, `src/systems/sanctuaryMovement.js`, `src/scenes/BaseScene.js`, `src/ui/testPanel.js`, `src/config.js`, `tools/prep-drogon.mjs`, `assets/models/dragon/drogon-sanctuary.glb` | `npm run check` full gate pass (16 test files / 202 tests). Browser pass on Base confirmed walk, damped turning, takeoff/climb/landing, Dracarys particles, restored props and the terrain shading; the remaining matrix rows (clip picker rebinding, Vault/Atlas/Mission round trip) are unverified — the session had no exclusive dev server. |
 
 ## How another model adds itself
 

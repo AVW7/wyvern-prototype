@@ -21,6 +21,9 @@ export default defineConfig({
   base: './',
   server: {
     open: false,
+    // Honour PORT so several dev servers (or a tool that assigns one) can run
+    // against this repo at once. Unset, Vite keeps its usual 5173.
+    port: Number(process.env.PORT) || undefined,
   },
   plugins: [copyRuntimeAssets()],
   build: {
