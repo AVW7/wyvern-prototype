@@ -22,8 +22,16 @@ const DEFAULTS = {
   walkClipSpeed: 96,
   walkTimeScale: { min: 0.55, max: 1.9 },
   walkTurnRateDeg: 55,
+  // Airborne turning is its own regime: a flying dragon carries momentum
+  // through a much wider arc than a walking one pivoting on its feet, so the
+  // yaw rate that counts as "hard over" is higher than walkTurnRateDeg.
+  flightTurnRateDeg: 90,
+  bankBlendResponseHz: 2.2,
+  // Fraction of the left clip in the level mix. SkyMoveL means +11.9° of bank
+  // and SkyMoveR means -8.7°, so 8.7/(11.9+8.7) of the left clip cancels them.
+  levelBankBlend: 0.42,
   bankMaxDeg: 32,
-  bankGain: 0.32,
+  bankGain: 0.16,
   bankResponseHz: 3.2,
   pitchMaxDeg: 18,
   pitchGain: 0.22,
@@ -52,6 +60,32 @@ export function shortestAngle(from, to) {
 }
 
 /**
+ * Split an airborne turn across the two banked sky clips.
+ *
+ * There is no level-flight clip in the source: measured across a wingbeat,
+ * SkyMoveL means +11.9° of bank and SkyMoveR means -8.7°. So level flight is
+ * not a clip to switch to — it is the weighting at which those two opposing
+ * banks cancel, which is what `levelBlend` holds. A turn then slides the
+ * weight toward whichever clip leans into it.
+ *
+ * Level sits at `levelBlend`, not 0.5, precisely because the two banks are not
+ * equal and opposite. The two arms are scaled separately so that blend ±1
+ * reaches a pure clip from either side without overshooting.
+ *
+ * @param {number} blend - -1 hard right .. 0 level .. +1 hard left
+ * @param {number} levelBlend - left clip's share at level
+ * @returns {{left: number, right: number}} weights summing to 1
+ */
+export function bankWeights(blend, levelBlend = DEFAULTS.levelBankBlend) {
+  const level = clamp(finite(levelBlend, 0.5), 0, 1);
+  const b = clamp(finite(blend, 0), -1, 1);
+  const left = b >= 0
+    ? level + b * (1 - level)
+    : level + b * level;
+  return { left, right: 1 - left };
+}
+
+/**
  * Create a motion state machine for one dragon.
  *
  * @param {object} options
@@ -69,6 +103,12 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
     /** Current body roll / pitch (radians), eased toward their targets. */
     roll: 0,
     pitch: 0,
+    /**
+     * Where the airborne turn sits between the two banked sky clips:
+     * -1 hard right, 0 level, +1 hard left. Eased, so it lags the input the
+     * way a body with mass does.
+     */
+    bankBlend: 0,
     /** Degrees/sec the body turned on the last update; drives banking. */
     yawRateDeg: 0,
     /** Motion slot the base (looping) layer should be playing. */
@@ -176,10 +216,26 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       let base;
       let baseTimeScale = 1;
       if (this.airborne) {
-        const turnRatio = clamp(this.yawRateDeg / config.walkTurnRateDeg, -1, 1);
-        if (turnRatio > 0.35) base = 'bankLeft';
-        else if (turnRatio < -0.35) base = 'bankRight';
-        else base = 'fly';
+        // Airborne turning is a continuous blend between the two banked sky
+        // clips, not a three-way switch between them and a level loop. There
+        // is no level loop to switch to: the source's only sky cycles are
+        // SkyMoveL (mean +11.9° of bank) and SkyMoveR (mean -8.7°), and `fly`
+        // used to be bound to SkyMoveL itself — so level flight already leaned
+        // left, turning left changed nothing on screen, and turning right swung
+        // through twice the angle it should have.
+        //
+        // Instead, hold both clips at once and cross-weight them. At rest the
+        // weights are the mix that cancels the two clips' opposing bank, which
+        // is the closest thing to level flight this rig can produce; a turn
+        // slides the weight toward the clip that leans into it. `bankBlend` is
+        // -1 (hard right) .. 0 (level) .. +1 (hard left) and sanctuary3D turns
+        // it into the pair of action weights.
+        base = 'fly';
+        const turnRatio = clamp(this.yawRateDeg / config.flightTurnRateDeg, -1, 1);
+        // Eased rather than assigned, or the blend snaps as hard as the switch
+        // it replaces — this is what makes a turn read as the body leaning in.
+        this.bankBlend += (turnRatio - this.bankBlend)
+          * (1 - Math.exp(-dt * config.bankBlendResponseHz));
       } else if (moving) {
         // Blend the straight walk into its turning variants by how hard the
         // body is rotating, so a curving path is not a straight-line shuffle.
@@ -215,6 +271,12 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       // ── Body attitude ──────────────────────────────────────────────────
       // Bank into turns while airborne and level out otherwise; nose up or down
       // with vertical speed. Both eased so they never pop.
+      //
+      // This rides on top of whatever bank the blended sky clips already carry,
+      // so `bankGain` is deliberately small: the clips supply the pose and this
+      // supplies the crispness the clips' slow wingbeat cycle cannot. Turning
+      // it up past about 0.2 reads as the model pivoting inside its own
+      // animation.
       const bankTarget = this.airborne
         ? clamp(
           -this.yawRateDeg * config.bankGain,
@@ -247,6 +309,7 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
         roll: this.roll,
         pitch: this.pitch,
         airborne: this.airborne,
+        bankBlend: this.bankBlend,
       };
     },
   };

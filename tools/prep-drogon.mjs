@@ -42,7 +42,6 @@ const KEEP = [
   // aerial attack. (The pelvis itself never leaves 414 in any clip — this rig
   // animates in place and lets the engine move the character, so height alone
   // tells you nothing.) Rendered stills confirmed each one by eye.
-  'DaenerysDragon_Battle_SkyMoveR01', // scout: level cruise, no bank
   'DaenerysDragon_Battle_Skill10_L',  // fly attack, left-hand pass
   'DaenerysDragon_Battle_Skill10_R',  // fly attack, right-hand pass
   'DaenerysDragon_Battle_Attack01',   // second ground attack, so it can vary
@@ -50,11 +49,17 @@ const KEEP = [
   'DaenerysDragon_Battle_TurnR180',   // about-face right
 ];
 
-// Skill11_L/R are deliberately NOT kept: their keyframe data is identical to
-// Skill10_L/R (same foot-drop to one decimal, same key counts), and fire is a
-// particle effect the game spawns over a clip rather than anything baked into
-// one — see createDracarysParticles() in systems/sanctuary3D.js. "Fly attack
-// with fire" is therefore Skill10 plus the emitter, not a second clip.
+// Deliberately NOT kept, both because they duplicate a clip already here:
+//   Skill11_L/R  — keyframe-identical to Skill10_L/R (same foot-drop to one
+//     decimal, same key counts). Fire is a particle effect the game spawns
+//     over a clip, never baked into one (see createDracarysParticles() in
+//     systems/sanctuary3D.js), so "fly attack with fire" is Skill10 plus the
+//     emitter rather than a second clip.
+//   SkyMoveR01   — measured wingtip bank over the cycle returns SkyMoveR's
+//     profile to the decimal. It was briefly kept as a "level cruise"; that
+//     was wrong. There is no level sky clip, which is why systems/
+//     dragonMotion.js blends the two banked ones instead of switching to a
+//     third.
 
 // Root bones whose translation tracks are reported by the audit below. The rig
 // has three top-level roots; the Bip002 chain is the one that drives the skin.

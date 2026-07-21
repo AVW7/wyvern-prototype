@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDragonMotion, shortestAngle } from '../src/systems/dragonMotion.js';
+import { bankWeights, createDragonMotion, shortestAngle } from '../src/systems/dragonMotion.js';
 import { SANCTUARY } from '../src/config.js';
 
 const MOTION = SANCTUARY.dragon3D.motion;
@@ -24,6 +24,50 @@ describe('shortestAngle', () => {
 
   it('is zero for identical headings', () => {
     expect(shortestAngle(1.2, 1.2)).toBeCloseTo(0, 9);
+  });
+});
+
+describe('bankWeights', () => {
+  const LEVEL = MOTION.levelBankBlend;
+
+  it('always sums to one, so the blend never gains or loses energy', () => {
+    for (let b = -1; b <= 1.0001; b += 0.1) {
+      const { left, right } = bankWeights(b, LEVEL);
+      expect(left + right).toBeCloseTo(1, 9);
+    }
+  });
+
+  it('sits at the level mix when flying straight', () => {
+    // Not 0.5: the two clips' banks are +11.9 and -8.7, so cancelling them
+    // needs an uneven mix.
+    expect(bankWeights(0, LEVEL).left).toBeCloseTo(LEVEL, 9);
+  });
+
+  it('reaches a pure clip at either extreme', () => {
+    expect(bankWeights(1, LEVEL).left).toBeCloseTo(1, 9);
+    expect(bankWeights(-1, LEVEL).left).toBeCloseTo(0, 9);
+  });
+
+  it('moves monotonically from right to left across the range', () => {
+    let previous = -Infinity;
+    for (let b = -1; b <= 1.0001; b += 0.05) {
+      const { left } = bankWeights(b, LEVEL);
+      expect(left).toBeGreaterThan(previous);
+      previous = left;
+    }
+  });
+
+  it('stays inside 0..1 for out-of-range and junk input', () => {
+    for (const b of [5, -5, Number.NaN, Number.POSITIVE_INFINITY, undefined]) {
+      const { left, right } = bankWeights(b, LEVEL);
+      expect(left).toBeGreaterThanOrEqual(0);
+      expect(left).toBeLessThanOrEqual(1);
+      expect(left + right).toBeCloseTo(1, 9);
+    }
+  });
+
+  it('degrades to an even split when the level mix is junk', () => {
+    expect(bankWeights(0, Number.NaN).left).toBeCloseTo(0.5, 9);
   });
 });
 
@@ -159,14 +203,86 @@ describe('createDragonMotion flight', () => {
     expect(machine.airborne).toBe(false);
   });
 
-  it('flies level when not turning and banks when it is', () => {
+  it('stays on the blended flight loop instead of switching clips to turn', () => {
+    // Airborne turning is a weighted blend of the two banked sky clips, so the
+    // base motion is `fly` throughout and the turn shows up in bankBlend.
+    // Switching between three separate loops is what this replaced.
     const machine = createDragonMotion({ motion: MOTION });
     machine.update({ dtMs: 16, ...climbing });
     machine.oneShotFinished();
     expect(machine.update({ dtMs: 16, ...climbing }).base).toBe('fly');
 
-    const turning = machine.update({ dtMs: 16, ...climbing, desiredHeading: Math.PI });
-    expect(turning.base).toBe('bankLeft');
+    const turning = run(machine, { ...climbing, desiredHeading: Math.PI }, 400);
+    expect(turning.base).toBe('fly');
+  });
+
+  describe('airborne bank blend', () => {
+    it('is level when flying straight', () => {
+      const machine = createDragonMotion({ motion: MOTION });
+      machine.update({ dtMs: 16, ...climbing });
+      machine.oneShotFinished();
+      const straight = run(machine, climbing, 600);
+      expect(straight.bankBlend).toBeCloseTo(0, 2);
+    });
+
+    it('leans toward the left clip on a left turn and the right on a right', () => {
+      const left = createDragonMotion({ motion: MOTION });
+      left.update({ dtMs: 16, ...climbing });
+      left.oneShotFinished();
+      // Positive yaw rate is a left turn, matching the heading convention.
+      expect(run(left, { ...climbing, desiredHeading: Math.PI / 2 }, 500).bankBlend)
+        .toBeGreaterThan(0.2);
+
+      const right = createDragonMotion({ motion: MOTION });
+      right.update({ dtMs: 16, ...climbing });
+      right.oneShotFinished();
+      expect(run(right, { ...climbing, desiredHeading: -Math.PI / 2 }, 500).bankBlend)
+        .toBeLessThan(-0.2);
+    });
+
+    it('never leaves the -1..+1 the weighting expects', () => {
+      const machine = createDragonMotion({ motion: MOTION });
+      machine.update({ dtMs: 16, ...climbing });
+      machine.oneShotFinished();
+      // Hard alternating input, far past what the yaw limiter can follow.
+      for (let i = 0; i < 60; i += 1) {
+        const pose = machine.update({
+          dtMs: 16, ...climbing, desiredHeading: i % 2 ? Math.PI : -Math.PI,
+        });
+        expect(pose.bankBlend).toBeGreaterThanOrEqual(-1);
+        expect(pose.bankBlend).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it('eases rather than snapping, so the lean has weight', () => {
+      const machine = createDragonMotion({ motion: MOTION });
+      machine.update({ dtMs: 16, ...climbing });
+      machine.oneShotFinished();
+
+      const first = machine.update({ dtMs: 16, ...climbing, desiredHeading: Math.PI / 2 });
+      const settled = run(machine, { ...climbing, desiredHeading: Math.PI / 2 }, 800);
+      // One frame in it has barely moved; held, it commits.
+      expect(first.bankBlend).toBeLessThan(0.2);
+      expect(settled.bankBlend).toBeGreaterThan(first.bankBlend);
+    });
+
+    it('relaxes back to level when the turn stops', () => {
+      const machine = createDragonMotion({ motion: MOTION });
+      machine.update({ dtMs: 16, ...climbing });
+      machine.oneShotFinished();
+      const turned = run(machine, { ...climbing, desiredHeading: Math.PI / 2 }, 600);
+      expect(Math.abs(turned.bankBlend)).toBeGreaterThan(0.2);
+
+      // desiredHeading null means "hold whatever heading you have".
+      const levelled = run(machine, { ...climbing, desiredHeading: null }, 1500);
+      expect(Math.abs(levelled.bankBlend)).toBeLessThan(0.1);
+    });
+
+    it('treats the air as a wider arc than the ground', () => {
+      // The same yaw rate should read as a smaller share of a full turn in the
+      // air than on foot, which is what flightTurnRateDeg encodes.
+      expect(MOTION.flightTurnRateDeg).toBeGreaterThan(MOTION.walkTurnRateDeg);
+    });
   });
 
   it('rolls opposite the turn and levels out again', () => {

@@ -53,6 +53,7 @@ export function createDragonDebugPanel(scene, sanctuary3D) {
     override: '—',
     action: '—',
     attitude: '—',
+    bank: '—',
     speed: '—',
     position: '—',
     render: '—',
@@ -62,7 +63,8 @@ export function createDragonDebugPanel(scene, sanctuary3D) {
   const rows = [
     ['motion', 'playing'], ['base', 'base'], ['oneShot', 'one-shot'],
     ['override', 'override'], ['action', 'action'], ['attitude', 'attitude'],
-    ['speed', 'speed'], ['position', 'position'], ['render', 'render'],
+    ['bank', 'bank'], ['speed', 'speed'], ['position', 'position'],
+    ['render', 'render'],
   ];
   rows.forEach(([key, label]) => {
     status.add(readout, key).name(label).listen().disable();
@@ -81,6 +83,10 @@ export function createDragonDebugPanel(scene, sanctuary3D) {
     readout.override = motion.override ?? '—';
     readout.action = motion.action ?? '—';
     readout.attitude = `y${motion.headingDeg}° r${motion.rollDeg}° p${motion.pitchDeg}°`;
+    // L/R are the two sky clips' live weights; they should always sum to 1
+    // while airborne, and sit at the level mix when flying straight.
+    readout.bank = `${motion.bankBlend >= 0 ? '+' : ''}${motion.bankBlend}`
+      + `  L${motion.bankLeftWeight} R${motion.bankRightWeight}`;
     // Altitude is shown as current→target because they differ during a climb,
     // and that gap is exactly what the takeoff/land bracket keys off.
     const altitude = Math.round(movement?.getAltitude?.() ?? 0);

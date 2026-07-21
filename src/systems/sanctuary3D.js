@@ -4,7 +4,7 @@ import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { GAME, SANCTUARY, TERRAIN } from '../config.js';
 import { BIOMES } from '../data/biomes.js';
 import { TILE_SIZE, HEIGHT_SCALE, gridToWorld3D, tileCenterY } from './grid3d.js';
-import { createDragonMotion } from './dragonMotion.js';
+import { bankWeights, createDragonMotion } from './dragonMotion.js';
 import { createNoise } from './noise.js';
 import { ensureDecorTexture } from './textureBake.js';
 import { neighbourOcclusion, tileFaceCanvases } from './tileTexture3D.js';
@@ -894,10 +894,8 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       return;
     }
 
-    if (scene.sys.settings.key === 'Vault') {
-      // In Rider Vault, we don't render flat 2D billboard sprites
-      return;
-    }
+    // We don't render flat 2D billboard sprites in 3D scenes (both Rider Vault and Roost grounds)
+    return;
 
     // Billboard the 2D drawer art for props with no 3D build. The texture has
     // to be *baked* first, not merely looked up: BaseScene bakes the exterior
@@ -1258,21 +1256,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         localMixer.timeScale = currentAnimSpeed;
       });
     } else {
-      // 2.5D Sprite Billboard for other residents
-      let textureKey = `species-${r.animal.species}`;
-      if (r.usesProfileTexture) {
-        textureKey = r.visual.textureKey;
-      }
-      const phaserTexture = scene.textures.get(textureKey)?.getSourceImage();
-      if (phaserTexture) {
-        const tex = getCachedTexture(textureKey, phaserTexture);
-        const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
-        const sprite = new THREE.Sprite(spriteMat);
-        sprite.position.set(0, 12, 0);
-        sprite.scale.set(22, 22, 1);
-        flightPivot.add(sprite);
-        visual3D = sprite;
-      }
+      // In 3D scenes, we don't render flat 2D billboard sprites for non-controlled residents
     }
 
     residentVisuals[r.animal.id] = {
@@ -1300,6 +1284,54 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       previous.crossFadeTo(action, fadeMs / 1000, false);
     }
     currentMotion = resolved;
+  }
+
+  // Hold both banked sky clips at once and cross-weight them, so an airborne
+  // turn is a lean that grows and relaxes rather than a crossfade between three
+  // separate loops. `blend` is dragonMotion's bankBlend: -1 hard right, 0
+  // level, +1 hard left.
+  //
+  // The two clips are kept phase-locked. They are separate recordings of the
+  // same wingbeat, so letting their times drift apart blends a downstroke into
+  // an upstroke and the wings visibly cancel out into a flat glide.
+  function applyFlightBlend(blend, fadeMs) {
+    const left = actions.bankLeft;
+    const right = actions.bankRight;
+    if (!left || !right) return false;
+
+    const { left: leftWeight, right: rightWeight } = bankWeights(
+      blend,
+      SANCTUARY.dragon3D?.motion?.levelBankBlend,
+    );
+
+    if (!left.isRunning() || !right.isRunning()) {
+      // Entering flight: start both from the outgoing motion, then let the
+      // weights below take over.
+      const previous = actions[currentMotion];
+      left.reset().play();
+      right.reset().play();
+      if (previous && previous !== left && previous !== right) {
+        previous.fadeOut(fadeMs / 1000);
+      }
+    }
+    right.time = left.time;
+    left.setEffectiveTimeScale(1);
+    right.setEffectiveTimeScale(1);
+    left.setEffectiveWeight(leftWeight);
+    right.setEffectiveWeight(rightWeight);
+    currentMotion = 'fly';
+    return true;
+  }
+
+  function runningWeight(action) {
+    return action?.isRunning() ? action.getEffectiveWeight() : 0;
+  }
+
+  // Release the pair so a single-action motion can take over cleanly.
+  function stopFlightBlend(fadeMs) {
+    [actions.bankLeft, actions.bankRight].forEach((action) => {
+      if (action?.isRunning()) action.fadeOut(fadeMs / 1000);
+    });
   }
 
   // Restart a one-shot from its first frame even if it is already the current
@@ -1837,16 +1869,30 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         baseTimeScale = pose.baseTimeScale;
 
         const fade = SANCTUARY.dragon3D?.crossfadeMs ?? 250;
+        // Level flight and the two banked turns are one blended pair rather
+        // than three loops to crossfade between — see applyFlightBlend().
+        // An override or a one-shot still wins, so forcing `bankLeft` from the
+        // debug panel shows that clip alone.
+        const blending = pose.airborne
+          && baseMotion === 'fly'
+          && !pose.oneShot
+          && !dragonMotion.pendingOneShot;
+
         if (pose.oneShot) {
+          stopFlightBlend(fade);
           if (!playOneShot(pose.oneShot, fade)) dragonMotion.oneShotFinished();
+        } else if (blending) {
+          applyFlightBlend(pose.bankBlend, fade);
         } else if (!dragonMotion.pendingOneShot) {
+          stopFlightBlend(fade);
           playMotion(baseMotion, fade);
         }
 
         // Speed-matched playback on the walk cycle only; a one-shot or a flight
-        // loop should run at its authored rate.
+        // loop should run at its authored rate. The blended pair sets its own
+        // weights and time scales, so it is left alone here.
         const activeAction = actions[currentMotion];
-        if (activeAction) {
+        if (activeAction && !blending) {
           const matched = currentMotion === baseMotion && !dragonMotion.pendingOneShot;
           activeAction.setEffectiveTimeScale(matched ? baseTimeScale : 1);
         }
@@ -2177,6 +2223,14 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         timeScale: Number(baseTimeScale.toFixed(2)),
         speed: Math.round(lastGroundSpeed),
         airborne: dragonMotion.airborne,
+        // -1 hard right .. 0 level .. +1 hard left, and the left clip's share
+        // of the blend that produces it. Without these a mis-weighted turn
+        // looks the same as a turn that never started.
+        // An action that has never been played still reports weight 1, so a
+        // stopped clip would read as fully on. Report what is actually running.
+        bankBlend: Number(dragonMotion.bankBlend.toFixed(2)),
+        bankLeftWeight: Number(runningWeight(actions.bankLeft).toFixed(2)),
+        bankRightWeight: Number(runningWeight(actions.bankRight).toFixed(2)),
         headingDeg: Math.round(dragonMotion.heading * 180 / Math.PI),
         rollDeg: Math.round(dragonMotion.roll * 180 / Math.PI),
         pitchDeg: Math.round(dragonMotion.pitch * 180 / Math.PI),

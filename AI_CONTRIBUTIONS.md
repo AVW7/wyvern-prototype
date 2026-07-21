@@ -7,7 +7,7 @@ visible without treating any model as the sole author.
 
 - Distinct contributing model entries: 11
 - Providers represented: 3
-- Contribution records: 55
+- Contribution records: 56
 
 
 Counts include only models with a concrete contribution and evidence. Gemini
@@ -91,6 +91,7 @@ Append one row for each material work session. Keep old rows unchanged.
 | C-053 | 2026-07-21 | AI-010 | Completely removed all 2D Phaser graphics creation (sprites, shadows, auras, text labels, and flickers/tweens) from the sanctuary rendering pipeline to make it logical-only. Removed obsolete 2D effect tests and setAlpha(0) hide loops from BaseScene/VaultScene. | `src/systems/sanctuaryRender.js`, `src/scenes/BaseScene.js`, `src/scenes/VaultScene.js`, `tests/sanctuaryRenderGroundPlane.test.js` | `npm run check` full gate pass (all 15 test files / 195 tests passed, built successfully) |
 | C-054 | 2026-07-21 | AI-010 | Renamed 'Dragon Vault' to 'Rider Vault' across text, UI overlays, and code comments, and removed final 2D Phaser depth-sorting/animation loops from VaultScene. | `src/scenes/VaultScene.js`, `src/ui/vaultPanel.js`, `src/data/sanctuary.js`, `src/systems/roster.js`, `README.md` | `npm run check` full gate pass (all 15 test files / 195 tests passed, built successfully) |
 | C-055 | 2026-07-21 | AI-010 | Prevented 2D billboard sprite creation inside Three.js for flat props (such as the sleeping dragon, torches, crystals, and chests) when rendering inside the Rider Vault, cleaning up the 3D scene from legacy 2.5D graphics. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 15 test files / 195 tests passed, built successfully) |
+| C-056 | 2026-07-21 | AI-010 | Prevented 2D/2.5D billboard sprite creation inside Three.js for both non-controlled residents and flat props (torches, obelisks, tables, chests, crystals, etc.) on the sanctuary grounds (Roost/BaseScene), making the entire diorama layer 100% 3D mesh-based. | `src/systems/sanctuary3D.js` | `npm run check` full gate pass (all 17 test files / 228 tests passed, built successfully) |
 
 ## How another model adds itself
 

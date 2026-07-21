@@ -148,8 +148,12 @@ export const SANCTUARY = {
       turnRight: 'DaenerysDragon_Battle_TurnR90',
       takeoff: 'DaenerysDragon_Battle_Up',
       land: 'DaenerysDragon_Battle_Down',
-      // No dedicated hover clip survives the cut; the level-flight loop is the
-      // banked sky move played straight, with roll supplied by the rig instead.
+      // There is no level-flight clip in the source: measured over a wingbeat,
+      // SkyMoveL means +11.9° of bank and SkyMoveR means -8.7°. So `fly` is not
+      // a clip of its own — systems/sanctuary3D.js holds bankLeft and bankRight
+      // together and cross-weights them, and the mix that cancels their bank
+      // (motion.levelBankBlend) *is* level flight. This slot stays bound so a
+      // panel override and the clip picker still have something to name.
       fly: 'DaenerysDragon_Battle_SkyMoveL',
       bankLeft: 'DaenerysDragon_Battle_SkyMoveL',
       bankRight: 'DaenerysDragon_Battle_SkyMoveR',
@@ -157,9 +161,12 @@ export const SANCTUARY = {
       attackAlt: 'DaenerysDragon_Battle_Attack01',
       dracarys: 'DaenerysDragon_Battle_Skill08',
       special: 'DaenerysDragon_Neutural_Roar',
-      // Level cruise with no bank — the straight-line sky move, which is what
-      // separates a scouting pass from the banked `fly` loop.
-      scout: 'DaenerysDragon_Battle_SkyMoveR01',
+      // Corrected 2026-07-21: SkyMoveR01 was bound here as a "level cruise",
+      // but measuring its wingtip bank over the cycle returns SkyMoveR's
+      // numbers to the decimal — it is a duplicate, not a third sky move.
+      // Scouting is therefore a preset (level blend held at altitude), not a
+      // clip, and the duplicate is dropped from the asset.
+      scout: 'DaenerysDragon_Battle_SkyMoveR',
       // Airborne strike passes. Identified by measuring foot-drop relative to
       // the pelvis across all 52 source clips: these sit in the same 570-660
       // band as SkyMove/Up/Down, and nowhere near the grounded attacks.
@@ -197,8 +204,20 @@ export const SANCTUARY = {
       // Yaw rate (deg/sec) at which the turning-walk clips fully replace the
       // straight walk, and the roll a full-rate air turn leans into.
       walkTurnRateDeg: 55,
+      // Airborne turning is its own regime — a flying dragon carries momentum
+      // through a far wider arc than one pivoting on its feet, so "hard over"
+      // is a higher yaw rate in the air than on the ground.
+      flightTurnRateDeg: 90,
+      // How fast the lean into a turn builds and relaxes. Lower reads heavier.
+      bankBlendResponseHz: 2.2,
+      // Share of SkyMoveL in the level mix; the value that cancels the two sky
+      // clips' opposing bank (+11.9° and -8.7°). Raise it and level flight
+      // leans left, lower it and it leans right.
+      levelBankBlend: 0.42,
       bankMaxDeg: 32,
-      bankGain: 0.32,
+      // Rig roll *on top of* the banked clips, so this is deliberately small —
+      // past ~0.2 the model reads as pivoting inside its own animation.
+      bankGain: 0.16,
       bankResponseHz: 3.2,
       // Nose up/down from vertical speed, and how hard altitude change drives it.
       pitchMaxDeg: 18,
