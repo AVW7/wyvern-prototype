@@ -588,6 +588,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   // teleported. Keyed by animal id because every resident rides its own.
   const groundHeights = new Map();
   let elapsedSec = 0;
+  let takeoffGustSpawned = false;
 
   // Camera State
   let camTarget = new THREE.Vector3(0, 0, 0);
@@ -1573,6 +1574,56 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
     }
   }
 
+  // Create radial ground shockwave / dust gust particles under wyvern's feet during takeoff
+  function createTakeoffGroundGust(position, yaw) {
+    const gustCount = 36;
+    const geo = new THREE.BufferGeometry();
+    const positions = [];
+    const velocities = [];
+    const lifetimes = [];
+
+    const groundY = position.y + 1; // low ground plane
+
+    for (let i = 0; i < gustCount; i++) {
+      const angle = (i / gustCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+      const speed = Math.random() * 35 + 25;
+
+      positions.push(
+        position.x + Math.sin(angle) * 3,
+        groundY + Math.random() * 1.5,
+        position.z + Math.cos(angle) * 3,
+      );
+
+      velocities.push(
+        Math.sin(angle) * speed,
+        Math.random() * 6 + 2,
+        Math.cos(angle) * speed,
+      );
+      lifetimes.push(Math.random() * 0.6 + 0.4);
+    }
+
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0xcccccc,
+      size: 9.0,
+      map: getSmokeParticleTexture(),
+      transparent: true,
+      blending: THREE.NormalBlending,
+      depthWrite: false,
+    });
+    const points = new THREE.Points(geo, mat);
+    threeScene.add(points);
+
+    activeParticles.push({
+      points,
+      velocities,
+      lifetimes,
+      maxLifetimes: [...lifetimes],
+      isFireBreath: false,
+      isSmoke: true,
+    });
+  }
+
   return {
     show() {
       target.style.display = 'block';
@@ -1964,6 +2015,18 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         }
       } else {
         dracarysTimer = 0;
+      }
+
+      // Spawning takeoff ground dust gust
+      if (currentMotion === 'takeoff' && controlledDragon) {
+        if (!takeoffGustSpawned) {
+          takeoffGustSpawned = true;
+          const dragonPos = new THREE.Vector3();
+          controlledDragon.getWorldPosition(dragonPos);
+          createTakeoffGroundGust(dragonPos, controlledDragon.rotation.y);
+        }
+      } else {
+        takeoffGustSpawned = false;
       }
 
       // Update fire lights

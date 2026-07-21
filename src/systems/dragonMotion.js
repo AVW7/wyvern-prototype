@@ -223,34 +223,27 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
         this.pendingOneShot = this.oneShot;
       }
 
-      // ── Base motion ────────────────────────────────────────────────────
+      // ── Vertical Speed & Base motion ─────────────────────────────────────
+      const verticalSpeed = dt > 0 ? (altitude - this.lastAltitude) / dt : 0;
+      this.lastAltitude = altitude;
+
       let base;
       let baseTimeScale = 1;
       if (this.airborne) {
-        // Airborne turning is a continuous blend, not a switch between loops:
-        // hold the level cycle and both banked ones at once and weight them.
-        // At rest that is the level clip alone; a turn slides weight onto the
-        // clip that leans into it. `bankBlend` is -1 (hard right) .. 0 (level)
-        // .. +1 (hard left) and sanctuary3D turns it into the action weights.
-        //
-        // The three clips are derived from one wingbeat of the source's sky
-        // moves, so they are phase-locked and can be summed at any ratio. Before
-        // they existed this had to cross-weight the two banked clips alone and
-        // call the cancelling mix "level", which left cruise leaning 5.2°.
         base = moving ? 'fly' : 'flyHover';
+        if (moving) {
+          baseTimeScale = Math.abs(verticalSpeed) > 1.5 || speed > 110 ? 1.15 : 0.95;
+        } else {
+          baseTimeScale = 1.05;
+        }
         const turnRatio = clamp(this.yawRateDeg / config.flightTurnRateDeg, -1, 1);
-        // Eased rather than assigned, or the blend snaps as hard as the switch
-        // it replaces — this is what makes a turn read as the body leaning in.
         this.bankBlend += (turnRatio - this.bankBlend)
           * (1 - Math.exp(-dt * config.bankBlendResponseHz));
       } else if (moving) {
-        // Blend the straight walk into its turning variants by how hard the
-        // body is rotating, so a curving path is not a straight-line shuffle.
         const turnRatio = clamp(this.yawRateDeg / config.walkTurnRateDeg, -1, 1);
         if (turnRatio > 0.45) base = 'walkLeft';
         else if (turnRatio < -0.45) base = 'walkRight';
         else base = 'walk';
-        // Speed-matched playback: this is the fix for foot sliding.
         baseTimeScale = clamp(
           speed / Math.max(1, config.walkClipSpeed),
           config.walkTimeScale.min,
@@ -261,7 +254,6 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       }
 
       // ── Idle break ─────────────────────────────────────────────────────
-      // A 15-second idle loop with nothing on top reads as a paused video.
       if (base === 'idle' && !this.oneShot && !this.pendingOneShot) {
         this.idleSec += dt;
         if (this.idleSec >= config.idleBreakAfterSec
@@ -276,14 +268,6 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
       this.base = base;
 
       // ── Body attitude ──────────────────────────────────────────────────
-      // Bank into turns while airborne and level out otherwise; nose up or down
-      // with vertical speed. Both eased so they never pop.
-      //
-      // This rides on top of whatever bank the blended sky clips already carry,
-      // so `bankGain` is deliberately small: the clips supply the pose and this
-      // supplies the crispness the clips' slow wingbeat cycle cannot. Turning
-      // it up past about 0.2 reads as the model pivoting inside its own
-      // animation.
       const bankTarget = this.airborne
         ? clamp(
           -this.yawRateDeg * config.bankGain,
@@ -291,11 +275,6 @@ export function createDragonMotion({ motion = {}, heading = 0, random = Math.ran
           config.bankMaxDeg,
         ) * DEG
         : 0;
-      // Measured climb rate, not the gap to the target: the movement controller
-      // eases altitude, so the remaining gap is large on the first frame of a
-      // climb and would peg the nose to its limit instantly.
-      const verticalSpeed = dt > 0 ? (altitude - this.lastAltitude) / dt : 0;
-      this.lastAltitude = altitude;
       // Airborne postures: hovering holds a slight +8° nose-up tilt so wings beat
       // horizontally over mass center; forward flight pitches -10° forward into travel
       // plus climb/descent pitch. On ground, pitch follows walking terrain slope.

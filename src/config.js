@@ -169,6 +169,7 @@ export const SANCTUARY = {
       // same 70° wing swing, and the banks are its ±27° siblings.
       fly: 'Fly_Level_Loop',
       flyHover: 'Fly_Level_Loop',
+      flyGlide: 'Fly_Glide_Loop',
       bankLeft: 'Fly_BankL_Loop',
       bankRight: 'Fly_BankR_Loop',
       attack: 'DaenerysDragon_Battle_Attack04',

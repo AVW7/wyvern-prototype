@@ -17,44 +17,44 @@ import { createNoise } from '../systems/noise.js';
 export const INTERACTIONS = {
   outside: [
     {
-      id: 'vault-gate', type: 'gate', propType: 'barredDoor', col: 10, row: 6,
+      id: 'vault-gate', type: 'gate', propType: 'barredDoor', col: 14, row: 10,
       label: 'Enter the Rider Vault', action: 'vault', range: 78, once: false,
     },
     {
-      id: 'spring-main', type: 'spring', col: 25, row: 27,
+      id: 'spring-main', type: 'spring', col: 41, row: 43,
       label: 'Drink from the spring', action: 'restore', range: 68, once: false,
     },
     {
-      id: 'training-ring', type: 'training', propType: 'arena', col: 31, row: 18,
+      id: 'training-ring', type: 'training', propType: 'arena', col: 50, row: 28,
       label: 'Train here', action: 'train', range: 70, once: false,
     },
     {
-      id: 'feeding-nest', type: 'nest', propType: 'nest', col: 6, row: 30,
+      id: 'feeding-nest', type: 'nest', propType: 'nest', col: 10, row: 48,
       label: 'Share a meal', action: 'feed', range: 68, once: false,
     },
     {
-      id: 'atlas-waystone', type: 'atlas', propType: 'obelisk', col: 30, row: 11,
+      id: 'atlas-waystone', type: 'atlas', propType: 'obelisk', col: 48, row: 18,
       label: 'Consult the world waystone', action: 'atlas', range: 72,
       once: false, confirm: true,
     },
     {
-      id: 'training-dummy', type: 'dummy', propType: 'dummy', col: 8, row: 8,
+      id: 'training-dummy', type: 'dummy', propType: 'dummy', col: 14, row: 14,
       label: 'Strike the training dummy', action: 'strikeDummy', range: 68, once: false,
     },
     {
-      id: 'brazier-1', type: 'brazier', propType: 'unlitBrazier', col: 24, row: 6,
+      id: 'brazier-1', type: 'brazier', propType: 'unlitBrazier', col: 38, row: 10,
       label: 'Light the brazier', action: 'lightBrazier', range: 68, once: false,
     },
     {
-      id: 'brazier-2', type: 'brazier', propType: 'unlitBrazier', col: 31, row: 6,
+      id: 'brazier-2', type: 'brazier', propType: 'unlitBrazier', col: 50, row: 10,
       label: 'Light the brazier', action: 'lightBrazier', range: 68, once: false,
     },
     {
-      id: 'brazier-3', type: 'brazier', propType: 'unlitBrazier', col: 35, row: 11,
+      id: 'brazier-3', type: 'brazier', propType: 'unlitBrazier', col: 56, row: 18,
       label: 'Light the brazier', action: 'lightBrazier', range: 68, once: false,
     },
     {
-      id: 'lagoon-crystal', type: 'crystal', propType: 'crystal', col: 24, row: 23,
+      id: 'lagoon-crystal', type: 'crystal', propType: 'crystal', col: 38, row: 37,
       label: 'Resonate with the crystal', action: 'resonateCrystal', range: 68, once: false,
     },
   ],
@@ -75,10 +75,6 @@ function makeBuilder(seed, size, defaultBiome) {
       height,
       variant: Math.floor(hash2(col, row, 1300) * TERRAIN.variants),
       blocked: height >= TERRAIN.blockedAt,
-      // Raised shelves are walkable: the actor climbs onto them (riding the
-      // surface lift) as long as the rise is within SANCTUARY.movement.climbStep.
-      // A taller rise still reads as a cliff because the climb-step gate in
-      // sanctuaryMovement refuses it — no per-cell no-go flag needed.
       walkable: true,
       decor: null,
     };
@@ -88,8 +84,6 @@ function makeBuilder(seed, size, defaultBiome) {
       for (let col = c0; col <= c1; col++) setTile(col, row, height, biome);
     }
   };
-  // Props sit at the tile's center (the designs place interior objects
-  // centered; exterior decor gets a hand-tuned nudge via offsetX/offsetY).
   const setProp = (col, row, type, offsetX = 0, offsetY = 0) => {
     const cell = tiles[row]?.[col];
     if (!cell) return;
@@ -101,115 +95,93 @@ function makeBuilder(seed, size, defaultBiome) {
   return { tiles, setTile, fill, setProp };
 }
 
-// The Mossy Monolith island. All terrain is `moss` — the Krog palette's blue
-// sidewalls make cliffs read as stone while tops stay green, exactly like the
-// source design (which built everything from its "grass" material).
+// The Mossy Monolith island (64x64 enlarged flight & training sanctuary).
 export function buildSanctuaryExterior() {
-  const size = 40;
+  const size = 64;
   const b = makeBuilder('SANCTUARY-EXTERIOR', size, 'moss');
 
-  // Build the core island shape (irregular circle with radius ~18 from center (20, 20))
-  for (let y = 1; y < 39; y++) {
-    for (let x = 1; x < 39; x++) {
-      const dist = Math.sqrt((x - 20) ** 2 + (y - 20) ** 2);
-      if (dist < 18.5) {
+  // Build the core island shape (irregular circle with radius ~29 from center (32, 32))
+  for (let y = 1; y < size - 1; y++) {
+    for (let x = 1; x < size - 1; x++) {
+      const dist = Math.sqrt((x - 32) ** 2 + (y - 32) ** 2);
+      if (dist < 29.5) {
         b.setTile(x, y, 1);
       }
     }
   }
 
   // Zone 1: Whispering Grove (South-West)
-  b.fill(3, 20, 15, 37, 1);
-  for (let y = 20; y <= 37; y++) {
-    for (let x = 3; x <= 15; x++) {
+  b.fill(4, 32, 28, 60, 1);
+  for (let y = 32; y <= 60; y++) {
+    for (let x = 4; x <= 28; x++) {
       if (b.tiles[y]?.[x]) {
-        if (x + y > 45) b.setTile(x, y, 2);
+        if (x + y > 72) b.setTile(x, y, 2);
       }
     }
   }
 
   // Zone 2: Bluestone Lagoon (South-East)
-  b.fill(21, 23, 29, 31, 1, 'bluestone');
-  b.fill(22, 24, 28, 30, 1, 'springwater');
+  b.fill(34, 36, 48, 50, 1, 'bluestone');
+  b.fill(36, 38, 46, 48, 1, 'springwater');
 
   // Zone 3: Central Monolith Summit (Center-West)
-  b.fill(8, 8, 22, 22, 2);
-  b.fill(11, 11, 19, 19, 3);
-  b.fill(13, 13, 17, 17, 4);
-  b.fill(14, 14, 16, 16, 5);
+  b.fill(16, 16, 34, 34, 2);
+  b.fill(19, 19, 31, 31, 3);
+  b.fill(22, 22, 28, 28, 4);
+  b.fill(24, 24, 26, 26, 5);
 
   // High Monolith on the summit
-  b.fill(9, 9, 11, 11, 6);
-  b.setTile(10, 10, 7);
-  b.tiles[10][11].overlay = 'monolithNiche';
+  b.fill(17, 17, 19, 19, 6);
+  b.setTile(18, 18, 7);
+  if (b.tiles[18]?.[19]) b.tiles[18][19].overlay = 'monolithNiche';
 
   // Zone 4: Volcanic Lava Flats (North-East)
-  for (let y = 2; y <= 19; y++) {
-    for (let x = 23; x <= 37; x++) {
-      const dist = Math.sqrt((x - 20) ** 2 + (y - 20) ** 2);
-      if (dist < 18.5) {
+  for (let y = 2; y <= 32; y++) {
+    for (let x = 36; x <= 60; x++) {
+      const dist = Math.sqrt((x - 32) ** 2 + (y - 32) ** 2);
+      if (dist < 29.5) {
         b.setTile(x, y, 1, 'warmstone');
       }
     }
   }
-  b.fill(26, 4, 30, 8, 1, 'lava');
-  b.fill(32, 12, 36, 16, 1, 'lava');
+  b.fill(42, 6, 48, 12, 1, 'lava');
+  b.fill(50, 18, 58, 24, 1, 'lava');
 
   // Zone 5: Ancient Ruins (North-West)
-  b.fill(3, 3, 12, 12, 1, 'flagstone');
-  for (let y = 3; y <= 12; y++) {
-    for (let x = 3; x <= 12; x++) {
-      if (x + y < 14) {
+  b.fill(5, 5, 20, 20, 1, 'flagstone');
+  for (let y = 5; y <= 20; y++) {
+    for (let x = 5; x <= 20; x++) {
+      if (x + y < 22) {
         b.setTile(x, y, 2, 'masonry');
       }
     }
   }
 
-  // Vault gate entrance — set into the flat Ancient Ruins flagstone, clear of
-  // the Central Monolith Summit terraces.
-  b.setTile(10, 6, 1, 'flagstone');
-  b.setProp(10, 6, 'barredDoor', 0, -4);
+  // Vault gate entrance
+  b.setTile(14, 10, 1, 'flagstone');
+  b.setProp(14, 10, 'barredDoor', 0, -4);
 
   // Landmarks & Props:
-  b.setProp(31, 18, 'arena');
-  b.setProp(30, 11, 'obelisk');
-  b.setProp(6, 30, 'nest');
-  b.setProp(8, 8, 'dummy');
+  b.setProp(50, 28, 'arena');
+  b.setProp(48, 18, 'obelisk');
+  b.setProp(10, 48, 'nest');
+  b.setProp(14, 14, 'dummy');
 
   // Unlit Braziers:
-  b.setProp(24, 6, 'unlitBrazier');
-  b.setProp(31, 6, 'unlitBrazier');
-  b.setProp(35, 11, 'unlitBrazier');
+  b.setProp(38, 10, 'unlitBrazier');
+  b.setProp(50, 10, 'unlitBrazier');
+  b.setProp(56, 18, 'unlitBrazier');
 
   // Resonant Crystal:
-  b.setProp(24, 23, 'crystal');
+  b.setProp(38, 37, 'crystal');
 
   // General decor:
-  b.setProp(3, 22, 'tree', -3, 1);
-  b.setProp(9, 25, 'tree', 2, -2);
-  b.setProp(4, 32, 'tree', -2, 3);
-  b.setProp(11, 35, 'tree', 4, 1);
-  b.setProp(6, 26, 'flowers', 2, 2);
-  b.setProp(12, 30, 'flowers', -3, -1);
-  b.setProp(5, 34, 'mushroom', 1, 1);
-  b.setProp(10, 36, 'mushroom', -2, 2);
-
-  b.setProp(21, 26, 'reeds', 0, 1);
-  b.setProp(29, 28, 'reeds', 1, -1);
-  b.setProp(28, 23, 'crystal', -1, 2);
-  b.setProp(19, 33, 'crystal', 3, 1);
-  b.setProp(20, 28, 'flowers', 0, 0);
-
-  b.setProp(28, 9, 'vent', -2, -2);
-  b.setProp(34, 17, 'vent', 1, 1);
-  b.setProp(25, 12, 'obsidian', 3, -1);
-  b.setProp(37, 7, 'obsidian', -2, 2);
-
-  b.setProp(4, 4, 'pillar');
-  b.setProp(8, 4, 'pillar');
-  b.setProp(4, 8, 'pillar');
-  b.setProp(6, 3, 'ruin');
-  b.setProp(3, 7, 'ruin');
+  b.setProp(5, 34, 'tree', -3, 1);
+  b.setProp(14, 40, 'tree', 2, -2);
+  b.setProp(6, 50, 'tree', -2, 3);
+  b.setProp(18, 56, 'tree', 4, 1);
+  b.setProp(10, 42, 'flowers', 2, 2);
+  b.setProp(20, 48, 'flowers', -3, -1);
 
   return {
     tiles: b.tiles, cols: size, rows: size, interactions: INTERACTIONS.outside,
@@ -287,25 +259,25 @@ export function buildSanctuaryInterior() {
 // are flat, prop-free ground in their map.
 export const RESIDENT_SPOTS = {
   outside: [
-    { col: 10, row: 20 },
-    { col: 8, row: 25 },
-    { col: 26, row: 32 },
-    { col: 30, row: 6 },
-    { col: 9, row: 10 },
-    { col: 15, row: 25 },
-    { col: 14, row: 20 },
-    { col: 5, row: 35 },
-    { col: 11, row: 33 },
-    { col: 20, row: 22 },
-    { col: 31, row: 30 },
-    { col: 24, row: 34 },
-    { col: 32, row: 8 },
-    { col: 27, row: 15 },
-    { col: 6, row: 5 },
-    { col: 3, row: 10 },
-    { col: 18, row: 10 },
-    { col: 20, row: 15 },
-    { col: 24, row: 18 },
+    { col: 16, row: 32 },
+    { col: 12, row: 40 },
+    { col: 41, row: 51 },
+    { col: 48, row: 10 },
+    { col: 14, row: 16 },
+    { col: 24, row: 40 },
+    { col: 22, row: 32 },
+    { col: 8, row: 56 },
+    { col: 17, row: 52 },
+    { col: 32, row: 35 },
+    { col: 49, row: 48 },
+    { col: 38, row: 54 },
+    { col: 51, row: 12 },
+    { col: 43, row: 24 },
+    { col: 10, row: 8 },
+    { col: 6, row: 16 },
+    { col: 28, row: 16 },
+    { col: 32, row: 24 },
+    { col: 38, row: 28 },
   ],
   inside: [
     { col: 9, row: 16 }, { col: 12, row: 12 }, { col: 6, row: 17 },

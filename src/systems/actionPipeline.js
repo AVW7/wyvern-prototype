@@ -49,6 +49,28 @@ export function createActionPipeline({ movement, dragon3D } = {}) {
       return statusText;
     },
 
+    getTelemetry() {
+      if (!movement) return { col: 0, row: 0, alt: 0, mode: 'Ground' };
+      const pos = movement.getLogicalPosition?.() || { col: 0, row: 0 };
+      const alt = movement.getAltitude?.() || 0;
+      const isFlying = movement.isFlying ?? false;
+      return {
+        col: Math.round(pos.col * 10) / 10,
+        row: Math.round(pos.row * 10) / 10,
+        alt: Math.round(alt),
+        mode: isFlying ? 'Airborne 🪽' : 'Grounded 🐾',
+      };
+    },
+
+    loadPreset(presetKey) {
+      if (PRESET_SEQUENCES[presetKey]) {
+        queue = PRESET_SEQUENCES[presetKey].map(s => ({ ...s, id: 'step-' + Math.random().toString(36).substring(2, 7) }));
+        this.stopSequence();
+        statusText = `Loaded ${presetKey} preset`;
+      }
+      return queue;
+    },
+
     addStep(type, details = {}) {
       const id = 'step-' + Math.random().toString(36).substring(2, 7);
       let label = 'Action';
@@ -142,7 +164,7 @@ export function createActionPipeline({ movement, dragon3D } = {}) {
           if (movement) {
             movement.setFlightMode?.(true);
           }
-          if (stepTimerMs >= 600) {
+          if (stepTimerMs >= 800) {
             this._nextStep();
           }
           break;

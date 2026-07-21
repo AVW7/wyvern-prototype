@@ -21,6 +21,8 @@ export function createActionKanbanPanel({ overlayContainer, pipeline, onSelectTa
     const isRunning = pipeline.isRunning();
     const statusText = pipeline.getStatusText();
 
+    const telem = pipeline.getTelemetry?.() || { col: 0, row: 0, alt: 0, mode: 'Grounded' };
+
     let html = `
       <div class="kanban-header">
         <div class="kanban-title">
@@ -28,6 +30,10 @@ export function createActionKanbanPanel({ overlayContainer, pipeline, onSelectTa
           <h3>Action Pipeline</h3>
         </div>
         <span class="kanban-status-badge ${isRunning ? 'active' : ''}">${statusText}</span>
+      </div>
+
+      <div class="kanban-telemetry-bar">
+        <span>📍 Col ${telem.col}, Row ${telem.row} | Alt ${telem.alt}u | ${telem.mode}</span>
       </div>
       
       <div class="kanban-step-list">
@@ -56,6 +62,11 @@ export function createActionKanbanPanel({ overlayContainer, pipeline, onSelectTa
     }
 
     html += `
+      </div>
+
+      <div class="kanban-preset-bar">
+        <button class="btn-preset-opt" data-preset="FIRE_STRIKE">🔥 Strike Preset</button>
+        <button class="btn-preset-opt" data-preset="PATROL">🚁 Patrol Preset</button>
       </div>
 
       <div class="kanban-add-bar">
@@ -106,6 +117,16 @@ export function createActionKanbanPanel({ overlayContainer, pipeline, onSelectTa
         } else {
           pipeline.addStep(type);
         }
+        render();
+      });
+    });
+
+    // Preset buttons
+    panelEl.querySelectorAll('.btn-preset-opt').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const presetKey = btn.dataset.preset;
+        pipeline.loadPreset(presetKey);
         render();
       });
     });

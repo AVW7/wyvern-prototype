@@ -1300,6 +1300,18 @@ button:active { transform: scale(0.97); }
   background: rgba(212, 175, 55, 0.15);
 }
 
+.kanban-telemetry-bar {
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--accent);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  text-align: center;
+}
+
 .step-num {
   font-size: 10px;
   font-weight: 700;
@@ -1343,6 +1355,26 @@ button:active { transform: scale(0.97); }
 .btn-step-del:hover {
   background: rgba(220, 50, 50, 0.3);
   border-color: #ff4444;
+}
+
+.kanban-preset-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.btn-preset-opt {
+  flex: 1;
+  padding: 4px 6px;
+  font-size: 10px;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: var(--accent);
+  border-radius: 4px;
+}
+.btn-preset-opt:hover {
+  background: rgba(212, 175, 55, 0.25);
+  border-color: var(--accent);
 }
 
 .kanban-add-bar {
