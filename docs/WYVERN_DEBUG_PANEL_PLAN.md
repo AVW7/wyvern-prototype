@@ -82,11 +82,22 @@ genuine gameplay actions through the action channel.
 
 ### Finding B — the altitude slider teleports
 
-`sanctuaryMovement.js:726` `setAltitude()` assigns `altitude` **and**
-`targetAltitude` together, so the eased climb never happens and the
-takeoff/land bracket in `dragonMotion.js:148-161` cannot trigger from the panel.
-Add `setTargetAltitude(alt)` that sets only the target; keep `setAltitude()` for
-callers that genuinely want a snap.
+`setAltitude()` assigns `altitude` **and** `targetAltitude` together, so the
+climb is instantaneous.
+
+Corrected 2026-07-21 during implementation: the first draft of this finding
+claimed takeoff and landing therefore never fire. That is wrong, and a test
+written to guard it failed. They *do* fire — `wantsAir` in
+`dragonMotion.js:148` keys off `targetAltitude`, which a snap sets just the
+same. The real defect is that the model is already at altitude on the frame the
+takeoff clip starts, so the clip animates a climb that has already happened,
+and `verticalSpeed` never registers, so the nose never pitches into it.
+
+Fix: `setTargetAltitude(alt)` sets only the target and lets `update()`'s
+existing ease carry the model there. `setAltitude()` stays for callers that
+genuinely want a snap. Covered by *flight altitude drives the 3D takeoff/land
+bracket* in `tests/sanctuaryMovement.test.js`, which drives the real controller
+into the real state machine rather than trusting either in isolation.
 
 ### Finding C — `dragonMotion` config is frozen at construction
 

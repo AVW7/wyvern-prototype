@@ -723,10 +723,34 @@ export function createSanctuaryMovement({
       return this.targetAltitude;
     },
 
+    // Snap to an altitude with no travel between here and there. The takeoff
+    // clip still fires, but against a model that has already arrived — there is
+    // no climb left for it to animate, and no vertical speed for the nose to
+    // pitch to. Prefer setTargetAltitude() for anything a viewer will watch.
     setAltitude(alt) {
       this.targetAltitude = alt;
       this.altitude = alt;
       this.isFlying = alt > 0;
+    },
+
+    // Ask for an altitude and let update() ease toward it, exactly as holding
+    // the ascend/descend keys does. This is what makes takeoff and landing
+    // play: the climb is spread over several frames, so dragonMotion sees the
+    // airborne intent before the model has arrived.
+    //
+    // `isFlying` is set from the request rather than the current height —
+    // otherwise asking to climb from the ground would be ignored by the
+    // `!this.isFlying` branch in update(), which resets the target to the floor
+    // on every frame the wyvern is not already flying.
+    setTargetAltitude(alt) {
+      const flightCfg = config.flight || DEFAULT_MOVEMENT.flight;
+      this.targetAltitude = clamp(
+        finite(alt, 0),
+        finite(flightCfg.minAltitude, 0),
+        finite(flightCfg.maxAltitude, 140),
+      );
+      this.isFlying = this.targetAltitude > finite(flightCfg.minAltitude, 0);
+      return this;
     },
 
     getLogicalFootprint() {

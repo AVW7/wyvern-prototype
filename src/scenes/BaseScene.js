@@ -37,7 +37,8 @@ import {
   gainXp, getAnimal, getRoster, raiseBond, recruitAnimal,
 } from '../systems/roster.js';
 import { createSanctuary3D } from '../systems/sanctuary3D.js';
-import { createDragonTestPanel } from '../ui/testPanel.js';
+import { createDragonDebugPanel } from '../ui/debugPanel.js';
+import { applyTuning } from '../ui/debugPanelSchema.js';
 import { KeyboardAction, onKeydown } from '../input/keyboardActions.js';
 
 // Scene starts destroy display objects, but this small in-memory preference row
@@ -114,8 +115,7 @@ export default class BaseScene extends Phaser.Scene {
     this.projectionView = normalizeView(SANCTUARY_SESSION.cameraView);
 
     this.sanctuary3D = null;
-    this.testPanel = null;
-    this.testOverrideAction = null;
+    this.debugPanel = null;
 
     // G toggles flight for the wyvern. Deliberately a plain key rather
     // than a roster/HUD affordance: flight is an experiment-only state with no
@@ -172,9 +172,12 @@ export default class BaseScene extends Phaser.Scene {
       // systems/dragonMotion.js from the movement controller's own state, which
       // is the only place that knows speed and altitude. See
       // docs/SANCTUARY_3D_DRAGON_PLAN.md, Milestone 3.
-      this.sanctuary3D.setMotion(
-        this.testOverrideAction || ACTION_MOTIONS[this.movement?.state] || null,
-      );
+      //
+      // setAction(), not setMotion(): this is the action channel, edge-detected
+      // into one one-shot inside the state machine. The debug panel's base-loop
+      // override rides setMotion() and must not collide with it — see
+      // docs/WYVERN_DEBUG_PANEL_PLAN.md, Finding A.
+      this.sanctuary3D.setAction(ACTION_MOTIONS[this.movement?.state] || null);
       this.sanctuary3D.update(delta);
     }
 
@@ -202,9 +205,8 @@ export default class BaseScene extends Phaser.Scene {
     // lagoon surface, lava lights and debug-panel timers on every rebuild.
     this.sanctuary3D?.destroy();
     this.sanctuary3D = null;
-    this.testPanel?.destroy();
-    this.testPanel = null;
-    this.testOverrideAction = null;
+    this.debugPanel?.destroy();
+    this.debugPanel = null;
 
     const worldData = buildSanctuaryExterior();
     this.world = buildSanctuaryView(
@@ -243,9 +245,10 @@ export default class BaseScene extends Phaser.Scene {
     });
     this.sanctuary3D.show();
 
-    if (this.sanctuary3D) {
-      this.testPanel = createDragonTestPanel(this, this.sanctuary3D);
-    }
+    // A rebuild throws the whole 3D layer away, so whatever was dialled in on
+    // the panel has to be pushed at the replacement before it is shown.
+    applyTuning(this.sanctuary3D);
+    this.debugPanel = createDragonDebugPanel(this, this.sanctuary3D);
 
     this.movement = createSanctuaryMovement({
       scene: this,
@@ -846,8 +849,8 @@ export default class BaseScene extends Phaser.Scene {
     this.wanderers?.destroy();
     this.movement?.destroy();
     this.cameraController?.destroy();
-    this.testPanel?.destroy();
-    this.testPanel = null;
+    this.debugPanel?.destroy();
+    this.debugPanel = null;
     this.sanctuary3D?.destroy();
     this.interactions = null;
     this.wanderers = null;

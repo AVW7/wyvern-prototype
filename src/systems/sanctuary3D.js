@@ -565,11 +565,21 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
   // which motion slot should be playing, how fast, and how the body is angled;
   // everything below only translates that into Three.js calls.
   const dragonMotion = createDragonMotion({ motion: SANCTUARY.dragon3D?.motion });
-  // Base motion to return to once a one-shot ends, and the slot a caller forced
-  // through setMotion() (the debug panel and the Dracarys action use this).
+  // Base motion to return to once a one-shot ends, and the two channels a
+  // caller can steer with. They are deliberately separate: `overrideMotion` is
+  // a looping slot forced to stay on screen (debug panel), while `actionMotion`
+  // is a gameplay action held for as long as the wyvern is in that state and
+  // edge-detected into a single one-shot inside dragonMotion. Running both
+  // through one variable is what made the panel's Walk button fire a one-shot
+  // walk before settling — see docs/WYVERN_DEBUG_PANEL_PLAN.md, Finding A.
   let baseMotion = 'idle';
   let baseTimeScale = 1;
   let overrideMotion = null;
+  let actionMotion = null;
+  // Last ground speed handed to the state machine (world units/sec). Derived in
+  // update() from the movement controller's step; kept so the debug panel can
+  // read the same number the walk cycle's playback rate is matched against.
+  let lastGroundSpeed = 0;
   let elapsedSec = 0;
 
   // Camera State
@@ -1809,6 +1819,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
           ? Math.hypot(moveVector.col, moveVector.row) * TILE_SIZE
           : 0;
         const speed = deltaSec > 0 ? stepped / deltaSec : 0;
+        lastGroundSpeed = speed;
 
         const pose = dragonMotion.update({
           dtMs: deltaMs,
@@ -1817,7 +1828,7 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
           isFlying: Boolean(movement?.isFlying),
           altitude: movement?.getAltitude?.() ?? 0,
           targetAltitude: movement?.getTargetAltitude?.() ?? 0,
-          action: overrideMotion,
+          action: actionMotion,
         });
 
         baseMotion = overrideMotion && !dragonMotion.pendingOneShot
@@ -2111,12 +2122,39 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
       renderer.render(threeScene, camera);
     },
 
-    // Force a motion slot, overriding the state machine. `null` hands control
-    // back to it. Used by the debug panel and the Dracarys roster action.
+    // Force a looping motion slot to stay on screen, overriding the state
+    // machine's own choice of base motion. `null` hands control back to it.
+    // A one-shot does not belong here — it would be held forever instead of
+    // playing once; use triggerAction() for those.
     setMotion(motion) {
       pendingMotion = motion || 'idle';
       overrideMotion = motion || null;
       if (!controlledDragon && motion) playMotion(motion);
+    },
+
+    // The gameplay action the wyvern is currently performing, or `null`.
+    // Level-triggered: BaseScene calls this every frame with whatever the
+    // movement state maps to, and dragonMotion edge-detects it into one
+    // one-shot, so holding a state does not restart the clip.
+    setAction(motion) {
+      actionMotion = motion || null;
+    },
+
+    /**
+     * Play a one-shot now, from its first frame, and hand back to the base
+     * motion when it finishes. Rejects looping slots: only the clips listed in
+     * `oneShotClips` are built with LoopOnce, so anything else would never fire
+     * the mixer's `finished` event and would leave the model frozen on it.
+     *
+     * @returns {boolean} whether the clip was started
+     */
+    triggerAction(motion) {
+      if (!(SANCTUARY.dragon3D?.oneShotClips || []).includes(motion)) return false;
+      if (!playOneShot(motion, SANCTUARY.dragon3D?.crossfadeMs ?? 250)) return false;
+      // Tell the state machine a one-shot owns the model, so update() does not
+      // crossfade back to the base motion on the very next frame.
+      dragonMotion.pendingOneShot = motion;
+      return true;
     },
 
     /** Every clip name in the loaded model, for the debug panel's picker. */
@@ -2135,11 +2173,28 @@ export function createSanctuary3D({ scene, tiles, interactions, residents, selec
         base: baseMotion,
         pending: dragonMotion.pendingOneShot,
         override: overrideMotion,
+        action: actionMotion,
         timeScale: Number(baseTimeScale.toFixed(2)),
+        speed: Math.round(lastGroundSpeed),
         airborne: dragonMotion.airborne,
         headingDeg: Math.round(dragonMotion.heading * 180 / Math.PI),
         rollDeg: Math.round(dragonMotion.roll * 180 / Math.PI),
         pitchDeg: Math.round(dragonMotion.pitch * 180 / Math.PI),
+      };
+    },
+
+    /**
+     * Per-frame renderer cost, for the debug panel's readout. `renderer.info`
+     * is reset by Three every frame, so this must be read after render() —
+     * the panel polls, so it always is.
+     */
+    getRenderStats() {
+      return {
+        calls: renderer.info.render.calls,
+        triangles: renderer.info.render.triangles,
+        geometries: renderer.info.memory.geometries,
+        textures: renderer.info.memory.textures,
+        programs: renderer.info.programs?.length ?? 0,
       };
     },
 

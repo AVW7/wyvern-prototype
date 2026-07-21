@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ISO, TERRAIN } from '../src/config.js';
+import { ISO, SANCTUARY, TERRAIN } from '../src/config.js';
 import { gridToScreen } from '../src/systems/iso.js';
+import { createDragonMotion } from '../src/systems/dragonMotion.js';
 import {
   canOccupy,
   createSanctuaryMovement,
@@ -727,5 +728,169 @@ describe('sanctuary flight altitude', () => {
     controller.setFlying(false);
     controller.update(1000, 1000);
     expect(controller.getAltitude()).toBeCloseTo(0);
+  });
+
+  describe('setTargetAltitude', () => {
+    // Slow settle so the climb takes several frames, which is the whole point
+    // of asking for a target rather than snapping to it.
+    function slowFlyer() {
+      return createSanctuaryMovement({
+        scene: sceneWith({ R: { isDown: false }, Q: { isDown: false } }),
+        layer: { sort: vi.fn() },
+        tiles: openTiles(),
+        resident: residentAt(2, 2),
+        tuning: { ...flightTuning(), flight: { ...flightTuning().flight, settleHz: 2.5 } },
+      });
+    }
+
+    it('opens a gap between current and target, rather than closing it', () => {
+      // setAltitude() teleports: both values land on the target in the same
+      // frame, so nothing downstream ever sees a climb in progress.
+      const snapped = slowFlyer();
+      snapped.setAltitude(60);
+      expect(snapped.getAltitude()).toBe(60);
+      expect(snapped.getTargetAltitude()).toBe(60);
+
+      const eased = slowFlyer();
+      eased.setTargetAltitude(60);
+      expect(eased.getTargetAltitude()).toBe(60);
+      expect(eased.getAltitude()).toBe(0);
+    });
+
+    it('takes several frames to arrive, and gets there', () => {
+      const controller = slowFlyer();
+      controller.setTargetAltitude(60);
+
+      controller.update(0, 100);
+      const afterOneFrame = controller.getAltitude();
+      expect(afterOneFrame).toBeGreaterThan(0);
+      expect(afterOneFrame).toBeLessThan(60);
+
+      for (let t = 100; t <= 4000; t += 100) controller.update(t, 100);
+      expect(controller.getAltitude()).toBeCloseTo(60, 0);
+    });
+
+    it('marks the wyvern as flying so update() does not reset the target', () => {
+      // update() forces targetAltitude back to the floor on every frame the
+      // controller is not flying, so a climb requested from the ground has to
+      // set isFlying or it is undone before it is ever seen.
+      const controller = slowFlyer();
+      controller.setTargetAltitude(60);
+      expect(controller.isFlying).toBe(true);
+
+      controller.update(0, 100);
+      expect(controller.getTargetAltitude()).toBe(60);
+    });
+
+    it('lands, and stops flying, when asked for the floor', () => {
+      const controller = slowFlyer();
+      controller.setTargetAltitude(60);
+      for (let t = 0; t <= 4000; t += 100) controller.update(t, 100);
+
+      controller.setTargetAltitude(0);
+      expect(controller.isFlying).toBe(false);
+      for (let t = 4000; t <= 8000; t += 100) controller.update(t, 100);
+      expect(controller.getAltitude()).toBeCloseTo(0, 0);
+    });
+
+    it('clamps to the configured ceiling and floor', () => {
+      const controller = slowFlyer();
+      controller.setTargetAltitude(9999);
+      expect(controller.getTargetAltitude()).toBe(100);
+      controller.setTargetAltitude(-50);
+      expect(controller.getTargetAltitude()).toBe(0);
+      controller.setTargetAltitude(Number.NaN);
+      expect(controller.getTargetAltitude()).toBe(0);
+    });
+  });
+});
+
+describe('flight altitude drives the 3D takeoff/land bracket', () => {
+  // The seam that was broken: the panel could set an altitude, but the model
+  // never played takeoff or land because the value snapped. This drives the
+  // real movement controller into the real state machine, which is the only
+  // place the two agree on what "airborne" means.
+  const MOTION = SANCTUARY.dragon3D.motion;
+
+  function rig() {
+    const controller = createSanctuaryMovement({
+      scene: sceneWith({ R: { isDown: false }, Q: { isDown: false } }),
+      layer: { sort: vi.fn() },
+      tiles: openTiles(),
+      resident: residentAt(2, 2),
+      tuning: {
+        speed: 0,
+        maxDeltaMs: 100,
+        flight: {
+          minAltitude: 0, maxAltitude: 140, takeoffAltitude: 42, climbSpeed: 90, settleHz: 2.5,
+        },
+      },
+    });
+    const machine = createDragonMotion({ motion: MOTION, random: () => 1 });
+    // One frame of the loop sanctuary3D.update() runs.
+    const step = (ms = 16, time = 0) => {
+      controller.update(time, ms);
+      return machine.update({
+        dtMs: ms,
+        speed: 0,
+        isFlying: controller.isFlying,
+        altitude: controller.getAltitude(),
+        targetAltitude: controller.getTargetAltitude(),
+      });
+    };
+    return { controller, machine, step };
+  }
+
+  it('plays takeoff after an eased climb is requested', () => {
+    const { controller, step } = rig();
+    expect(step(16, 0).oneShot).toBe(null);
+
+    controller.setTargetAltitude(80);
+    const shots = [];
+    for (let t = 0; t < 2000; t += 16) shots.push(step(16, t).oneShot);
+
+    expect(shots).toContain('takeoff');
+    expect(shots.filter((s) => s === 'takeoff').length).toBe(1);
+  });
+
+  it('climbs through the takeoff instead of arriving before it', () => {
+    // Finding B, stated precisely: a snap still *fires* takeoff, but the model
+    // is already at altitude on the frame the clip starts, so the climb it
+    // animates has nothing left to cover. What the eased path buys is frames
+    // spent actually travelling, which is what reads as a takeoff on screen.
+    const snapped = rig();
+    snapped.controller.setAltitude(80);
+    let snappedClimbFrames = 0;
+    for (let t = 0; t < 2000; t += 16) {
+      const before = snapped.controller.getAltitude();
+      snapped.step(16, t);
+      if (snapped.controller.getAltitude() - before > 0.5) snappedClimbFrames += 1;
+    }
+    expect(snappedClimbFrames).toBe(0);
+
+    const eased = rig();
+    eased.controller.setTargetAltitude(80);
+    let easedClimbFrames = 0;
+    for (let t = 0; t < 2000; t += 16) {
+      const before = eased.controller.getAltitude();
+      eased.step(16, t);
+      if (eased.controller.getAltitude() - before > 0.5) easedClimbFrames += 1;
+    }
+    // Roughly a second of climb at the configured settle rate.
+    expect(easedClimbFrames).toBeGreaterThan(20);
+  });
+
+  it('plays land on the way back down', () => {
+    const { controller, machine, step } = rig();
+    controller.setTargetAltitude(80);
+    for (let t = 0; t < 3000; t += 16) step(16, t);
+    expect(machine.airborne).toBe(true);
+
+    controller.setTargetAltitude(0);
+    const shots = [];
+    for (let t = 3000; t < 8000; t += 16) shots.push(step(16, t).oneShot);
+
+    expect(shots).toContain('land');
+    expect(machine.airborne).toBe(false);
   });
 });
