@@ -1,202 +1,1417 @@
 {
-  "bootstrap.js": {
+  ".claude/launch.json": {
+    "mtime": 1784607281.2197862,
+    "ast_hash": "b230818483cd1b0e120f6ff2823de553",
+    "semantic_hash": "b230818483cd1b0e120f6ff2823de553"
+  },
+  "assets/sprites/wyverns/Cinderlash/wyvern_atlas_4096.json": {
+    "mtime": 1784287213.5835018,
+    "ast_hash": "b0d5c9ab3a3b22005dda3617412a9cb1",
+    "semantic_hash": "b0d5c9ab3a3b22005dda3617412a9cb1"
+  },
+  "assets/sprites/wyverns/Cinderlash/wyvern_atlas_8192.json": {
+    "mtime": 1784287246.375331,
+    "ast_hash": "15af73ab1b9d6f54697c5eb35b3533e1",
+    "semantic_hash": "15af73ab1b9d6f54697c5eb35b3533e1"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/config_snippet.js": {
+    "mtime": 1784559224.2261858,
+    "ast_hash": "755efccced2247f1fb8d729d9e958d82",
+    "semantic_hash": "755efccced2247f1fb8d729d9e958d82"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/extras/wyvern_8dir_V3_atlas.json": {
+    "mtime": 1784559224.2272873,
+    "ast_hash": "0be355e4efc6c929c06d177a746a03c6",
+    "semantic_hash": "0be355e4efc6c929c06d177a746a03c6"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/extras/wyvern_ultimate_V4_atlas.json": {
+    "mtime": 1784559224.270017,
+    "ast_hash": "d74444e67a6fc064b92911fa5360f510",
+    "semantic_hash": "d74444e67a6fc064b92911fa5360f510"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/wyvern_required_atlas.json": {
+    "mtime": 1784559224.8375149,
+    "ast_hash": "23509a0cfd5f44715bdb8be4d4e7c07b",
+    "semantic_hash": "23509a0cfd5f44715bdb8be4d4e7c07b"
+  },
+  "assets/sprites/wyverns/Galeclaw/galeclaw.json": {
+    "mtime": 1784403414.071368,
+    "ast_hash": "e2fa4fcb47b93aaf13d5cdcbe65adf9d",
+    "semantic_hash": "e2fa4fcb47b93aaf13d5cdcbe65adf9d"
+  },
+  "devserver.py": {
+    "mtime": 1784280311.6922088,
+    "ast_hash": "8530a15026952a604bcfeff47c03351a",
+    "semantic_hash": "8530a15026952a604bcfeff47c03351a"
+  },
+  "package.json": {
+    "mtime": 1784609419.1314845,
+    "ast_hash": "f2969c649f1360eee03e22dc0fb7758b",
+    "semantic_hash": "f2969c649f1360eee03e22dc0fb7758b"
+  },
+  "scripts/check-syntax.mjs": {
+    "mtime": 1784280645.369623,
+    "ast_hash": "4327ee81393c813764492edcb9879b52",
+    "semantic_hash": "4327ee81393c813764492edcb9879b52"
+  },
+  "scripts/validate-wyvern-atlases.mjs": {
+    "mtime": 1784281887.9855785,
+    "ast_hash": "df34bf0ab67b899f254444887e030011",
+    "semantic_hash": "df34bf0ab67b899f254444887e030011"
+  },
+  "src/bootstrap.js": {
     "mtime": 1784280645.0483181,
     "ast_hash": "d8d5928034066b4ebe1992ebf1866a7b",
     "semantic_hash": "d8d5928034066b4ebe1992ebf1866a7b"
   },
-  "config.js": {
-    "mtime": 1784559408.0724523,
-    "ast_hash": "59c7a337535946dbbae2e80356fb9e5c",
-    "semantic_hash": "59c7a337535946dbbae2e80356fb9e5c"
+  "src/config.js": {
+    "mtime": 1784608379.7794008,
+    "ast_hash": "78defb9bfd1cb036028ca4395cd8c9d5",
+    "semantic_hash": "78defb9bfd1cb036028ca4395cd8c9d5"
   },
-  "data/atlas.js": {
+  "src/data/atlas.js": {
     "mtime": 1784262074.6998713,
     "ast_hash": "b56af2ab52c9c433230b5dff6e50b901",
     "semantic_hash": "b56af2ab52c9c433230b5dff6e50b901"
   },
-  "data/biomes.js": {
+  "src/data/biomes.js": {
     "mtime": 1784260190.80699,
     "ast_hash": "0097c0bab35129dc2f11a40cb03b4d4c",
     "semantic_hash": "0097c0bab35129dc2f11a40cb03b4d4c"
   },
-  "data/sanctuary.js": {
+  "src/data/sanctuary.js": {
     "mtime": 1784559730.3010216,
     "ast_hash": "a49ecfc3510e8693ae4027ed0c9e1fbf",
     "semantic_hash": "a49ecfc3510e8693ae4027ed0c9e1fbf"
   },
-  "data/species.js": {
+  "src/data/species.js": {
     "mtime": 1784209389.5852401,
     "ast_hash": "91665c940ceeb18755a5d86c9742ec5b",
     "semantic_hash": "91665c940ceeb18755a5d86c9742ec5b"
   },
-  "data/wyverns.js": {
+  "src/data/wyverns.js": {
     "mtime": 1784550970.9982271,
     "ast_hash": "aed8202935b01bb1dea4a6f682cc889e",
     "semantic_hash": "aed8202935b01bb1dea4a6f682cc889e"
   },
-  "entities/Enemy.js": {
+  "src/entities/Enemy.js": {
     "mtime": 1784203719.0766664,
     "ast_hash": "7892d8df3c9a6604b81d6394ba465091",
     "semantic_hash": "7892d8df3c9a6604b81d6394ba465091"
   },
-  "entities/Wyvern.js": {
-    "mtime": 1784398241.7234771,
-    "ast_hash": "5b65fd8c520b5f54ebc9886d03f99083",
-    "semantic_hash": "5b65fd8c520b5f54ebc9886d03f99083"
+  "src/entities/Wyvern.js": {
+    "mtime": 1784609445.1907196,
+    "ast_hash": "a9b496284d17f2296b30ba03b88bcbb2",
+    "semantic_hash": "a9b496284d17f2296b30ba03b88bcbb2"
   },
-  "main.js": {
-    "mtime": 1784401990.347176,
+  "src/input/keyboardActions.ts": {
+    "mtime": 1784609496.9251246,
+    "ast_hash": "995cbeafecb9e60d7e5425ab23b90bf1",
+    "semantic_hash": "995cbeafecb9e60d7e5425ab23b90bf1"
+  },
+  "src/main.js": {
+    "mtime": 1784585342.7185047,
     "ast_hash": "2ecb36cde727851cea97173c16543b4d",
     "semantic_hash": "2ecb36cde727851cea97173c16543b4d"
   },
-  "scenes/AtlasScene.js": {
-    "mtime": 1784262149.9776149,
-    "ast_hash": "9d9cc68dd80ef160cc576652b0dc1336",
-    "semantic_hash": "9d9cc68dd80ef160cc576652b0dc1336"
+  "src/scenes/AtlasScene.js": {
+    "mtime": 1784609664.1604686,
+    "ast_hash": "eb427a8d03276c4f63ef459ec04d4713",
+    "semantic_hash": "eb427a8d03276c4f63ef459ec04d4713"
   },
-  "scenes/BaseScene.js": {
-    "mtime": 1784559615.0066714,
-    "ast_hash": "c0eebc4e4766c8e5359307a949bf84e4",
-    "semantic_hash": "c0eebc4e4766c8e5359307a949bf84e4"
+  "src/scenes/BaseScene.js": {
+    "mtime": 1784609679.1859205,
+    "ast_hash": "62571c64aa5a31aaab6506868f8f3ab8",
+    "semantic_hash": "62571c64aa5a31aaab6506868f8f3ab8"
   },
-  "scenes/BootScene.js": {
+  "src/scenes/BootScene.js": {
     "mtime": 1784202758.7705047,
     "ast_hash": "afc3999f8f0f5fb4649c2ac230c6be69",
     "semantic_hash": "afc3999f8f0f5fb4649c2ac230c6be69"
   },
-  "scenes/MissionScene.js": {
+  "src/scenes/MissionScene.js": {
     "mtime": 1784398241.7238955,
     "ast_hash": "25a5e3b89593ac2ddbc0a138eb95c0eb",
     "semantic_hash": "25a5e3b89593ac2ddbc0a138eb95c0eb"
   },
-  "scenes/PreloadScene.js": {
+  "src/scenes/PreloadScene.js": {
     "mtime": 1784365574.7447329,
     "ast_hash": "d8327f56010e8d984ff55c6c96f48c85",
     "semantic_hash": "d8327f56010e8d984ff55c6c96f48c85"
   },
-  "scenes/VaultScene.js": {
-    "mtime": 1784376941.6070285,
-    "ast_hash": "4647e54dd7b507ce57ea2d0c6c77e4b7",
-    "semantic_hash": "4647e54dd7b507ce57ea2d0c6c77e4b7"
+  "src/scenes/VaultScene.js": {
+    "mtime": 1784609646.2909427,
+    "ast_hash": "ca2e85be30a1f279acab7854ef4abbbe",
+    "semantic_hash": "ca2e85be30a1f279acab7854ef4abbbe"
   },
-  "systems/atlasWorld.js": {
+  "src/systems/atlasWorld.js": {
     "mtime": 1784262008.1108427,
     "ast_hash": "866a8a127f7d1c9cad550c779a5799e4",
     "semantic_hash": "866a8a127f7d1c9cad550c779a5799e4"
   },
-  "systems/decorArt.js": {
+  "src/systems/decorArt.js": {
     "mtime": 1784559646.5864985,
     "ast_hash": "dbc355dd8c99dbfe3a7009453375eedc",
     "semantic_hash": "dbc355dd8c99dbfe3a7009453375eedc"
   },
-  "systems/draw.js": {
+  "src/systems/dragonMotion.js": {
+    "mtime": 1784606799.2475088,
+    "ast_hash": "e11af786bd57f49f9c176ce74fb78e55",
+    "semantic_hash": "e11af786bd57f49f9c176ce74fb78e55"
+  },
+  "src/systems/draw.js": {
     "mtime": 1784206232.3373044,
     "ast_hash": "313c5fabfe439a368518a45ce2035396",
     "semantic_hash": "313c5fabfe439a368518a45ce2035396"
   },
-  "systems/iso.js": {
+  "src/systems/grid3d.js": {
+    "mtime": 1784565476.3454978,
+    "ast_hash": "e4756a8297d6260bb8d4381fffa13472",
+    "semantic_hash": "e4756a8297d6260bb8d4381fffa13472"
+  },
+  "src/systems/iso.js": {
     "mtime": 1784397718.5576293,
     "ast_hash": "b01a3aaeba19baa7a27862734c96f4b1",
     "semantic_hash": "b01a3aaeba19baa7a27862734c96f4b1"
   },
-  "systems/noise.js": {
+  "src/systems/noise.js": {
     "mtime": 1784206218.2884605,
     "ast_hash": "0e7b34930633d2e44aa4ab3304be1601",
     "semantic_hash": "0e7b34930633d2e44aa4ab3304be1601"
   },
-  "systems/roster.js": {
+  "src/systems/roster.js": {
     "mtime": 1784280300.0649726,
     "ast_hash": "d33a062b84c0392f41cbb52c42f4b557",
     "semantic_hash": "d33a062b84c0392f41cbb52c42f4b557"
   },
-  "systems/sanctuary3D.js": {
-    "mtime": 1784564537.0818489,
-    "ast_hash": "b0730b99c7e8414553375a7a81f5db2d",
-    "semantic_hash": "b0730b99c7e8414553375a7a81f5db2d"
+  "src/systems/sanctuary3D.js": {
+    "mtime": 1784607842.3637846,
+    "ast_hash": "504bdcc5401b957a549720e06210e0b6",
+    "semantic_hash": "504bdcc5401b957a549720e06210e0b6"
   },
-  "systems/sanctuaryCamera.js": {
-    "mtime": 1784397718.5583072,
-    "ast_hash": "7d7d2235dc846ebf19425ab038be1df1",
-    "semantic_hash": "7d7d2235dc846ebf19425ab038be1df1"
+  "src/systems/sanctuaryCamera.js": {
+    "mtime": 1784609590.5550873,
+    "ast_hash": "c09635a8a8e2dba2d22bbc75d7f98d26",
+    "semantic_hash": "c09635a8a8e2dba2d22bbc75d7f98d26"
   },
-  "systems/sanctuaryDecorArt.js": {
+  "src/systems/sanctuaryDecorArt.js": {
     "mtime": 1784560077.5752637,
     "ast_hash": "de21c760aadd9e706c2cd7da1aba7b1f",
     "semantic_hash": "de21c760aadd9e706c2cd7da1aba7b1f"
   },
-  "systems/sanctuaryGroundPlane.js": {
+  "src/systems/sanctuaryGroundPlane.js": {
     "mtime": 1784397718.5589545,
     "ast_hash": "3866b0dcee8319408a78775125f93b33",
     "semantic_hash": "3866b0dcee8319408a78775125f93b33"
   },
-  "systems/sanctuaryInteractions.js": {
-    "mtime": 1784401033.5584054,
-    "ast_hash": "1264c4646a127322485119892b17a4aa",
-    "semantic_hash": "1264c4646a127322485119892b17a4aa"
+  "src/systems/sanctuaryInteractions.js": {
+    "mtime": 1784609545.2862368,
+    "ast_hash": "88aaeb7063116c159b5b2e3f81270f91",
+    "semantic_hash": "88aaeb7063116c159b5b2e3f81270f91"
   },
-  "systems/sanctuaryMovement.js": {
-    "mtime": 1784561259.198192,
-    "ast_hash": "78f814abf53ce40bc8334715750b9c46",
-    "semantic_hash": "78f814abf53ce40bc8334715750b9c46"
+  "src/systems/sanctuaryMovement.js": {
+    "mtime": 1784609512.2965446,
+    "ast_hash": "95171537fb91dfce0ece76d52ebc150e",
+    "semantic_hash": "95171537fb91dfce0ece76d52ebc150e"
   },
-  "systems/sanctuaryProjection.js": {
-    "mtime": 1784397718.5606272,
-    "ast_hash": "849bb3c09501a946c4ea6a1ac8358782",
-    "semantic_hash": "849bb3c09501a946c4ea6a1ac8358782"
+  "src/systems/sanctuaryProjection.js": {
+    "mtime": 1784586211.848173,
+    "ast_hash": "facfba5d68ed670a81204b27a0120282",
+    "semantic_hash": "facfba5d68ed670a81204b27a0120282"
   },
-  "systems/sanctuaryRender.js": {
-    "mtime": 1784550283.317401,
-    "ast_hash": "5fafdc957e9904fef51c4a9f9555b542",
-    "semantic_hash": "5fafdc957e9904fef51c4a9f9555b542"
+  "src/systems/sanctuaryRender.js": {
+    "mtime": 1784576471.9209602,
+    "ast_hash": "c1c35b561cf1cfafb866270312df2d23",
+    "semantic_hash": "c1c35b561cf1cfafb866270312df2d23"
   },
-  "systems/terrain.js": {
+  "src/systems/terrain.js": {
     "mtime": 1784207453.1280308,
     "ast_hash": "b8362d0b0d95b981f76efad95341397b",
     "semantic_hash": "b8362d0b0d95b981f76efad95341397b"
   },
-  "systems/textureBake.js": {
+  "src/systems/textureBake.js": {
     "mtime": 1784397718.562037,
     "ast_hash": "85ad1a19c74a4c8ee965723daa8dd147",
     "semantic_hash": "85ad1a19c74a4c8ee965723daa8dd147"
   },
-  "systems/tileArt.js": {
+  "src/systems/tileArt.js": {
     "mtime": 1784397718.5639946,
     "ast_hash": "30c975b5b036e4fd02c91d2215f1d9ee",
     "semantic_hash": "30c975b5b036e4fd02c91d2215f1d9ee"
   },
-  "systems/wyvernAtlas.js": {
-    "mtime": 1784284742.7627501,
-    "ast_hash": "da384064cc7d8ab5a9f2d2583c911ee4",
-    "semantic_hash": "da384064cc7d8ab5a9f2d2583c911ee4"
+  "src/systems/tileTexture3D.js": {
+    "mtime": 1784606845.8393312,
+    "ast_hash": "c8dbd0dada9c82f48d5e8c7823ae67ea",
+    "semantic_hash": "c8dbd0dada9c82f48d5e8c7823ae67ea"
   },
-  "systems/wyvernPresentation.js": {
+  "src/systems/wyvernAtlas.js": {
+    "mtime": 1784605720.1953926,
+    "ast_hash": "29035959e25871e2c722817cf1472fb2",
+    "semantic_hash": "29035959e25871e2c722817cf1472fb2"
+  },
+  "src/systems/wyvernPresentation.js": {
     "mtime": 1784365249.6487572,
     "ast_hash": "955545d1ed50aca6a65131698cd3e5dd",
     "semantic_hash": "955545d1ed50aca6a65131698cd3e5dd"
   },
-  "ui/atlasPanel.js": {
+  "src/ui/atlasPanel.js": {
     "mtime": 1784376380.3816066,
     "ast_hash": "91c7ad2cc5ec9f125d547130ece7e292",
     "semantic_hash": "91c7ad2cc5ec9f125d547130ece7e292"
   },
-  "ui/roostPanel.js": {
-    "mtime": 1784401626.6867435,
-    "ast_hash": "15486889e6b36c0092489bf84a0df62f",
-    "semantic_hash": "15486889e6b36c0092489bf84a0df62f"
+  "src/ui/roostPanel.js": {
+    "mtime": 1784604324.9937656,
+    "ast_hash": "fd983815afe24e37ee61126cf35a4f7e",
+    "semantic_hash": "fd983815afe24e37ee61126cf35a4f7e"
   },
-  "ui/uiKit.js": {
+  "src/ui/testPanel.js": {
+    "mtime": 1784608387.2497864,
+    "ast_hash": "603e20f2ed8a0c168427f86a14c24c28",
+    "semantic_hash": "603e20f2ed8a0c168427f86a14c24c28"
+  },
+  "src/ui/uiKit.js": {
     "mtime": 1784376064.7215862,
     "ast_hash": "7bdf4116aa811713d84339e009075247",
     "semantic_hash": "7bdf4116aa811713d84339e009075247"
   },
-  "ui/uiKit.test.js": {
+  "src/ui/uiKit.test.js": {
     "mtime": 1784376334.2635028,
     "ast_hash": "a1dc2a37f365094b4b7f9ff0d4714aca",
     "semantic_hash": "a1dc2a37f365094b4b7f9ff0d4714aca"
   },
-  "ui/vaultPanel.js": {
-    "mtime": 1784376906.3683543,
-    "ast_hash": "208511b4a8875d5be6ddbe8ae64e9e19",
-    "semantic_hash": "208511b4a8875d5be6ddbe8ae64e9e19"
+  "src/ui/vaultPanel.js": {
+    "mtime": 1784605707.9102576,
+    "ast_hash": "3637099f9ac64afad8d7ae8803e49d3a",
+    "semantic_hash": "3637099f9ac64afad8d7ae8803e49d3a"
+  },
+  "tests/baseSceneLifecycle.test.js": {
+    "mtime": 1784397718.5667074,
+    "ast_hash": "60a1fadd0955e2931e21bc382d01c7a0",
+    "semantic_hash": "60a1fadd0955e2931e21bc382d01c7a0"
+  },
+  "tests/dragonMotion.test.js": {
+    "mtime": 1784607169.038515,
+    "ast_hash": "4245561e66d166c25b81cd0153432f0d",
+    "semantic_hash": "4245561e66d166c25b81cd0153432f0d"
+  },
+  "tests/grid3d.test.js": {
+    "mtime": 1784565965.573513,
+    "ast_hash": "85012aaf4dbd6fc17a68d0faf401c761",
+    "semantic_hash": "85012aaf4dbd6fc17a68d0faf401c761"
+  },
+  "tests/sanctuaryCamera.test.js": {
+    "mtime": 1784397718.5671425,
+    "ast_hash": "57f2e2e9c46fc596ad050541d6c606d8",
+    "semantic_hash": "57f2e2e9c46fc596ad050541d6c606d8"
+  },
+  "tests/sanctuaryData.test.js": {
+    "mtime": 1784561272.8055472,
+    "ast_hash": "52e7bd650b4a2ef2689d9bcab875af75",
+    "semantic_hash": "52e7bd650b4a2ef2689d9bcab875af75"
+  },
+  "tests/sanctuaryGroundPlane.test.js": {
+    "mtime": 1784397718.5676107,
+    "ast_hash": "814161ab80842ed26737af9730a0e1c0",
+    "semantic_hash": "814161ab80842ed26737af9730a0e1c0"
+  },
+  "tests/sanctuaryInteractions.test.js": {
+    "mtime": 1784397718.5677886,
+    "ast_hash": "d1bc612f5519369ff4c23598c822bd7f",
+    "semantic_hash": "d1bc612f5519369ff4c23598c822bd7f"
+  },
+  "tests/sanctuaryMovement.test.js": {
+    "mtime": 1784566033.4806497,
+    "ast_hash": "e0847f531bec5b020c5dbbd66259a996",
+    "semantic_hash": "e0847f531bec5b020c5dbbd66259a996"
+  },
+  "tests/sanctuaryPicker.test.js": {
+    "mtime": 1784566066.7971911,
+    "ast_hash": "9f8c71df3bbfd244e4e092d491f124df",
+    "semantic_hash": "9f8c71df3bbfd244e4e092d491f124df"
+  },
+  "tests/sanctuaryProjection.test.js": {
+    "mtime": 1784397718.568335,
+    "ast_hash": "30121bb37099d2e88c5d0298526a22dc",
+    "semantic_hash": "30121bb37099d2e88c5d0298526a22dc"
+  },
+  "tests/sanctuaryRenderGroundPlane.test.js": {
+    "mtime": 1784397718.5685823,
+    "ast_hash": "459c4deaae09a74d9e05849a5e962e53",
+    "semantic_hash": "459c4deaae09a74d9e05849a5e962e53"
+  },
+  "tests/sanctuaryTextureBake.test.js": {
+    "mtime": 1784397718.568809,
+    "ast_hash": "e9bf7e1e959d8b87e399ce6362402598",
+    "semantic_hash": "e9bf7e1e959d8b87e399ce6362402598"
+  },
+  "tests/tileTexture3D.test.js": {
+    "mtime": 1784607191.7163315,
+    "ast_hash": "0bde8babd5e076a3c4ffa110307a5123",
+    "semantic_hash": "0bde8babd5e076a3c4ffa110307a5123"
+  },
+  "tests/wyvernAtlas.test.js": {
+    "mtime": 1784284813.9631817,
+    "ast_hash": "f0b819323919632cc303580cea9f1afb",
+    "semantic_hash": "f0b819323919632cc303580cea9f1afb"
+  },
+  "tests/wyvernPresentation.test.js": {
+    "mtime": 1784579769.086232,
+    "ast_hash": "2a8574f776377ea2b7fa15dbbe95eb5c",
+    "semantic_hash": "2a8574f776377ea2b7fa15dbbe95eb5c"
+  },
+  "tools/prep-drogon.mjs": {
+    "mtime": 1784606628.0973356,
+    "ast_hash": "9cb06f5705c0fb76d6b31d7dd7eaa9ce",
+    "semantic_hash": "9cb06f5705c0fb76d6b31d7dd7eaa9ce"
+  },
+  "tsconfig.json": {
+    "mtime": 1784609361.520265,
+    "ast_hash": "71d0ae301b0b62d7eff3fa8c74f3b85c",
+    "semantic_hash": "71d0ae301b0b62d7eff3fa8c74f3b85c"
+  },
+  "vite.config.js": {
+    "mtime": 1784607269.7408519,
+    "ast_hash": "cca67500bc351de64b0331cef5f63d48",
+    "semantic_hash": "cca67500bc351de64b0331cef5f63d48"
+  },
+  "vitest.config.js": {
+    "mtime": 1784376320.3782814,
+    "ast_hash": "baf5d37bf42763b44e4be8d92ca8780b",
+    "semantic_hash": "baf5d37bf42763b44e4be8d92ca8780b"
+  },
+  ".skills/game-ui-frontend/SKILL.md": {
+    "mtime": 1784560218.1805952,
+    "ast_hash": "a299c6ad7fecae22439ded6a68f13e42",
+    "semantic_hash": "a299c6ad7fecae22439ded6a68f13e42"
+  },
+  ".skills/game-ui-frontend/agents/openai.yaml": {
+    "mtime": 1784560218.1977344,
+    "ast_hash": "5dfd257b5fc8a6bf0ecad9587efa7b82",
+    "semantic_hash": "5dfd257b5fc8a6bf0ecad9587efa7b82"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/SKILL.md": {
+    "mtime": 1784560233.675059,
+    "ast_hash": "389c6b7fd60287765b97e89f94eb85a3",
+    "semantic_hash": "389c6b7fd60287765b97e89f94eb85a3"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/assets/2d-maze-game.md": {
+    "mtime": 1784560233.683087,
+    "ast_hash": "3f72ca4a208a9a1f647efe466a78b847",
+    "semantic_hash": "3f72ca4a208a9a1f647efe466a78b847"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/assets/2d-platform-game.md": {
+    "mtime": 1784560233.6850681,
+    "ast_hash": "77e138659a2590404af3a69e576da515",
+    "semantic_hash": "77e138659a2590404af3a69e576da515"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/assets/gameBase-template-repo.md": {
+    "mtime": 1784560233.6932075,
+    "ast_hash": "6c17d807057619e0b5c4df7a579a119a",
+    "semantic_hash": "6c17d807057619e0b5c4df7a579a119a"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/assets/paddle-game-template.md": {
+    "mtime": 1784560233.708908,
+    "ast_hash": "38fdb7b925f019ca7973eb2bdeb56b69",
+    "semantic_hash": "38fdb7b925f019ca7973eb2bdeb56b69"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/assets/simple-2d-engine.md": {
+    "mtime": 1784560233.7390368,
+    "ast_hash": "c5bf665ad3bd73d133ec6adb5c0a06d4",
+    "semantic_hash": "c5bf665ad3bd73d133ec6adb5c0a06d4"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/references/3d-web-games.md": {
+    "mtime": 1784560233.7429042,
+    "ast_hash": "9cdda820f66f51ba17111cf88801eb58",
+    "semantic_hash": "9cdda820f66f51ba17111cf88801eb58"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/references/algorithms.md": {
+    "mtime": 1784560233.7448354,
+    "ast_hash": "17aec55055a768a5c162d58b6e8b9140",
+    "semantic_hash": "17aec55055a768a5c162d58b6e8b9140"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/references/basics.md": {
+    "mtime": 1784560233.7461488,
+    "ast_hash": "5a299af84fda0622d5ec15e788045df6",
+    "semantic_hash": "5a299af84fda0622d5ec15e788045df6"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/references/game-control-mechanisms.md": {
+    "mtime": 1784560233.7516773,
+    "ast_hash": "d2c38e4fe2d822bda2b7a4c5aa50f2e8",
+    "semantic_hash": "d2c38e4fe2d822bda2b7a4c5aa50f2e8"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/references/game-engine-core-principles.md": {
+    "mtime": 1784560233.7530553,
+    "ast_hash": "e22884f941f6536dd790c2b84e6577d0",
+    "semantic_hash": "e22884f941f6536dd790c2b84e6577d0"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/references/game-publishing.md": {
+    "mtime": 1784560233.7560833,
+    "ast_hash": "89db936d8e9a8ba5319d82be6efab560",
+    "semantic_hash": "89db936d8e9a8ba5319d82be6efab560"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/references/techniques.md": {
+    "mtime": 1784560233.7573826,
+    "ast_hash": "f815fc8844c22cbf73514b7f75e14c13",
+    "semantic_hash": "f815fc8844c22cbf73514b7f75e14c13"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/references/terminology.md": {
+    "mtime": 1784560233.759138,
+    "ast_hash": "fdefa8601fcbbd424189ad2201d95124",
+    "semantic_hash": "fdefa8601fcbbd424189ad2201d95124"
+  },
+  ".skills/github-awesome-copilot-game-engine-1/references/web-apis.md": {
+    "mtime": 1784560233.7614048,
+    "ast_hash": "ca1130f8a6793cd9df10d12ed508fc59",
+    "semantic_hash": "ca1130f8a6793cd9df10d12ed508fc59"
+  },
+  ".skills/threejs-skills-main/README.md": {
+    "mtime": 1784575519.1050081,
+    "ast_hash": "2c7718a4d6f7a1eabde48b15ef8b31d5",
+    "semantic_hash": "2c7718a4d6f7a1eabde48b15ef8b31d5"
+  },
+  ".skills/threejs-skills-main/skills/threejs-animation/SKILL.md": {
+    "mtime": 1784575519.1056333,
+    "ast_hash": "889523a4b978de3a3b8c20028c9a87f4",
+    "semantic_hash": "889523a4b978de3a3b8c20028c9a87f4"
+  },
+  ".skills/threejs-skills-main/skills/threejs-fundamentals/SKILL.md": {
+    "mtime": 1784575519.1061625,
+    "ast_hash": "426f34a84e30434814b73b888677cd87",
+    "semantic_hash": "426f34a84e30434814b73b888677cd87"
+  },
+  ".skills/threejs-skills-main/skills/threejs-geometry/SKILL.md": {
+    "mtime": 1784575519.1072102,
+    "ast_hash": "44f615adaf9af4da6200e2833088fc2b",
+    "semantic_hash": "44f615adaf9af4da6200e2833088fc2b"
+  },
+  ".skills/threejs-skills-main/skills/threejs-interaction/SKILL.md": {
+    "mtime": 1784575519.1078835,
+    "ast_hash": "f21d928de97c85b259a2441f600de054",
+    "semantic_hash": "f21d928de97c85b259a2441f600de054"
+  },
+  ".skills/threejs-skills-main/skills/threejs-lighting/SKILL.md": {
+    "mtime": 1784575519.1083565,
+    "ast_hash": "552d5331ad2f789fd75b98ac70b9f3d4",
+    "semantic_hash": "552d5331ad2f789fd75b98ac70b9f3d4"
+  },
+  ".skills/threejs-skills-main/skills/threejs-loaders/SKILL.md": {
+    "mtime": 1784575519.1093426,
+    "ast_hash": "de93ea2eca83756ca58c695121d3ccfe",
+    "semantic_hash": "de93ea2eca83756ca58c695121d3ccfe"
+  },
+  ".skills/threejs-skills-main/skills/threejs-materials/SKILL.md": {
+    "mtime": 1784575519.110223,
+    "ast_hash": "ba143d4be6aa2d2534c90a81bff8fb82",
+    "semantic_hash": "ba143d4be6aa2d2534c90a81bff8fb82"
+  },
+  ".skills/threejs-skills-main/skills/threejs-postprocessing/SKILL.md": {
+    "mtime": 1784575519.111168,
+    "ast_hash": "2b92954c287e43b638d55111179ac64b",
+    "semantic_hash": "2b92954c287e43b638d55111179ac64b"
+  },
+  ".skills/threejs-skills-main/skills/threejs-shaders/SKILL.md": {
+    "mtime": 1784575519.1118283,
+    "ast_hash": "fb7afc360f8f09f628f27bab103bc90f",
+    "semantic_hash": "fb7afc360f8f09f628f27bab103bc90f"
+  },
+  ".skills/threejs-skills-main/skills/threejs-textures/SKILL.md": {
+    "mtime": 1784575519.112375,
+    "ast_hash": "a9f9e1949599617a5a803bcbc7afbad3",
+    "semantic_hash": "a9f9e1949599617a5a803bcbc7afbad3"
+  },
+  "AGENTS.md": {
+    "mtime": 1784565380.0778646,
+    "ast_hash": "7c8eef7cf83eddf7758147a8f766343d",
+    "semantic_hash": "7c8eef7cf83eddf7758147a8f766343d"
+  },
+  "AI_CONTEXT.md": {
+    "mtime": 1784550283.3142495,
+    "ast_hash": "8ab729d925ffa1e047588155fa8d49e9",
+    "semantic_hash": "8ab729d925ffa1e047588155fa8d49e9"
+  },
+  "AI_CONTRIBUTIONS.md": {
+    "mtime": 1784608453.7242172,
+    "ast_hash": "5bf76524fab4ac8058cc2f61f86393e6",
+    "semantic_hash": "5bf76524fab4ac8058cc2f61f86393e6"
+  },
+  "CLAUDE.md": {
+    "mtime": 1784550283.3148694,
+    "ast_hash": "3da43fec306b55321b94fd79cf5701c1",
+    "semantic_hash": "3da43fec306b55321b94fd79cf5701c1"
+  },
+  "GEMINI.md": {
+    "mtime": 1784565385.3634553,
+    "ast_hash": "6724a108614371921b0cb0ad4a63ef6e",
+    "semantic_hash": "6724a108614371921b0cb0ad4a63ef6e"
+  },
+  "README.md": {
+    "mtime": 1784550283.3151362,
+    "ast_hash": "5a20e09dc7b92e14a8849c8b895631ff",
+    "semantic_hash": "5a20e09dc7b92e14a8849c8b895631ff"
+  },
+  "ROADMAP.md": {
+    "mtime": 1784550283.3156044,
+    "ast_hash": "d89328ab89e9f976c9ad4adb0f988c78",
+    "semantic_hash": "d89328ab89e9f976c9ad4adb0f988c78"
+  },
+  "assets/audio/README.md": {
+    "mtime": 1784202901.9230416,
+    "ast_hash": "6b317f1e206eb58a4cf09c942fd47ac7",
+    "semantic_hash": "6b317f1e206eb58a4cf09c942fd47ac7"
+  },
+  "assets/models/README.md": {
+    "mtime": 1784608404.2782447,
+    "ast_hash": "f663fc306b517cdf9b3244141d9ff375",
+    "semantic_hash": "f663fc306b517cdf9b3244141d9ff375"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/README.txt": {
+    "mtime": 1784559224.2250142,
+    "ast_hash": "f7efc65351926459a72571c5d10c96b5",
+    "semantic_hash": "f7efc65351926459a72571c5d10c96b5"
+  },
+  "assets/sprites/wyverns/README.md": {
+    "mtime": 1784397718.5517569,
+    "ast_hash": "ca356a2a42e2e892345fdf86aa4fcb5d",
+    "semantic_hash": "ca356a2a42e2e892345fdf86aa4fcb5d"
+  },
+  "assets/tilemaps/README.md": {
+    "mtime": 1784202901.9217508,
+    "ast_hash": "dc97f492f5ff02c6c7846e7e78f15005",
+    "semantic_hash": "dc97f492f5ff02c6c7846e7e78f15005"
+  },
+  "assets/ui/README.md": {
+    "mtime": 1784202901.9246397,
+    "ast_hash": "826da7b7e81117a18f497fe6315c89de",
+    "semantic_hash": "826da7b7e81117a18f497fe6315c89de"
+  },
+  "docs/SANCTUARY_3D_DRAGON_PLAN.md": {
+    "mtime": 1784608428.5624857,
+    "ast_hash": "ad819b8730f33d9e1ec62d884c1c96ce",
+    "semantic_hash": "ad819b8730f33d9e1ec62d884c1c96ce"
+  },
+  "docs/SANCTUARY_FREE_ROAM_PLAN.md": {
+    "mtime": 1784398004.0803773,
+    "ast_hash": "cae4a3e14c73957709a46d17ed762b17",
+    "semantic_hash": "cae4a3e14c73957709a46d17ed762b17"
+  },
+  "docs/SANCTUARY_ROTATABLE_CAMERA_PLAN.md": {
+    "mtime": 1784397718.553343,
+    "ast_hash": "ff3299f1a63bd19049adcb9b7b21a337",
+    "semantic_hash": "ff3299f1a63bd19049adcb9b7b21a337"
+  },
+  "docs/UI_REDESIGN_PLAN.md": {
+    "mtime": 1784375279.051652,
+    "ast_hash": "3a1e44b942d93c294967c5c290f98ab0",
+    "semantic_hash": "3a1e44b942d93c294967c5c290f98ab0"
+  },
+  "index.html": {
+    "mtime": 1784550283.3159444,
+    "ast_hash": "3258afe28c89c692128b1fa589f65aa4",
+    "semantic_hash": "3258afe28c89c692128b1fa589f65aa4"
+  },
+  "wyvernassets-3d testing/mega_wyvern 2/license.txt": {
+    "mtime": 1715945992.0,
+    "ast_hash": "791552de1edcdc8c8f731c28942f958e",
+    "semantic_hash": "791552de1edcdc8c8f731c28942f958e"
+  },
+  "wyvernassets-3d testing/mega_wyvern/license.txt": {
+    "mtime": 1715945992.0,
+    "ast_hash": "791552de1edcdc8c8f731c28942f958e",
+    "semantic_hash": "791552de1edcdc8c8f731c28942f958e"
+  },
+  "wyvernassets-3d testing/wyvern (1)/license.txt": {
+    "mtime": 1647017976.0,
+    "ast_hash": "c06eb9ad373d60330466888aa02ccb76",
+    "semantic_hash": "c06eb9ad373d60330466888aa02ccb76"
+  },
+  "assets/sprites/wyverns/Cinderlash/attack_0.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "ac53b69c899b748db59fc2aeefa51d14",
+    "semantic_hash": "ac53b69c899b748db59fc2aeefa51d14"
+  },
+  "assets/sprites/wyverns/Cinderlash/attack_1.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "7a0a585d3855a45e7effa9cd9b173a57",
+    "semantic_hash": "7a0a585d3855a45e7effa9cd9b173a57"
+  },
+  "assets/sprites/wyverns/Cinderlash/attack_2.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "c26dcd5fad16e938972ffd29ca9c8d92",
+    "semantic_hash": "c26dcd5fad16e938972ffd29ca9c8d92"
+  },
+  "assets/sprites/wyverns/Cinderlash/attack_3.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "f1abbb320efe7f94efed15dc424bf2b7",
+    "semantic_hash": "f1abbb320efe7f94efed15dc424bf2b7"
+  },
+  "assets/sprites/wyverns/Cinderlash/death_0.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "bcf9761650aedab31ecebde39b9fa7ff",
+    "semantic_hash": "bcf9761650aedab31ecebde39b9fa7ff"
+  },
+  "assets/sprites/wyverns/Cinderlash/death_1.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "31aadbf00b45d765677a2ab53da22370",
+    "semantic_hash": "31aadbf00b45d765677a2ab53da22370"
+  },
+  "assets/sprites/wyverns/Cinderlash/death_2.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "122128d4bf974cfde36a28c7271500d0",
+    "semantic_hash": "122128d4bf974cfde36a28c7271500d0"
+  },
+  "assets/sprites/wyverns/Cinderlash/death_3.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "f6e485e4b7065c1761481cf3884335fc",
+    "semantic_hash": "f6e485e4b7065c1761481cf3884335fc"
+  },
+  "assets/sprites/wyverns/Cinderlash/death_4.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "ea7b996559dfac92ec9878a4d50edfe4",
+    "semantic_hash": "ea7b996559dfac92ec9878a4d50edfe4"
+  },
+  "assets/sprites/wyverns/Cinderlash/fly_0.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "7a91d6d0a0ef4f28fd1573a986e32df6",
+    "semantic_hash": "7a91d6d0a0ef4f28fd1573a986e32df6"
+  },
+  "assets/sprites/wyverns/Cinderlash/fly_1.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "6e11607b4fd938104baa535814a5a287",
+    "semantic_hash": "6e11607b4fd938104baa535814a5a287"
+  },
+  "assets/sprites/wyverns/Cinderlash/fly_2.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "3b9cf6796b93ac7503ef6f15a4ce8ca7",
+    "semantic_hash": "3b9cf6796b93ac7503ef6f15a4ce8ca7"
+  },
+  "assets/sprites/wyverns/Cinderlash/fly_3.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "dcbebc94bd90bd8a5d71293de56887b6",
+    "semantic_hash": "dcbebc94bd90bd8a5d71293de56887b6"
+  },
+  "assets/sprites/wyverns/Cinderlash/guard_0.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "97b1d13be9f9ff26fdffd304034ac489",
+    "semantic_hash": "97b1d13be9f9ff26fdffd304034ac489"
+  },
+  "assets/sprites/wyverns/Cinderlash/guard_1.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "211d29037f362da1ce2ce4edabff8afe",
+    "semantic_hash": "211d29037f362da1ce2ce4edabff8afe"
+  },
+  "assets/sprites/wyverns/Cinderlash/guard_2.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "b4ea614dad197e5d406ba30a912c900d",
+    "semantic_hash": "b4ea614dad197e5d406ba30a912c900d"
+  },
+  "assets/sprites/wyverns/Cinderlash/guard_3.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "b839e767935a660aa557b910534df0b4",
+    "semantic_hash": "b839e767935a660aa557b910534df0b4"
+  },
+  "assets/sprites/wyverns/Cinderlash/hurt_0.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "fc803f4b3a3a0c7a1f7aa986a1677e02",
+    "semantic_hash": "fc803f4b3a3a0c7a1f7aa986a1677e02"
+  },
+  "assets/sprites/wyverns/Cinderlash/hurt_1.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "e99864b7f54f7adebad90e0dae8c6d85",
+    "semantic_hash": "e99864b7f54f7adebad90e0dae8c6d85"
+  },
+  "assets/sprites/wyverns/Cinderlash/hurt_2.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "0be19fa013de40384a33587d9a3483c8",
+    "semantic_hash": "0be19fa013de40384a33587d9a3483c8"
+  },
+  "assets/sprites/wyverns/Cinderlash/idle_0.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "5315a57429bddffed6aae2ba65bd4277",
+    "semantic_hash": "5315a57429bddffed6aae2ba65bd4277"
+  },
+  "assets/sprites/wyverns/Cinderlash/idle_1.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "5f8d2fbb6bc32e8d30c123d230b487a7",
+    "semantic_hash": "5f8d2fbb6bc32e8d30c123d230b487a7"
+  },
+  "assets/sprites/wyverns/Cinderlash/idle_2.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "5fa857e8ad64167b25e2e44d71d6cf3d",
+    "semantic_hash": "5fa857e8ad64167b25e2e44d71d6cf3d"
+  },
+  "assets/sprites/wyverns/Cinderlash/idle_3.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "2a41daf2849ed99f6ab83c23fb759921",
+    "semantic_hash": "2a41daf2849ed99f6ab83c23fb759921"
+  },
+  "assets/sprites/wyverns/Cinderlash/special_0.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "4d6e7f043bb303e8dfe23d6d8b542337",
+    "semantic_hash": "4d6e7f043bb303e8dfe23d6d8b542337"
+  },
+  "assets/sprites/wyverns/Cinderlash/special_1.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "deb8e419f11846eba9349dde1c432196",
+    "semantic_hash": "deb8e419f11846eba9349dde1c432196"
+  },
+  "assets/sprites/wyverns/Cinderlash/special_2.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "d8efaecf2f1b61be576c9eacc7207167",
+    "semantic_hash": "d8efaecf2f1b61be576c9eacc7207167"
+  },
+  "assets/sprites/wyverns/Cinderlash/special_3.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "a9e213a8785bd6352ebe49bb5c121ae5",
+    "semantic_hash": "a9e213a8785bd6352ebe49bb5c121ae5"
+  },
+  "assets/sprites/wyverns/Cinderlash/special_4.png": {
+    "mtime": 1784253838.0,
+    "ast_hash": "cb18874a37456db21d7981015803bed3",
+    "semantic_hash": "cb18874a37456db21d7981015803bed3"
+  },
+  "assets/sprites/wyverns/Cinderlash/wyvern_atlas_4096.png": {
+    "mtime": 1784286896.485517,
+    "ast_hash": "4f2ef3f58009bf9efce344899b3b3699",
+    "semantic_hash": "4f2ef3f58009bf9efce344899b3b3699"
+  },
+  "assets/sprites/wyverns/Cinderlash/wyvern_atlas_8192.png": {
+    "mtime": 1784286908.710142,
+    "ast_hash": "0b73ce675544350594b07c119a96202a",
+    "semantic_hash": "0b73ce675544350594b07c119a96202a"
+  },
+  "assets/sprites/wyverns/Embertooth/fly_e_back_1024.png": {
+    "mtime": 1784372938.0,
+    "ast_hash": "2f4173a76cbf46ed4460bb12a3dc6c6f",
+    "semantic_hash": "2f4173a76cbf46ed4460bb12a3dc6c6f"
+  },
+  "assets/sprites/wyverns/Embertooth/fly_e_down_1024.png": {
+    "mtime": 1784372938.0,
+    "ast_hash": "b773df36f0928bd8cd460f3c1a27e194",
+    "semantic_hash": "b773df36f0928bd8cd460f3c1a27e194"
+  },
+  "assets/sprites/wyverns/Embertooth/fly_e_mid_1024.png": {
+    "mtime": 1784372938.0,
+    "ast_hash": "8d70622443a26764e3f9087912969689",
+    "semantic_hash": "8d70622443a26764e3f9087912969689"
+  },
+  "assets/sprites/wyverns/Embertooth/fly_e_up_1024.png": {
+    "mtime": 1784372938.0,
+    "ast_hash": "3feb3cd4e60d0d30d2612aac17569dcc",
+    "semantic_hash": "3feb3cd4e60d0d30d2612aac17569dcc"
+  },
+  "assets/sprites/wyverns/Embertooth/idle_e_1024.png": {
+    "mtime": 1784372438.0,
+    "ast_hash": "b21c3e56854689e6b2d96c6e1e38ce2f",
+    "semantic_hash": "b21c3e56854689e6b2d96c6e1e38ce2f"
+  },
+  "assets/sprites/wyverns/Embertooth/idle_n_1024.png": {
+    "mtime": 1784372438.0,
+    "ast_hash": "9584968cfbd0dbe001caf66f92755650",
+    "semantic_hash": "9584968cfbd0dbe001caf66f92755650"
+  },
+  "assets/sprites/wyverns/Embertooth/idle_ne_1024.png": {
+    "mtime": 1784372438.0,
+    "ast_hash": "df244a85b39120f6dcba753405eeeb1d",
+    "semantic_hash": "df244a85b39120f6dcba753405eeeb1d"
+  },
+  "assets/sprites/wyverns/Embertooth/idle_nw_1024.png": {
+    "mtime": 1784372438.0,
+    "ast_hash": "0b755872de2f44532f4e23eaa88078b6",
+    "semantic_hash": "0b755872de2f44532f4e23eaa88078b6"
+  },
+  "assets/sprites/wyverns/Embertooth/idle_s_1024.png": {
+    "mtime": 1784372438.0,
+    "ast_hash": "a437089520e82704a734e3c034f0b587",
+    "semantic_hash": "a437089520e82704a734e3c034f0b587"
+  },
+  "assets/sprites/wyverns/Embertooth/idle_se_1024.png": {
+    "mtime": 1784372438.0,
+    "ast_hash": "d5bdf0833781336071a3c8b2213705b7",
+    "semantic_hash": "d5bdf0833781336071a3c8b2213705b7"
+  },
+  "assets/sprites/wyverns/Embertooth/idle_sw_1024.png": {
+    "mtime": 1784372438.0,
+    "ast_hash": "1e7e40549562d6070c5277fcb488b803",
+    "semantic_hash": "1e7e40549562d6070c5277fcb488b803"
+  },
+  "assets/sprites/wyverns/Embertooth/idle_w_1024.png": {
+    "mtime": 1784372438.0,
+    "ast_hash": "814585720612f914e6603f6a2a59b696",
+    "semantic_hash": "814585720612f914e6603f6a2a59b696"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/extras/wyvern_8dir_V3_atlas.png": {
+    "mtime": 1784559224.267759,
+    "ast_hash": "fd4c22fbdb18ecab743bb442bf987f3c",
+    "semantic_hash": "fd4c22fbdb18ecab743bb442bf987f3c"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/extras/wyvern_ultimate_V4_atlas.png": {
+    "mtime": 1784559224.778016,
+    "ast_hash": "d5a24067b1d7cd0f439d1413f9c818ef",
+    "semantic_hash": "d5a24067b1d7cd0f439d1413f9c818ef"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/strips/attack_fixed.png": {
+    "mtime": 1784559224.7887883,
+    "ast_hash": "a61eb1359fbe1262059ee18a6aa76589",
+    "semantic_hash": "a61eb1359fbe1262059ee18a6aa76589"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/strips/death_fixed.png": {
+    "mtime": 1784559224.7964222,
+    "ast_hash": "b3ee255bd479587f4c1f4291a8c55daf",
+    "semantic_hash": "b3ee255bd479587f4c1f4291a8c55daf"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/strips/fly_true_fixed.png": {
+    "mtime": 1784559224.8029208,
+    "ast_hash": "ca51a2b52fc0aa0ade72e54b2b91bf00",
+    "semantic_hash": "ca51a2b52fc0aa0ade72e54b2b91bf00"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/strips/guard_fixed.png": {
+    "mtime": 1784559224.8080862,
+    "ast_hash": "cda95b48ed40614731d80be584e7865a",
+    "semantic_hash": "cda95b48ed40614731d80be584e7865a"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/strips/hurt_fixed.png": {
+    "mtime": 1784559224.8154783,
+    "ast_hash": "a395cc6bd7e5a6e492598ee4eebecfe7",
+    "semantic_hash": "a395cc6bd7e5a6e492598ee4eebecfe7"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/strips/idle_true_fixed.png": {
+    "mtime": 1784559224.8256805,
+    "ast_hash": "cf37acb5b2d6de8d71cbf5850434a11b",
+    "semantic_hash": "cf37acb5b2d6de8d71cbf5850434a11b"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/strips/special_fire_fixed.png": {
+    "mtime": 1784559224.8369858,
+    "ast_hash": "37d3326e39b8ceb618d98b4b461dda0b",
+    "semantic_hash": "37d3326e39b8ceb618d98b4b461dda0b"
+  },
+  "assets/sprites/wyverns/Embertooth/wyvern_final_required_bundle/wyvern_required_atlas.png": {
+    "mtime": 1784559224.877662,
+    "ast_hash": "cbc858c9f70d36f8f804c655bb91859d",
+    "semantic_hash": "cbc858c9f70d36f8f804c655bb91859d"
+  },
+  "assets/sprites/wyverns/Galeclaw/attack_01.png": {
+    "mtime": 1784403115.23033,
+    "ast_hash": "795e339093ffa4ba8bb9e1d7dbf958cf",
+    "semantic_hash": "795e339093ffa4ba8bb9e1d7dbf958cf"
+  },
+  "assets/sprites/wyverns/Galeclaw/attack_02.png": {
+    "mtime": 1784403113.4675524,
+    "ast_hash": "f0304bfd5a19df7d74b89157eb1e9a19",
+    "semantic_hash": "f0304bfd5a19df7d74b89157eb1e9a19"
+  },
+  "assets/sprites/wyverns/Galeclaw/attack_03.png": {
+    "mtime": 1784403112.5681672,
+    "ast_hash": "a4c93aa32556f66ccf6a96a2731eb0bd",
+    "semantic_hash": "a4c93aa32556f66ccf6a96a2731eb0bd"
+  },
+  "assets/sprites/wyverns/Galeclaw/attack_04.png": {
+    "mtime": 1784403111.4474072,
+    "ast_hash": "f1b5a1b9f301820a7c6792b1831a845f",
+    "semantic_hash": "f1b5a1b9f301820a7c6792b1831a845f"
+  },
+  "assets/sprites/wyverns/Galeclaw/attack_05.png": {
+    "mtime": 1784403109.9266376,
+    "ast_hash": "1616a74995a0151b1132e0ce69785822",
+    "semantic_hash": "1616a74995a0151b1132e0ce69785822"
+  },
+  "assets/sprites/wyverns/Galeclaw/death_01.png": {
+    "mtime": 1784402726.0766854,
+    "ast_hash": "47a50aa9c5e97a32a85b44c6abe98f29",
+    "semantic_hash": "47a50aa9c5e97a32a85b44c6abe98f29"
+  },
+  "assets/sprites/wyverns/Galeclaw/death_02.png": {
+    "mtime": 1784403251.5032215,
+    "ast_hash": "b8b177d5ebd6b2cbe6ce9eeee0abd34c",
+    "semantic_hash": "b8b177d5ebd6b2cbe6ce9eeee0abd34c"
+  },
+  "assets/sprites/wyverns/Galeclaw/death_03.png": {
+    "mtime": 1784402724.3309686,
+    "ast_hash": "96665cd6109897af09e4e358a06769bb",
+    "semantic_hash": "96665cd6109897af09e4e358a06769bb"
+  },
+  "assets/sprites/wyverns/Galeclaw/death_04.png": {
+    "mtime": 1784403273.9443114,
+    "ast_hash": "f55d64a73c3efa71b437678c691a6fcb",
+    "semantic_hash": "f55d64a73c3efa71b437678c691a6fcb"
+  },
+  "assets/sprites/wyverns/Galeclaw/death_05.png": {
+    "mtime": 1784403275.522364,
+    "ast_hash": "3caa89f6bf35df9a6cba21ff6de17867",
+    "semantic_hash": "3caa89f6bf35df9a6cba21ff6de17867"
+  },
+  "assets/sprites/wyverns/Galeclaw/fly_01.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "8b30128974d3f71f8dd0606512c6e1d1",
+    "semantic_hash": "8b30128974d3f71f8dd0606512c6e1d1"
+  },
+  "assets/sprites/wyverns/Galeclaw/fly_02.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "afdb55305a51acaf974614580e533fd7",
+    "semantic_hash": "afdb55305a51acaf974614580e533fd7"
+  },
+  "assets/sprites/wyverns/Galeclaw/fly_03.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "990437750f122644a100c374fae226cc",
+    "semantic_hash": "990437750f122644a100c374fae226cc"
+  },
+  "assets/sprites/wyverns/Galeclaw/fly_04.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "ac8a950cac7173ce394588b3ea496158",
+    "semantic_hash": "ac8a950cac7173ce394588b3ea496158"
+  },
+  "assets/sprites/wyverns/Galeclaw/fly_loop_right.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "a7fdd8d8a0494b8ffed0f0c7fdb1ff13",
+    "semantic_hash": "a7fdd8d8a0494b8ffed0f0c7fdb1ff13"
+  },
+  "assets/sprites/wyverns/Galeclaw/galeclaw.png": {
+    "mtime": 1784403411.1626909,
+    "ast_hash": "9674b75ec58f0261c914ed01af248253",
+    "semantic_hash": "9674b75ec58f0261c914ed01af248253"
+  },
+  "assets/sprites/wyverns/Galeclaw/guard_01.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "a7c6ff3003d65df82afdb38e6b76f2aa",
+    "semantic_hash": "a7c6ff3003d65df82afdb38e6b76f2aa"
+  },
+  "assets/sprites/wyverns/Galeclaw/guard_02.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "a4d71014e09008a6097d33c52f2b1dee",
+    "semantic_hash": "a4d71014e09008a6097d33c52f2b1dee"
+  },
+  "assets/sprites/wyverns/Galeclaw/guard_03.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "0862639283b3382dec6d5cf68d3a77db",
+    "semantic_hash": "0862639283b3382dec6d5cf68d3a77db"
+  },
+  "assets/sprites/wyverns/Galeclaw/guard_04.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "e105d1439cb1f076e08e6088d959d15d",
+    "semantic_hash": "e105d1439cb1f076e08e6088d959d15d"
+  },
+  "assets/sprites/wyverns/Galeclaw/guard_loop_right.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "86dfd8e7aaffd08dad1dc3fc4d01569e",
+    "semantic_hash": "86dfd8e7aaffd08dad1dc3fc4d01569e"
+  },
+  "assets/sprites/wyverns/Galeclaw/hurt_01.png": {
+    "mtime": 1784304619.2566462,
+    "ast_hash": "12db8ce7311a979ef551f740f47e955d",
+    "semantic_hash": "12db8ce7311a979ef551f740f47e955d"
+  },
+  "assets/sprites/wyverns/Galeclaw/hurt_02.png": {
+    "mtime": 1784304618.0247,
+    "ast_hash": "4fb586b64137c371910906aa4ef20948",
+    "semantic_hash": "4fb586b64137c371910906aa4ef20948"
+  },
+  "assets/sprites/wyverns/Galeclaw/hurt_03.png": {
+    "mtime": 1784304616.3332667,
+    "ast_hash": "35977ffeab59f4dce99fbab060cda8b2",
+    "semantic_hash": "35977ffeab59f4dce99fbab060cda8b2"
+  },
+  "assets/sprites/wyverns/Galeclaw/hurt_04.png": {
+    "mtime": 1784304614.4804218,
+    "ast_hash": "4319c46e7eedb74a96b1793596bf319c",
+    "semantic_hash": "4319c46e7eedb74a96b1793596bf319c"
+  },
+  "assets/sprites/wyverns/Galeclaw/idle_01.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "f37cc086378613ef0d0ab1074c50318f",
+    "semantic_hash": "f37cc086378613ef0d0ab1074c50318f"
+  },
+  "assets/sprites/wyverns/Galeclaw/idle_02.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "9cba688a9c185b41c57ef549fb8fe06c",
+    "semantic_hash": "9cba688a9c185b41c57ef549fb8fe06c"
+  },
+  "assets/sprites/wyverns/Galeclaw/idle_03.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "0cd50970fc74c346354c644bb368be4f",
+    "semantic_hash": "0cd50970fc74c346354c644bb368be4f"
+  },
+  "assets/sprites/wyverns/Galeclaw/idle_04.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "dace3a3d1ed80abed323fdcfc34a87a3",
+    "semantic_hash": "dace3a3d1ed80abed323fdcfc34a87a3"
+  },
+  "assets/sprites/wyverns/Galeclaw/idle_loop_right.png": {
+    "mtime": 1784332058.0,
+    "ast_hash": "93ece2ea31897f5f203a7a6aa743d225",
+    "semantic_hash": "93ece2ea31897f5f203a7a6aa743d225"
+  },
+  "assets/sprites/wyverns/Galeclaw/special_0.png": {
+    "mtime": 1784364274.7253263,
+    "ast_hash": "85ffb8d447f913ccd164decf704537f2",
+    "semantic_hash": "85ffb8d447f913ccd164decf704537f2"
+  },
+  "assets/sprites/wyverns/Galeclaw/special_1.png": {
+    "mtime": 1784364275.789395,
+    "ast_hash": "34d9ce788ca77591cf96315f6030992f",
+    "semantic_hash": "34d9ce788ca77591cf96315f6030992f"
+  },
+  "assets/sprites/wyverns/Galeclaw/special_2.png": {
+    "mtime": 1784364279.242632,
+    "ast_hash": "3dee3f62e3fc80c1c9001fcdbac42417",
+    "semantic_hash": "3dee3f62e3fc80c1c9001fcdbac42417"
+  },
+  "assets/sprites/wyverns/Galeclaw/special_3.png": {
+    "mtime": 1784364279.5146072,
+    "ast_hash": "a96578dd57c24873c2f8cf4df0705a32",
+    "semantic_hash": "a96578dd57c24873c2f8cf4df0705a32"
+  },
+  "assets/sprites/wyverns/Galeclaw/special_4.png": {
+    "mtime": 1784364282.9131813,
+    "ast_hash": "111485f1da521213a4d98c56b2a85443",
+    "semantic_hash": "111485f1da521213a4d98c56b2a85443"
+  },
+  "assets/sprites/wyverns/Redstorm/attack_E_wyvern.png": {
+    "mtime": 1784374342.0,
+    "ast_hash": "c46d30e3257a8108fb3ca782b09c196b",
+    "semantic_hash": "c46d30e3257a8108fb3ca782b09c196b"
+  },
+  "assets/sprites/wyverns/Redstorm/attack_E_wyvern_isolated.png": {
+    "mtime": 1784449909.183466,
+    "ast_hash": "abb1d4a5095863c9486da53351219bc5",
+    "semantic_hash": "abb1d4a5095863c9486da53351219bc5"
+  },
+  "assets/sprites/wyverns/Redstorm/attack_SW_wyvern.png": {
+    "mtime": 1784374342.0,
+    "ast_hash": "3e6b33bc7b7c1e276144b2b99564eec3",
+    "semantic_hash": "3e6b33bc7b7c1e276144b2b99564eec3"
+  },
+  "assets/sprites/wyverns/Redstorm/attack_SW_wyvern_isolated.png": {
+    "mtime": 1784449905.6506958,
+    "ast_hash": "dd655ccedbee77f1c3c15f56e1fe2644",
+    "semantic_hash": "dd655ccedbee77f1c3c15f56e1fe2644"
+  },
+  "assets/sprites/wyverns/Redstorm/attack_W_wyvern.png": {
+    "mtime": 1784374342.0,
+    "ast_hash": "25254c4652b4b7cfb1a64eda8b22d37f",
+    "semantic_hash": "25254c4652b4b7cfb1a64eda8b22d37f"
+  },
+  "assets/sprites/wyverns/Redstorm/attack_W_wyvern_isolated.png": {
+    "mtime": 1784449907.8673768,
+    "ast_hash": "962105f9d89a5abfeb8c252c9873a435",
+    "semantic_hash": "962105f9d89a5abfeb8c252c9873a435"
+  },
+  "assets/sprites/wyverns/Redstorm/attack_e_1024.png": {
+    "mtime": 1784374342.0,
+    "ast_hash": "e5d1447463b0e517f9545eefce97738d",
+    "semantic_hash": "e5d1447463b0e517f9545eefce97738d"
+  },
+  "assets/sprites/wyverns/Redstorm/attack_sw_1024.png": {
+    "mtime": 1784374342.0,
+    "ast_hash": "ce84aef77a0db4ca8f1879737c655b4b",
+    "semantic_hash": "ce84aef77a0db4ca8f1879737c655b4b"
+  },
+  "assets/sprites/wyverns/Redstorm/attack_w_1024.png": {
+    "mtime": 1784374342.0,
+    "ast_hash": "03d06a42ef54d79ad262db993254521f",
+    "semantic_hash": "03d06a42ef54d79ad262db993254521f"
+  },
+  "assets/sprites/wyverns/Redstorm/fly_e_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "b21c3e56854689e6b2d96c6e1e38ce2f",
+    "semantic_hash": "b21c3e56854689e6b2d96c6e1e38ce2f"
+  },
+  "assets/sprites/wyverns/Redstorm/fly_n_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "9584968cfbd0dbe001caf66f92755650",
+    "semantic_hash": "9584968cfbd0dbe001caf66f92755650"
+  },
+  "assets/sprites/wyverns/Redstorm/fly_ne_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "df244a85b39120f6dcba753405eeeb1d",
+    "semantic_hash": "df244a85b39120f6dcba753405eeeb1d"
+  },
+  "assets/sprites/wyverns/Redstorm/fly_nw_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "0b755872de2f44532f4e23eaa88078b6",
+    "semantic_hash": "0b755872de2f44532f4e23eaa88078b6"
+  },
+  "assets/sprites/wyverns/Redstorm/fly_s_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "a437089520e82704a734e3c034f0b587",
+    "semantic_hash": "a437089520e82704a734e3c034f0b587"
+  },
+  "assets/sprites/wyverns/Redstorm/fly_se_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "d5bdf0833781336071a3c8b2213705b7",
+    "semantic_hash": "d5bdf0833781336071a3c8b2213705b7"
+  },
+  "assets/sprites/wyverns/Redstorm/fly_sw_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "1e7e40549562d6070c5277fcb488b803",
+    "semantic_hash": "1e7e40549562d6070c5277fcb488b803"
+  },
+  "assets/sprites/wyverns/Redstorm/fly_w_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "814585720612f914e6603f6a2a59b696",
+    "semantic_hash": "814585720612f914e6603f6a2a59b696"
+  },
+  "assets/sprites/wyverns/Redstorm/guard_E_wyvern_fixed_1024_isolated.png": {
+    "mtime": 1784449895.2228384,
+    "ast_hash": "6468df3e562ab54adc9f559360b37ef2",
+    "semantic_hash": "6468df3e562ab54adc9f559360b37ef2"
+  },
+  "assets/sprites/wyverns/Redstorm/guard_E_wyvern_fixed_isolated.png": {
+    "mtime": 1784449898.2455301,
+    "ast_hash": "471ccd3d45989e132a368c7f130143cd",
+    "semantic_hash": "471ccd3d45989e132a368c7f130143cd"
+  },
+  "assets/sprites/wyverns/Redstorm/guard_SW_wyvern_isolated.png": {
+    "mtime": 1784449900.3980172,
+    "ast_hash": "a9a90991985ee0f7d8b7bda14178f523",
+    "semantic_hash": "a9a90991985ee0f7d8b7bda14178f523"
+  },
+  "assets/sprites/wyverns/Redstorm/hurt_SW_wyvern_isolated.png": {
+    "mtime": 1784449903.7546353,
+    "ast_hash": "e1eac9584bc2ff5800a11d334c1bdefc",
+    "semantic_hash": "e1eac9584bc2ff5800a11d334c1bdefc"
+  },
+  "assets/sprites/wyverns/Redstorm/idle_e_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "b21c3e56854689e6b2d96c6e1e38ce2f",
+    "semantic_hash": "b21c3e56854689e6b2d96c6e1e38ce2f"
+  },
+  "assets/sprites/wyverns/Redstorm/idle_n_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "9584968cfbd0dbe001caf66f92755650",
+    "semantic_hash": "9584968cfbd0dbe001caf66f92755650"
+  },
+  "assets/sprites/wyverns/Redstorm/idle_ne_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "df244a85b39120f6dcba753405eeeb1d",
+    "semantic_hash": "df244a85b39120f6dcba753405eeeb1d"
+  },
+  "assets/sprites/wyverns/Redstorm/idle_nw_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "0b755872de2f44532f4e23eaa88078b6",
+    "semantic_hash": "0b755872de2f44532f4e23eaa88078b6"
+  },
+  "assets/sprites/wyverns/Redstorm/idle_s_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "a437089520e82704a734e3c034f0b587",
+    "semantic_hash": "a437089520e82704a734e3c034f0b587"
+  },
+  "assets/sprites/wyverns/Redstorm/idle_se_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "d5bdf0833781336071a3c8b2213705b7",
+    "semantic_hash": "d5bdf0833781336071a3c8b2213705b7"
+  },
+  "assets/sprites/wyverns/Redstorm/idle_sw_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "1e7e40549562d6070c5277fcb488b803",
+    "semantic_hash": "1e7e40549562d6070c5277fcb488b803"
+  },
+  "assets/sprites/wyverns/Redstorm/idle_w_0.png": {
+    "mtime": 1784372582.0,
+    "ast_hash": "814585720612f914e6603f6a2a59b696",
+    "semantic_hash": "814585720612f914e6603f6a2a59b696"
+  },
+  "assets/sprites/wyverns/Subzero/e_idle_0.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "7b39609b6de1303168546217411c0eab",
+    "semantic_hash": "7b39609b6de1303168546217411c0eab"
+  },
+  "assets/sprites/wyverns/Subzero/e_idle_1.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "dd1cef2b555b7dbd6bc1407011aaa19b",
+    "semantic_hash": "dd1cef2b555b7dbd6bc1407011aaa19b"
+  },
+  "assets/sprites/wyverns/Subzero/e_idle_2.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "0d7063c30b0ffdce767cfba4dd5923ad",
+    "semantic_hash": "0d7063c30b0ffdce767cfba4dd5923ad"
+  },
+  "assets/sprites/wyverns/Subzero/e_idle_3.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "6cf70bc4229d9e4f14b43f2411dffcd3",
+    "semantic_hash": "6cf70bc4229d9e4f14b43f2411dffcd3"
+  },
+  "assets/sprites/wyverns/Subzero/n_idle_0.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "9e4d00fe827484db05bc34770e021699",
+    "semantic_hash": "9e4d00fe827484db05bc34770e021699"
+  },
+  "assets/sprites/wyverns/Subzero/n_idle_1.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "2fe955aa94911fd33c12fb347b7184e2",
+    "semantic_hash": "2fe955aa94911fd33c12fb347b7184e2"
+  },
+  "assets/sprites/wyverns/Subzero/n_idle_2.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "0185763985f755578f838587ceffcc4b",
+    "semantic_hash": "0185763985f755578f838587ceffcc4b"
+  },
+  "assets/sprites/wyverns/Subzero/n_idle_3.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "8671a2866497b79504fee26ee58737b0",
+    "semantic_hash": "8671a2866497b79504fee26ee58737b0"
+  },
+  "assets/sprites/wyverns/Subzero/ne_idle_0.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "e2a8bf70e44aefc9324f3127ed1d284d",
+    "semantic_hash": "e2a8bf70e44aefc9324f3127ed1d284d"
+  },
+  "assets/sprites/wyverns/Subzero/ne_idle_1.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "ac1588f60c1e37547929588ce4e7cfe7",
+    "semantic_hash": "ac1588f60c1e37547929588ce4e7cfe7"
+  },
+  "assets/sprites/wyverns/Subzero/ne_idle_2.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "88a17a8a5fff22a6127f796a62681121",
+    "semantic_hash": "88a17a8a5fff22a6127f796a62681121"
+  },
+  "assets/sprites/wyverns/Subzero/ne_idle_3.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "0c396705a35cd93ee453f47a94196e16",
+    "semantic_hash": "0c396705a35cd93ee453f47a94196e16"
+  },
+  "assets/sprites/wyverns/Subzero/nw_idle_0.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "14ea9dc9289d289c261f02046794d350",
+    "semantic_hash": "14ea9dc9289d289c261f02046794d350"
+  },
+  "assets/sprites/wyverns/Subzero/nw_idle_1.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "448f64577ede628f1832bfffd1de4706",
+    "semantic_hash": "448f64577ede628f1832bfffd1de4706"
+  },
+  "assets/sprites/wyverns/Subzero/nw_idle_2.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "3a720e26fe13ec70893fa6c6d65e3a47",
+    "semantic_hash": "3a720e26fe13ec70893fa6c6d65e3a47"
+  },
+  "assets/sprites/wyverns/Subzero/nw_idle_3.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "9415ae936dca84a482b77eb0ecd5961d",
+    "semantic_hash": "9415ae936dca84a482b77eb0ecd5961d"
+  },
+  "assets/sprites/wyverns/Subzero/s_idle_0.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "3e422696effb8c6487c9b92853afbbaf",
+    "semantic_hash": "3e422696effb8c6487c9b92853afbbaf"
+  },
+  "assets/sprites/wyverns/Subzero/s_idle_1.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "8f50a74070b4a4f0a472664e8a475edd",
+    "semantic_hash": "8f50a74070b4a4f0a472664e8a475edd"
+  },
+  "assets/sprites/wyverns/Subzero/s_idle_2.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "dd2a94852022a2860945ad4584e24d3c",
+    "semantic_hash": "dd2a94852022a2860945ad4584e24d3c"
+  },
+  "assets/sprites/wyverns/Subzero/s_idle_3.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "343fd2c936a4fc70fbed5c7830ac45d2",
+    "semantic_hash": "343fd2c936a4fc70fbed5c7830ac45d2"
+  },
+  "assets/sprites/wyverns/Subzero/se_idle_0.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "08f1c5e30a55d02954170fc8b68ed30f",
+    "semantic_hash": "08f1c5e30a55d02954170fc8b68ed30f"
+  },
+  "assets/sprites/wyverns/Subzero/se_idle_1.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "0dbc9c68c9b2523ab17b270399813f49",
+    "semantic_hash": "0dbc9c68c9b2523ab17b270399813f49"
+  },
+  "assets/sprites/wyverns/Subzero/se_idle_2.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "d7ed8ceb2148ac3e5de91ab7f219a691",
+    "semantic_hash": "d7ed8ceb2148ac3e5de91ab7f219a691"
+  },
+  "assets/sprites/wyverns/Subzero/se_idle_3.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "24f21523002197213a367b850c799d7d",
+    "semantic_hash": "24f21523002197213a367b850c799d7d"
+  },
+  "assets/sprites/wyverns/Subzero/sw_idle_0.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "39d4a01edaac4c71b9f5c33002c10117",
+    "semantic_hash": "39d4a01edaac4c71b9f5c33002c10117"
+  },
+  "assets/sprites/wyverns/Subzero/sw_idle_1.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "b222d59907eb18d47cf8e3654175af5b",
+    "semantic_hash": "b222d59907eb18d47cf8e3654175af5b"
+  },
+  "assets/sprites/wyverns/Subzero/sw_idle_2.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "4572ce9b493c9c74757e7eb5fd5347de",
+    "semantic_hash": "4572ce9b493c9c74757e7eb5fd5347de"
+  },
+  "assets/sprites/wyverns/Subzero/sw_idle_3.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "4bc7557013800aca4c8cf30fb3513352",
+    "semantic_hash": "4bc7557013800aca4c8cf30fb3513352"
+  },
+  "assets/sprites/wyverns/Subzero/w_idle_0.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "f132ed698572588883cf79afa7c09d03",
+    "semantic_hash": "f132ed698572588883cf79afa7c09d03"
+  },
+  "assets/sprites/wyverns/Subzero/w_idle_1.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "e88c5106b780e212041bdc0d3850b6f4",
+    "semantic_hash": "e88c5106b780e212041bdc0d3850b6f4"
+  },
+  "assets/sprites/wyverns/Subzero/w_idle_2.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "e540a4ce426c50138bdf85c7afbb1752",
+    "semantic_hash": "e540a4ce426c50138bdf85c7afbb1752"
+  },
+  "assets/sprites/wyverns/Subzero/w_idle_3.png": {
+    "mtime": 1784259444.0,
+    "ast_hash": "0c3e92300c32c9134b8c2c501ac472b4",
+    "semantic_hash": "0c3e92300c32c9134b8c2c501ac472b4"
+  },
+  "wyvernassets-3d testing/drogon-game-of-thrones-dragon/textures/T_DaenerysDragon_Body_D.png": {
+    "mtime": 1779327496.0,
+    "ast_hash": "bab8d5d6a8c62dde1bc2eb0c01e17927",
+    "semantic_hash": "bab8d5d6a8c62dde1bc2eb0c01e17927"
+  },
+  "wyvernassets-3d testing/drogon-game-of-thrones-dragon/textures/T_DaenerysDragon_Head_D.png": {
+    "mtime": 1779327496.0,
+    "ast_hash": "c89e18599bd9c19013b2cd9a0d493f40",
+    "semantic_hash": "c89e18599bd9c19013b2cd9a0d493f40"
+  },
+  "wyvernassets-3d testing/mega_wyvern 2/textures/Dragon_Boss_05_baseColor.png": {
+    "mtime": 1715945994.0,
+    "ast_hash": "18e8095b8806339972ceffbc18b16212",
+    "semantic_hash": "18e8095b8806339972ceffbc18b16212"
+  },
+  "wyvernassets-3d testing/mega_wyvern 2/textures/Dragon_Boss_05_metallicRoughness.png": {
+    "mtime": 1715945996.0,
+    "ast_hash": "817f254f716f884c38dd94cfba38231b",
+    "semantic_hash": "817f254f716f884c38dd94cfba38231b"
+  },
+  "wyvernassets-3d testing/mega_wyvern 2/textures/Dragon_Boss_05_specularf0.png": {
+    "mtime": 1715945998.0,
+    "ast_hash": "6f0aedd8f4f910cf7813d33a4729d952",
+    "semantic_hash": "6f0aedd8f4f910cf7813d33a4729d952"
+  },
+  "wyvernassets-3d testing/mega_wyvern/textures/Dragon_Boss_05_baseColor.png": {
+    "mtime": 1715945994.0,
+    "ast_hash": "18e8095b8806339972ceffbc18b16212",
+    "semantic_hash": "18e8095b8806339972ceffbc18b16212"
+  },
+  "wyvernassets-3d testing/mega_wyvern/textures/Dragon_Boss_05_metallicRoughness.png": {
+    "mtime": 1715945996.0,
+    "ast_hash": "817f254f716f884c38dd94cfba38231b",
+    "semantic_hash": "817f254f716f884c38dd94cfba38231b"
+  },
+  "wyvernassets-3d testing/mega_wyvern/textures/Dragon_Boss_05_specularf0.png": {
+    "mtime": 1715945998.0,
+    "ast_hash": "6f0aedd8f4f910cf7813d33a4729d952",
+    "semantic_hash": "6f0aedd8f4f910cf7813d33a4729d952"
+  },
+  "wyvernassets-3d testing/wyvern/textures/internal_ground_ao_texture.jpeg": {
+    "mtime": 1635970466.0,
+    "ast_hash": "9ebf076a419a10537ab73731b431f5fa",
+    "semantic_hash": "9ebf076a419a10537ab73731b431f5fa"
   }
 }
